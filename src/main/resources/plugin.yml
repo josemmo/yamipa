@@ -1,12 +1,7 @@
 name: ${project.name}
 version: ${project.version}
 main: io.josemmo.bukkit.plugin.YamipaPlugin
-
-commands:
-  image:
-    description: Yamipa plugin commands, place images on blocks
-    usage: /<command> [place|remove|download|list]
-    aliases: ['images', 'yamipa']
+depend: [CommandAPI]
 
 permissions:
   yamipa.*:
