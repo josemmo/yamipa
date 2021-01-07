@@ -18,6 +18,14 @@ public class YamipaPlugin extends JavaPlugin {
         return instance;
     }
 
+    /**
+     * Get image storage instance
+     * @return Image storage instance
+     */
+    public ImageStorage getImageStorage() {
+        return storage;
+    }
+
     @Override
     public void onLoad() {
         instance = this;
