@@ -6,9 +6,9 @@ import org.bukkit.scheduler.BukkitTask;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -16,7 +16,7 @@ public class ImageStorage {
     static public final long POLLING_INTERVAL = 100L; // In server ticks
     static private final Logger logger = YamipaPlugin.getInstance().getLogger();
     private final String basePath;
-    private final Map<String, ImageFile> cachedImages = new HashMap<>();
+    private final SortedMap<String, ImageFile> cachedImages = new TreeMap<>();
     private BukkitTask task;
     private WatchService watchService;
 
@@ -37,14 +37,15 @@ public class ImageStorage {
         // Create directory if not exists
         File directory = new File(basePath);
         if (directory.mkdirs()) {
-            logger.info("Created image directory as it did not exist");
+            logger.info("Created images directory as it did not exist");
         }
 
         // Do initial directory listing
         for (File file : Objects.requireNonNull(directory.listFiles())) {
+            if (file.isDirectory()) continue;
             cachedImages.put(file.getName(), new ImageFile(file.getAbsolutePath()));
         }
-        logger.fine("Found " + cachedImages.size() + " file(s) in image directory");
+        logger.fine("Found " + cachedImages.size() + " file(s) in images directory");
 
         // Prepare watch service
         watchService = FileSystems.getDefault().newWatchService();
@@ -64,23 +65,26 @@ public class ImageStorage {
             watchKey.pollEvents().forEach(event -> {
                 WatchEvent.Kind<?> kind = event.kind();
                 File file = directoryPath.resolve((Path) event.context()).toFile();
-                if (!file.isFile()) return;
+                if (file.isDirectory()) return;
 
                 String filename = file.getName();
                 synchronized (this) {
                     if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
                         cachedImages.remove(filename);
+                        logger.fine("Detected file deletion at " + filename);
                     } else if (cachedImages.containsKey(filename)) {
                         cachedImages.get(filename).invalidate();
+                        logger.fine("Detected file update at " + filename);
                     } else {
                         cachedImages.put(filename, new ImageFile(file.getAbsolutePath()));
+                        logger.fine("Detected file creation at " + filename);
                     }
                 }
             });
 
             watchKey.reset();
         }, POLLING_INTERVAL, POLLING_INTERVAL);
-        logger.fine("Started watching for file changes in image directory");
+        logger.fine("Started watching for file changes in images directory");
     }
 
     /**
@@ -106,7 +110,7 @@ public class ImageStorage {
      * Get all images
      * @return List of images
      */
-    public synchronized Map<String, ImageFile> getAll() {
+    public synchronized SortedMap<String, ImageFile> getAll() {
         return cachedImages;
     }
 
