@@ -3,6 +3,9 @@ package io.josemmo.bukkit.plugin.renderer;
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.PacketContainer;
 import org.bukkit.entity.Player;
+import org.bukkit.map.MapPalette;
+import java.awt.*;
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class FakeMap extends FakeEntity {
@@ -11,6 +14,7 @@ public class FakeMap extends FakeEntity {
     public static final int MAX_MAP_ID = 32767;
 
     private static final AtomicInteger lastMapId = new AtomicInteger(-1);
+    private static FakeMap errorInstance;
     private final int id;
     private final byte[] pixels;
 
@@ -28,12 +32,35 @@ public class FakeMap extends FakeEntity {
     }
 
     /**
-     * Class constructor
-     * @param pixels Map pixels
+     * Get map instance to show in case of error
+     * @return Error instance
      */
-    public FakeMap(byte[] pixels) {
+    public static FakeMap getErrorInstance() {
+        if (errorInstance == null) {
+            // TODO: use a resource file instead
+            int[] pixels = new int[DIMENSION * DIMENSION];
+            Arrays.fill(pixels, 0xffffffff);
+            errorInstance = new FakeMap(pixels);
+        }
+
+        return errorInstance;
+    }
+
+    /**
+     * Class constructor
+     * @param pixels Array of RGBA pixels with DIMENSION×DIMENSION elements
+     */
+    public FakeMap(int[] pixels) {
         this.id = getNextId();
-        this.pixels = pixels;
+
+        // Convert RGB pixels to in-game indexes
+        this.pixels = new byte[DIMENSION*DIMENSION];
+        for (int x=0; x<DIMENSION; x++) {
+            for (int y=0; y<DIMENSION; y++) {
+                this.pixels[x + y*DIMENSION] = MapPalette.matchColor(new Color(pixels[x + y*DIMENSION], true));
+            }
+        }
+
         logger.info("Created FakeMap#" + this.id); // TODO: change log level
     }
 
@@ -50,7 +77,6 @@ public class FakeMap extends FakeEntity {
      * @param player Player instance
      */
     public void sendPixels(Player player) {
-        logger.info("Sending pixels for FakeMap#" + id); // TODO: change log level
         PacketContainer mapDataPacket = new PacketContainer(PacketType.Play.Server.MAP);
         mapDataPacket.getModifier().writeDefaults();
         mapDataPacket.getIntegers()
@@ -67,5 +93,7 @@ public class FakeMap extends FakeEntity {
         mapDataPacket.getByteArrays()
             .write(0, pixels);
         tryToSendPacket(player, mapDataPacket);
+
+        logger.info("Sent pixels for FakeMap#" + id); // TODO: change log level
     }
 }
