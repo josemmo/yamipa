@@ -6,6 +6,8 @@ import com.comphenix.protocol.wrappers.WrappedDataWatcher;
 import de.tr7zw.nbtapi.NBTItem;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Rotation;
+import org.bukkit.block.BlockFace;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -19,6 +21,8 @@ public class FakeItemFrame extends FakeEntity {
     private static final AtomicInteger lastFrameId = new AtomicInteger(MAX_FRAME_ID);
     private final int id;
     private final Location location;
+    private final BlockFace face;
+    private final Rotation rotation;
     private final FakeMap map;
 
     /**
@@ -37,13 +41,16 @@ public class FakeItemFrame extends FakeEntity {
     /**
      * Class constructor
      * @param location Frame location
+     * @param face     Block face
+     * @param rotation Frame rotation
      * @param map      Fake map to render
      */
-    public FakeItemFrame(Location location, FakeMap map) {
+    public FakeItemFrame(Location location, BlockFace face, Rotation rotation, FakeMap map) {
         this.id = getNextId();
         this.location = location;
+        this.face = face;
+        this.rotation = rotation;
         this.map = map;
-        // TODO
         logger.info("Created FakeItemFrame#" + this.id + " using FakeMap#" + this.map.getId()); // TODO: change log level
     }
 
@@ -52,6 +59,37 @@ public class FakeItemFrame extends FakeEntity {
      * @param player Player instance
      */
     public void spawn(Player player) {
+        // Calculate frame position in relation to target block
+        double x = location.getBlockX();
+        double y = location.getBlockY();
+        double z = location.getBlockZ();
+        int pitch = 0;
+        int yaw = 0;
+        switch (face) {
+            case UP:
+                ++y;
+                pitch = -64;
+                break;
+            case DOWN:
+                --y;
+                pitch = 64;
+                break;
+            case EAST:
+                ++x;
+                yaw = -64;
+                break;
+            case WEST:
+                --x;
+                yaw = 64;
+                break;
+            case NORTH:
+                --z;
+                yaw = 128;
+                break;
+            case SOUTH:
+                ++z;
+        }
+
         // Create item frame entity
         PacketContainer framePacket = new PacketContainer(PacketType.Play.Server.SPAWN_ENTITY);
         framePacket.getEntityTypeModifier()
@@ -61,15 +99,15 @@ public class FakeItemFrame extends FakeEntity {
             .write(1, 0)
             .write(2, 0)
             .write(3, 0)
-            .write(4, 0) // Pitch angle // TODO: change value
-            .write(5, 0) // Yaw angle // TODO: change value
+            .write(4, pitch)
+            .write(5, yaw)
             .write(6, 0);
         framePacket.getUUIDs()
             .write(0, UUID.randomUUID());
         framePacket.getDoubles()
-            .write(0, location.getX())
-            .write(1, location.getY())
-            .write(2, location.getZ());
+            .write(0, x)
+            .write(1, y)
+            .write(2, z);
         tryToSendPacket(player, framePacket);
 
         // Create and attach filled map
@@ -80,6 +118,7 @@ public class FakeItemFrame extends FakeEntity {
         WrappedDataWatcher dataWatcher = new WrappedDataWatcher();
         WrappedDataWatcher.Serializer byteSerializer = WrappedDataWatcher.Registry.get(Byte.class);
         WrappedDataWatcher.Serializer itemStackSerializer = WrappedDataWatcher.Registry.getItemStackSerializer(false);
+        WrappedDataWatcher.Serializer integerSerializer = WrappedDataWatcher.Registry.get(Integer.class);
         dataWatcher.setObject(
             new WrappedDataWatcher.WrappedDataWatcherObject(0, byteSerializer),
             (byte) 0x20 // Invisible
@@ -87,6 +126,10 @@ public class FakeItemFrame extends FakeEntity {
         dataWatcher.setObject(
             new WrappedDataWatcher.WrappedDataWatcherObject(7, itemStackSerializer),
             mapItemStack
+        );
+        dataWatcher.setObject(
+            new WrappedDataWatcher.WrappedDataWatcherObject(8, integerSerializer),
+            rotation.ordinal()
         );
 
         PacketContainer mapPacket = new PacketContainer(PacketType.Play.Server.ENTITY_METADATA);
