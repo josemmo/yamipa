@@ -15,14 +15,25 @@ import java.util.logging.Logger;
 public class ImageFile {
     private static final Logger logger = YamipaPlugin.getInstance().getLogger();
     private final ConcurrentMap<String, FakeMap[][]> cache = new ConcurrentHashMap<>();
+    private final String name;
     private final String path;
 
     /**
      * Class constructor
+     * @param name Image file name
      * @param path Path to image file
      */
-    protected ImageFile(String path) {
+    protected ImageFile(String name, String path) {
+        this.name = name;
         this.path = path;
+    }
+
+    /**
+     * Get image file name
+     * @return Image file name
+     */
+    public String getName() {
+        return name;
     }
 
     /**

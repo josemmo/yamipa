@@ -13,7 +13,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class ImageStorage {
-    static public final long POLLING_INTERVAL = 100L; // In server ticks
+    static public final long POLLING_INTERVAL = 20L * 5; // In server ticks
     static private final Logger logger = YamipaPlugin.getInstance().getLogger();
     private final String basePath;
     private final SortedMap<String, ImageFile> cachedImages = new TreeMap<>();
@@ -43,7 +43,8 @@ public class ImageStorage {
         // Do initial directory listing
         for (File file : Objects.requireNonNull(directory.listFiles())) {
             if (file.isDirectory()) continue;
-            cachedImages.put(file.getName(), new ImageFile(file.getAbsolutePath()));
+            String filename = file.getName();
+            cachedImages.put(filename, new ImageFile(filename, file.getAbsolutePath()));
         }
         logger.fine("Found " + cachedImages.size() + " file(s) in images directory");
 
@@ -76,7 +77,7 @@ public class ImageStorage {
                         cachedImages.get(filename).invalidate();
                         logger.fine("Detected file update at " + filename);
                     } else {
-                        cachedImages.put(filename, new ImageFile(file.getAbsolutePath()));
+                        cachedImages.put(filename, new ImageFile(filename, file.getAbsolutePath()));
                         logger.fine("Detected file creation at " + filename);
                     }
                 }
