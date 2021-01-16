@@ -47,7 +47,7 @@ public class YamipaPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         storage = new ImageStorage(getDataFolder().getPath() + "/images");
-        renderer = new ImageRenderer(getDataFolder().getPath() + "/images.yml");
+        renderer = new ImageRenderer(getDataFolder().getPath() + "/images.dat");
         try {
             storage.start();
         } catch (Exception e) {
