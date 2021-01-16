@@ -61,7 +61,7 @@ public class FakeMap extends FakeEntity {
             }
         }
 
-        logger.info("Created FakeMap#" + this.id); // TODO: change log level
+        logger.info("Created FakeMap#" + this.id); // TODO: remove
     }
 
     /**
@@ -94,6 +94,6 @@ public class FakeMap extends FakeEntity {
             .write(0, pixels);
         tryToSendPacket(player, mapDataPacket);
 
-        logger.info("Sent pixels for FakeMap#" + id); // TODO: change log level
+        logger.info("Sent pixels for FakeMap#" + id); // TODO: remove
     }
 }

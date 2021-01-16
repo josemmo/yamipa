@@ -153,6 +153,7 @@ public class ImageRenderer implements Listener {
     public void addImage(FakeImage fakeImage, boolean isInit) {
         for (String worldAreaId : fakeImage.getWorldAreaIds()) {
             WorldArea worldArea = worldAreas.computeIfAbsent(worldAreaId, __ -> new WorldArea());
+            // TODO: when creating a new area, we need to initialize its "players" property
             worldArea.addImage(fakeImage);
         }
         if (!isInit) {
@@ -199,7 +200,9 @@ public class ImageRenderer implements Listener {
             WorldArea worldArea = worldAreas.get(worldAreaId);
             if (worldArea != null) {
                 worldArea.removeImage(image);
-                // TODO: remove world area is it has no more fake images
+                if (!worldArea.hasImages()) {
+                    worldAreas.remove(worldAreaId);
+                }
             }
         }
         hasConfigChanged.set(true);

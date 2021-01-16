@@ -25,6 +25,14 @@ public class WorldArea {
     }
 
     /**
+     * Contains fake images
+     * @return TRUE if instance contains fake images, FALSE otherwise
+     */
+    public boolean hasImages() {
+        return fakeImages.isEmpty();
+    }
+
+    /**
      * Get all fake images
      * @return Set of fake images
      */
@@ -72,7 +80,9 @@ public class WorldArea {
     public void removePlayer(Player player) {
         players.remove(player);
         if (players.isEmpty()) {
-            // TODO: invalidate cache for this instance
+            for (FakeImage image : fakeImages) {
+                image.invalidate();
+            }
         }
     }
 
