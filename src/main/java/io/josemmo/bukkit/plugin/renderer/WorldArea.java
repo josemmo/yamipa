@@ -5,10 +5,11 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class WorldArea {
     public static final int CHUNK_RATIO = 2; // 2^2=4 (4x4 chunks)
-    private final String id;
+    private final Set<FakeImage> fakeImages = ConcurrentHashMap.newKeySet();
     private final Set<Player> players = new HashSet<>();
 
     /**
@@ -24,11 +25,33 @@ public class WorldArea {
     }
 
     /**
-     * Class constructor
-     * @param location Location instance
+     * Get all fake images
+     * @return Set of fake images
      */
-    public WorldArea(Location location) {
-        this.id = getId(location);
+    public Set<FakeImage> getImages() {
+        return fakeImages;
+    }
+
+    /**
+     * Add fake image
+     * @param image Fake image instance
+     */
+    public void addImage(FakeImage image) {
+        fakeImages.add(image);
+        for (Player player : players) {
+            image.spawn(player);
+        }
+    }
+
+    /**
+     * Remove fake image
+     * @param image Fake image instance
+     */
+    public void removeImage(FakeImage image) {
+        fakeImages.remove(image);
+        for (Player player : players) {
+            image.destroy(player);
+        }
     }
 
     /**
@@ -37,7 +60,9 @@ public class WorldArea {
      */
     public void load(Player player) {
         players.add(player);
-        // TODO: not implemented
+        for (FakeImage image : fakeImages) {
+            image.spawn(player);
+        }
     }
 
     /**
@@ -46,7 +71,9 @@ public class WorldArea {
      */
     public void removePlayer(Player player) {
         players.remove(player);
-        // TODO: not implemented
+        if (players.isEmpty()) {
+            // TODO: invalidate cache for this instance
+        }
     }
 
     /**
@@ -54,8 +81,10 @@ public class WorldArea {
      * @param player Player instance
      */
     public void unload(Player player) {
+        for (FakeImage image : fakeImages) {
+            image.destroy(player);
+        }
         removePlayer(player);
-        // TODO: not implemented
     }
 
     /**
