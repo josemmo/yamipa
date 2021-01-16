@@ -52,6 +52,13 @@ public class FakeItemFrame extends FakeEntity {
         this.rotation = rotation;
         this.map = map;
         logger.info("Created FakeItemFrame#" + this.id + " using FakeMap#" + this.map.getId()); // TODO: change log level
+
+    /**
+     * Get item frame ID
+     * @return Item frame ID
+     */
+    public int getId() {
+        return id;
     }
 
     /**
@@ -139,15 +146,5 @@ public class FakeItemFrame extends FakeEntity {
 
         // Send map pixels
         map.sendPixels(player);
-    }
-
-    /**
-     * Destroy item frame from player's client
-     * @param player Player instance
-     */
-    public void destroy(Player player) {
-        PacketContainer packet = new PacketContainer(PacketType.Play.Server.ENTITY_DESTROY);
-        packet.getIntegerArrays().write(0, new int[]{id});
-        tryToSendPacket(player, packet);
     }
 }

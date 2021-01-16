@@ -1,11 +1,17 @@
 package io.josemmo.bukkit.plugin.renderer;
 
+import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.events.PacketContainer;
 import io.josemmo.bukkit.plugin.storage.ImageFile;
 import io.josemmo.bukkit.plugin.utils.DirectionUtils;
 import org.bukkit.Location;
 import org.bukkit.Rotation;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
+import org.bukkit.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.BiFunction;
 
 public class FakeImage extends FakeEntity {
     public static final int MAX_DIMENSION = 10;
@@ -15,6 +21,8 @@ public class FakeImage extends FakeEntity {
     private final Rotation rotation;
     private final int width;
     private final int height;
+    private final BiFunction<Integer, Integer, Vector> getLocationVector;
+    private FakeItemFrame[][] frames;
 
     /**
      * Get image rotation from player eyesight
@@ -32,11 +40,11 @@ public class FakeImage extends FakeEntity {
         BlockFace eyeDirection = DirectionUtils.getCardinalDirection(location.getYaw());
         switch (eyeDirection) {
             case EAST:
-                return Rotation.CLOCKWISE_45;
+                return (face == BlockFace.DOWN) ? Rotation.CLOCKWISE_135 : Rotation.CLOCKWISE_45;
             case SOUTH:
                 return Rotation.CLOCKWISE;
             case WEST:
-                return Rotation.CLOCKWISE_135;
+                return (face == BlockFace.DOWN) ? Rotation.CLOCKWISE_45 : Rotation.CLOCKWISE_135;
             default:
                 return Rotation.NONE;
         }
@@ -58,6 +66,39 @@ public class FakeImage extends FakeEntity {
         this.rotation = rotation;
         this.width = width;
         this.height = height;
+
+        // Define function for retrieving item frame positional vector from <row,column> pair
+        if (face == BlockFace.SOUTH) {
+            getLocationVector = (col, row) -> new Vector(col, -row, 0);
+        } else if (face == BlockFace.NORTH) {
+            getLocationVector = (col, row) -> new Vector(-col, -row, 0);
+        } else if (face == BlockFace.EAST) {
+            getLocationVector = (col, row) -> new Vector(0, -row, -col);
+        } else if (face == BlockFace.WEST) {
+            getLocationVector = (col, row) -> new Vector(0, -row, col);
+        } else if (face == BlockFace.UP) {
+            if (rotation == Rotation.CLOCKWISE_45) {
+                getLocationVector = (col, row) -> new Vector(-row, 0, col);
+            } else if (rotation == Rotation.CLOCKWISE_135) {
+                getLocationVector = (col, row) -> new Vector(row, 0, -col);
+            } else if (rotation == Rotation.CLOCKWISE) {
+                getLocationVector = (col, row) -> new Vector(-col, 0, -row);
+            } else { // Rotation.NONE
+                getLocationVector = (col, row) -> new Vector(col, 0, row);
+            }
+        } else { // BlockFace.DOWN
+            if (rotation == Rotation.CLOCKWISE_45) {
+                getLocationVector = (col, row) -> new Vector(-row, 0, -col);
+            } else if (rotation == Rotation.CLOCKWISE_135) {
+                getLocationVector = (col, row) -> new Vector(row, 0, col);
+            } else if (rotation == Rotation.CLOCKWISE) {
+                getLocationVector = (col, row) -> new Vector(-col, 0, row);
+            } else { // Rotation.NONE
+                getLocationVector = (col, row) -> new Vector(col, 0, -row);
+            }
+        }
+
+        logger.info("Created FakeImage#(" + location + "," + face + ")"); // TODO: remove
     }
 
     /**
@@ -120,11 +161,32 @@ public class FakeImage extends FakeEntity {
     }
 
     /**
+     * Load item frames and maps
+     */
+    public void load() {
+        FakeMap[][] maps = image.getMaps(width, height);
+
+        // Generate frames
+        frames = new FakeItemFrame[width][height];
+        for (int col=0; col<width; col++) {
+            for (int row=0; row<height; row++) {
+                Location frameLocation = location.clone().add(getLocationVector.apply(col, row));
+                frames[col][row] = new FakeItemFrame(frameLocation, face, rotation, maps[col][row]);
+            }
+        }
+    }
+
+    /**
      * Spawn image for a player
      * @param player Player instance
      */
     public void spawn(Player player) {
-        // TODO: not implemented
+        if (frames == null) load();
+        for (FakeItemFrame[] col : frames) {
+            for (FakeItemFrame frame : col) {
+                frame.spawn(player);
+            }
+        }
     }
 
     /**
@@ -132,6 +194,28 @@ public class FakeImage extends FakeEntity {
      * @param player Player instance
      */
     public void destroy(Player player) {
-        // TODO: not implemented
+        if (frames == null) return;
+
+        // Get frame IDs
+        List<Integer> frameIds = new ArrayList<>(width*height);
+        for (FakeItemFrame[] col : frames) {
+            for (FakeItemFrame frame : col) {
+                frameIds.add(frame.getId());
+            }
+        }
+
+        // Send destroy packet
+        PacketContainer destroyPacket = new PacketContainer(PacketType.Play.Server.ENTITY_DESTROY);
+        destroyPacket.getIntegerArrays().write(0, frameIds.stream().mapToInt(i->i).toArray());
+        tryToSendPacket(player, destroyPacket);
+    }
+
+    /**
+     * Invalidate cache
+     * <p>
+     * Removes all item frames associated with this image.
+     */
+    public void invalidate() {
+        frames = null;
     }
 }
