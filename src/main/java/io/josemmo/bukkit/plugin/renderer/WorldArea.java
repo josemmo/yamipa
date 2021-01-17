@@ -1,27 +1,28 @@
 package io.josemmo.bukkit.plugin.renderer;
 
-import org.bukkit.Chunk;
-import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * A World Area is a group of 16 chunks arranged in a 4x4 square.
+ */
 public class WorldArea {
-    public static final int CHUNK_RATIO = 2; // 2^2=4 (4x4 chunks)
     private final Set<FakeImage> fakeImages = ConcurrentHashMap.newKeySet();
     private final Set<Player> players = new HashSet<>();
 
     /**
-     * Get ID from location
-     * @param  location Location instance
-     * @return          World area ID
+     * Class constructor
+     * @param id World area ID
      */
-    public static String getId(Location location) {
-        Chunk chunk = location.getChunk();
-        return chunk.getWorld().getName() + "," +
-            (chunk.getX() >> CHUNK_RATIO) + "," +
-            (chunk.getZ() >> CHUNK_RATIO);
+    public WorldArea(WorldAreaId id) {
+        for (Player player : id.getWorld().getPlayers()) {
+            WorldAreaId playerWorldAreaId = WorldAreaId.fromLocation(player.getLocation());
+            if (id.equals(playerWorldAreaId)) {
+                players.add(player);
+            }
+        }
     }
 
     /**

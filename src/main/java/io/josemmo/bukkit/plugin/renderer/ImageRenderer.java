@@ -28,12 +28,12 @@ public class ImageRenderer implements Listener {
     private final String configPath;
     private BukkitTask saveTask;
     private final AtomicBoolean hasConfigChanged = new AtomicBoolean(false);
-    private final ConcurrentMap<String, WorldArea> worldAreas = new ConcurrentHashMap<>();
-    private final Map<UUID, String> playersLocation = new HashMap<>();
+    private final ConcurrentMap<WorldAreaId, WorldArea> worldAreas = new ConcurrentHashMap<>();
+    private final Map<UUID, WorldAreaId> playersLocation = new HashMap<>();
 
     /**
      * Class constructor
-     * @param configPath Path to YAML configuration file
+     * @param configPath Path to configuration file
      */
     public ImageRenderer(String configPath) {
         this.configPath = configPath;
@@ -149,9 +149,11 @@ public class ImageRenderer implements Listener {
      * @param isInit    TRUE if called during renderer startup, FALSE otherwise
      */
     public void addImage(FakeImage fakeImage, boolean isInit) {
-        for (String worldAreaId : fakeImage.getWorldAreaIds()) {
-            WorldArea worldArea = worldAreas.computeIfAbsent(worldAreaId, __ -> new WorldArea());
-            // TODO: when creating a new area, we need to initialize its "players" property
+        for (WorldAreaId worldAreaId : fakeImage.getWorldAreaIds()) {
+            WorldArea worldArea = worldAreas.computeIfAbsent(worldAreaId, __ -> {
+                plugin.fine("Created WorldArea#(" + worldAreaId + ")");
+                return new WorldArea(worldAreaId);
+            });
             worldArea.addImage(fakeImage);
         }
         if (!isInit) {
@@ -174,7 +176,7 @@ public class ImageRenderer implements Listener {
      * @return          Fake image instance or NULL if not found
      */
     public FakeImage getImage(Location location, BlockFace face) {
-        String worldAreaId = WorldArea.getId(location);
+        WorldAreaId worldAreaId = WorldAreaId.fromLocation(location);
         WorldArea worldArea = worldAreas.get(worldAreaId);
         if (worldArea == null) {
             return null;
@@ -194,16 +196,31 @@ public class ImageRenderer implements Listener {
      * @param image Fake image instance
      */
     public void removeImage(FakeImage image) {
-        for (String worldAreaId : image.getWorldAreaIds()) {
+        for (WorldAreaId worldAreaId : image.getWorldAreaIds()) {
             WorldArea worldArea = worldAreas.get(worldAreaId);
             if (worldArea != null) {
                 worldArea.removeImage(image);
                 if (!worldArea.hasImages()) {
+                    plugin.fine("Destroyed WorldArea#(" + worldAreaId + ")");
                     worldAreas.remove(worldAreaId);
                 }
             }
         }
         hasConfigChanged.set(true);
+    }
+
+    /**
+     * Get available world areas from IDs
+     * @param  ids World area IDs
+     * @return     World area instances
+     */
+    private Set<WorldArea> getWorldAreas(WorldAreaId[] ids) {
+        Set<WorldArea> instances = new HashSet<>();
+        for (WorldAreaId id : ids) {
+            if (!worldAreas.containsKey(id)) continue;
+            instances.add(worldAreas.get(id));
+        }
+        return instances;
     }
 
     /**
@@ -215,21 +232,33 @@ public class ImageRenderer implements Listener {
         UUID uuid = player.getUniqueId();
 
         // Has player moved to another world area?
-        String worldAreaId = WorldArea.getId(location);
-        String prevWorldAreaId = playersLocation.get(uuid);
+        WorldAreaId worldAreaId = WorldAreaId.fromLocation(location);
+        WorldAreaId prevWorldAreaId = playersLocation.get(uuid);
         if (worldAreaId.equals(prevWorldAreaId)) {
             return;
         }
-
-        // Unload previous world area
-        if (prevWorldAreaId != null && worldAreas.containsKey(prevWorldAreaId)) {
-            worldAreas.get(prevWorldAreaId).unload(player);
-        }
-
-        // Update and load current world area
         playersLocation.put(uuid, worldAreaId);
-        if (worldAreas.containsKey(worldAreaId)) {
-            worldAreas.get(worldAreaId).load(player);
+        plugin.fine("Player#" + player.getName() + " moved to WorldArea#(" + worldAreaId + ")");
+
+        // Get world areas that should be loaded/unloaded
+        Set<WorldArea> desiredState = getWorldAreas(worldAreaId.getNeighborhood());
+        Set<WorldArea> currentState;
+        if (prevWorldAreaId == null) {
+            currentState = new HashSet<>();
+        } else {
+            currentState = getWorldAreas(prevWorldAreaId.getNeighborhood());
+        }
+        Set<WorldArea> areasToLoad = new HashSet<>(desiredState);
+        areasToLoad.removeAll(currentState);
+        Set<WorldArea> areasToUnload = new HashSet<>(currentState);
+        areasToUnload.removeAll(desiredState);
+
+        // Load/unload world areas
+        for (WorldArea area : areasToUnload) {
+            area.unload(player);
+        }
+        for (WorldArea area : areasToLoad) {
+            area.load(player);
         }
     }
 
@@ -244,7 +273,7 @@ public class ImageRenderer implements Listener {
         UUID uuid = player.getUniqueId();
 
         // Notify world area that player quit
-        String worldAreaId = playersLocation.get(uuid);
+        WorldAreaId worldAreaId = playersLocation.get(uuid);
         if (worldAreaId != null) {
             if (worldAreas.containsKey(worldAreaId)) {
                 worldAreas.get(worldAreaId).removePlayer(player);

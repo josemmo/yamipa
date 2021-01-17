@@ -98,7 +98,7 @@ public class FakeImage extends FakeEntity {
             }
         }
 
-        plugin.fine("Created FakeImage#(" + location + "," + face + ")");
+        plugin.fine("Created FakeImage#(" + location + "," + face + ") from ImageFile#(" + image.getName() + ")");
     }
 
     /**
@@ -153,17 +153,17 @@ public class FakeImage extends FakeEntity {
      * Get world area IDs where this image is located
      * @return Array of world area IDs
      */
-    public String[] getWorldAreaIds() {
+    public WorldAreaId[] getWorldAreaIds() {
         // TODO: just a prototype, not fully implemented
-        return new String[]{
-            WorldArea.getId(this.location)
+        return new WorldAreaId[]{
+            WorldAreaId.fromLocation(this.location)
         };
     }
 
     /**
      * Load item frames and maps
      */
-    public void load() {
+    private void load() {
         FakeMap[][] maps = image.getMaps(width, height);
 
         // Generate frames
