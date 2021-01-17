@@ -1,6 +1,7 @@
 package io.josemmo.bukkit.plugin.renderer;
 
 import org.bukkit.entity.Player;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -102,7 +103,7 @@ public class WorldArea {
      * Unload for all players
      */
     public void unload() {
-        for (Player player : players) {
+        for (Player player : new ArrayList<>(players)) {
             unload(player);
         }
     }

@@ -272,13 +272,15 @@ public class ImageRenderer implements Listener {
         Player player = event.getPlayer();
         UUID uuid = player.getUniqueId();
 
-        // Notify world area that player quit
+        // Get player's current world area ID
         WorldAreaId worldAreaId = playersLocation.get(uuid);
-        if (worldAreaId != null) {
-            if (worldAreas.containsKey(worldAreaId)) {
-                worldAreas.get(worldAreaId).removePlayer(player);
-            }
-            playersLocation.remove(uuid);
+        if (worldAreaId == null) return;
+        playersLocation.remove(uuid);
+
+        // Notify world areas that player quit
+        Set<WorldArea> loadedWorldAreas = getWorldAreas(worldAreaId.getNeighborhood());
+        for (WorldArea worldArea : loadedWorldAreas) {
+            worldArea.removePlayer(player);
         }
     }
 
