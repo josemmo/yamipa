@@ -61,7 +61,7 @@ public class FakeMap extends FakeEntity {
             }
         }
 
-        logger.info("Created FakeMap#" + this.id); // TODO: remove
+        plugin.fine("Created FakeMap#" + this.id);
     }
 
     /**
@@ -94,6 +94,6 @@ public class FakeMap extends FakeEntity {
             .write(0, pixels);
         tryToSendPacket(player, mapDataPacket);
 
-        logger.info("Sent pixels for FakeMap#" + id); // TODO: remove
+        plugin.fine("Sent pixels for FakeMap#" + id + " to Player#" + player.getName());
     }
 }

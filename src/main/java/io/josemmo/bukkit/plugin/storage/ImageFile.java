@@ -10,10 +10,9 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.logging.Logger;
 
 public class ImageFile {
-    private static final Logger logger = YamipaPlugin.getInstance().getLogger();
+    private static final YamipaPlugin plugin = YamipaPlugin.getInstance();
     private final ConcurrentMap<String, FakeMap[][]> cache = new ConcurrentHashMap<>();
     private final String name;
     private final String path;
@@ -114,7 +113,7 @@ public class ImageFile {
             for (FakeMap[] column : matrix) {
                 Arrays.fill(column, errorMap);
             }
-            logger.warning("Failed to get image data from file \"" + path + "\"");
+            plugin.warning("Failed to get image data from file \"" + path + "\"");
         }
 
         // Persist in cache and return

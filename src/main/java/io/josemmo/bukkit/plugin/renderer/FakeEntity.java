@@ -6,10 +6,9 @@ import com.comphenix.protocol.events.PacketContainer;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
 import org.bukkit.entity.Player;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public abstract class FakeEntity {
-    protected static final Logger logger = YamipaPlugin.getInstance().getLogger();
+    protected static final YamipaPlugin plugin = YamipaPlugin.getInstance();
     private static final ProtocolManager connection = ProtocolLibrary.getProtocolManager();
 
     /**
@@ -21,7 +20,7 @@ public abstract class FakeEntity {
         try {
             connection.sendServerPacket(player, packet);
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Failed to send FakeEntity packet", e);
+            plugin.log(Level.SEVERE, "Failed to send FakeEntity packet", e);
         }
     }
 }

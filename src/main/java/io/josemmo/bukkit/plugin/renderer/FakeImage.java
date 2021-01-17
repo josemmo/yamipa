@@ -98,7 +98,7 @@ public class FakeImage extends FakeEntity {
             }
         }
 
-        logger.info("Created FakeImage#(" + location + "," + face + ")"); // TODO: remove
+        plugin.fine("Created FakeImage#(" + location + "," + face + ")");
     }
 
     /**
@@ -217,5 +217,6 @@ public class FakeImage extends FakeEntity {
      */
     public void invalidate() {
         frames = null;
+        plugin.fine("Invalidated FakeImage#(" + location + "," + face + ")");
     }
 }

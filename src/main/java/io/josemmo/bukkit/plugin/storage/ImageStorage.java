@@ -10,11 +10,10 @@ import java.util.Objects;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class ImageStorage {
     static public final long POLLING_INTERVAL = 20L * 5; // In server ticks
-    static private final Logger logger = YamipaPlugin.getInstance().getLogger();
+    static private final YamipaPlugin plugin = YamipaPlugin.getInstance();
     private final String basePath;
     private final SortedMap<String, ImageFile> cachedImages = new TreeMap<>();
     private BukkitTask task;
@@ -37,7 +36,7 @@ public class ImageStorage {
         // Create directory if not exists
         File directory = new File(basePath);
         if (directory.mkdirs()) {
-            logger.info("Created images directory as it did not exist");
+            plugin.info("Created images directory as it did not exist");
         }
 
         // Do initial directory listing
@@ -46,7 +45,7 @@ public class ImageStorage {
             String filename = file.getName();
             cachedImages.put(filename, new ImageFile(filename, file.getAbsolutePath()));
         }
-        logger.fine("Found " + cachedImages.size() + " file(s) in images directory");
+        plugin.fine("Found " + cachedImages.size() + " file(s) in images directory");
 
         // Prepare watch service
         watchService = FileSystems.getDefault().newWatchService();
@@ -59,7 +58,7 @@ public class ImageStorage {
         );
 
         // Start watching for changes
-        task = Bukkit.getScheduler().runTaskTimerAsynchronously(YamipaPlugin.getInstance(), () -> {
+        task = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, () -> {
             WatchKey watchKey = watchService.poll();
             if (watchKey == null) return;
 
@@ -72,20 +71,20 @@ public class ImageStorage {
                 synchronized (this) {
                     if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
                         cachedImages.remove(filename);
-                        logger.fine("Detected file deletion at " + filename);
+                        plugin.fine("Detected file deletion at " + filename);
                     } else if (cachedImages.containsKey(filename)) {
                         cachedImages.get(filename).invalidate();
-                        logger.fine("Detected file update at " + filename);
+                        plugin.fine("Detected file update at " + filename);
                     } else {
                         cachedImages.put(filename, new ImageFile(filename, file.getAbsolutePath()));
-                        logger.fine("Detected file creation at " + filename);
+                        plugin.fine("Detected file creation at " + filename);
                     }
                 }
             });
 
             watchKey.reset();
         }, POLLING_INTERVAL, POLLING_INTERVAL);
-        logger.fine("Started watching for file changes in images directory");
+        plugin.fine("Started watching for file changes in images directory");
     }
 
     /**
@@ -102,7 +101,7 @@ public class ImageStorage {
             try {
                 watchService.close();
             } catch (IOException e) {
-                logger.log(Level.WARNING, "Failed to close watch service", e);
+                plugin.log(Level.WARNING, "Failed to close watch service", e);
             }
         }
     }

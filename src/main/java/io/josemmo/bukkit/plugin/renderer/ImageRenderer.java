@@ -21,12 +21,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class ImageRenderer implements Listener {
     static public final long SAVE_INTERVAL = 20L * 90; // In server ticks
     private static final YamipaPlugin plugin = YamipaPlugin.getInstance();
-    static private final Logger logger = plugin.getLogger();
     private final String configPath;
     private BukkitTask saveTask;
     private final AtomicBoolean hasConfigChanged = new AtomicBoolean(false);
@@ -78,7 +76,7 @@ public class ImageRenderer implements Listener {
         try {
             config.load(configPath);
         } catch (IOException e) {
-            logger.warning("Failed to load placed fake images from disk");
+            plugin.warning("Failed to load placed fake images from disk");
             return;
         }
 
@@ -98,7 +96,7 @@ public class ImageRenderer implements Listener {
                 int height = Math.min(FakeImage.MAX_DIMENSION, Math.abs(Integer.parseInt(row[8])));
                 addImage(new FakeImage(imageFile, location, face, rotation, width, height), true);
             } catch (Exception e) {
-                logger.warning("Invalid fake image properties: " + String.join(";", row));
+                plugin.warning("Invalid fake image properties: " + String.join(";", row));
             }
         }
     }
@@ -139,9 +137,9 @@ public class ImageRenderer implements Listener {
         // Write to disk
         try {
             config.save(configPath);
-            logger.info("Saved placed fake images to disk");
+            plugin.info("Saved placed fake images to disk");
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "Failed to save placed fake images to disk", e);
+            plugin.log(Level.SEVERE, "Failed to save placed fake images to disk", e);
         }
     }
 

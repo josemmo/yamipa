@@ -51,7 +51,7 @@ public class FakeItemFrame extends FakeEntity {
         this.face = face;
         this.rotation = rotation;
         this.map = map;
-        logger.info("Created FakeItemFrame#" + this.id + " using FakeMap#" + this.map.getId()); // TODO: remove
+        plugin.fine("Created FakeItemFrame#" + this.id + " using FakeMap#" + this.map.getId());
     }
 
     /**
