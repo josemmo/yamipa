@@ -154,9 +154,21 @@ public class FakeImage extends FakeEntity {
      * @return Array of world area IDs
      */
     public WorldAreaId[] getWorldAreaIds() {
-        // TODO: just a prototype, not fully implemented
+        Location bottomRight = location.clone().add(getLocationVector.apply(width, height));
+        WorldAreaId topLeftWorldAreaId = WorldAreaId.fromLocation(location);
+        WorldAreaId bottomRightWorldAreaId = WorldAreaId.fromLocation(bottomRight);
+
+        // Fake image is contained inside a single world area
+        if (topLeftWorldAreaId.equals(bottomRightWorldAreaId)) {
+            return new WorldAreaId[]{
+                topLeftWorldAreaId
+            };
+        }
+
+        // Fake image covers multiple world areas
         return new WorldAreaId[]{
-            WorldAreaId.fromLocation(this.location)
+            topLeftWorldAreaId,
+            bottomRightWorldAreaId
         };
     }
 
