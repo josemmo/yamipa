@@ -1,7 +1,6 @@
 package io.josemmo.bukkit.plugin.renderer;
 
 import io.josemmo.bukkit.plugin.YamipaPlugin;
-import io.josemmo.bukkit.plugin.storage.ImageFile;
 import io.josemmo.bukkit.plugin.utils.CsvConfiguration;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -84,7 +83,7 @@ public class ImageRenderer implements Listener {
         for (String[] row : config.getRows()) {
             if (row.length != 9) continue;
             try {
-                ImageFile imageFile = Objects.requireNonNull(plugin.getStorage().get(row[0]));
+                String filename = row[0];
                 World world = Objects.requireNonNull(plugin.getServer().getWorld(row[1]));
                 double x = Integer.parseInt(row[2]);
                 double y = Integer.parseInt(row[3]);
@@ -94,7 +93,7 @@ public class ImageRenderer implements Listener {
                 Rotation rotation = Rotation.valueOf(row[6]);
                 int width = Math.min(FakeImage.MAX_DIMENSION, Math.abs(Integer.parseInt(row[7])));
                 int height = Math.min(FakeImage.MAX_DIMENSION, Math.abs(Integer.parseInt(row[8])));
-                addImage(new FakeImage(imageFile, location, face, rotation, width, height), true);
+                addImage(new FakeImage(filename, location, face, rotation, width, height), true);
             } catch (Exception e) {
                 plugin.warning("Invalid fake image properties: " + String.join(";", row));
             }
@@ -121,7 +120,7 @@ public class ImageRenderer implements Listener {
         for (FakeImage fakeImage : fakeImages) {
             Location location = fakeImage.getLocation();
             String[] row = new String[]{
-                fakeImage.getFile().getName(),
+                fakeImage.getFilename(),
                 location.getChunk().getWorld().getName(),
                 location.getBlockX() + "",
                 location.getBlockY() + "",

@@ -16,7 +16,7 @@ import java.util.function.BiFunction;
 
 public class FakeImage extends FakeEntity {
     public static final int MAX_DIMENSION = 10;
-    private final ImageFile image; // TODO: delete this instance when file gets deleted
+    private final String filename;
     private final Location location;
     private final BlockFace face;
     private final Rotation rotation;
@@ -53,15 +53,15 @@ public class FakeImage extends FakeEntity {
 
     /**
      * Class constructor
-     * @param image    Image instance
+     * @param filename Image filename
      * @param location Top-left corner where image will be placed
      * @param face     Block face
      * @param rotation Image rotation
      * @param width    Width in blocks
      * @param height   Height in blocks
      */
-    public FakeImage(ImageFile image, Location location, BlockFace face, Rotation rotation, int width, int height) {
-        this.image = image;
+    public FakeImage(String filename, Location location, BlockFace face, Rotation rotation, int width, int height) {
+        this.filename = filename;
         this.location = location;
         this.face = face;
         this.rotation = rotation;
@@ -99,15 +99,23 @@ public class FakeImage extends FakeEntity {
             }
         }
 
-        plugin.fine("Created FakeImage#(" + location + "," + face + ") from ImageFile#(" + image.getName() + ")");
+        plugin.fine("Created FakeImage#(" + location + "," + face + ") from ImageFile#(" + filename + ")");
+    }
+
+    /**
+     * Get image filename
+     * @return Image filename
+     */
+    public String getFilename() {
+        return filename;
     }
 
     /**
      * Get image file instance
-     * @return Image file instance
+     * @return Image file instance or NULL if not found
      */
     public ImageFile getFile() {
-        return image;
+        return plugin.getStorage().get(filename);
     }
 
     /**
@@ -207,7 +215,14 @@ public class FakeImage extends FakeEntity {
      * Load item frames and maps
      */
     private void load() {
-        FakeMap[][] maps = image.getMaps(width, height);
+        ImageFile file = getFile();
+        FakeMap[][] maps;
+        if (file == null) {
+            maps = FakeMap.getErrorMatrix(width, height);
+            plugin.warning("File \"" + filename + "\" does not exist");
+        } else {
+            maps = file.getMaps(width, height);
+        }
 
         // Generate frames
         frames = new FakeItemFrame[width][height];

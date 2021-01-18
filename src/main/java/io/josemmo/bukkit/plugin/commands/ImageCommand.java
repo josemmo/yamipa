@@ -100,7 +100,8 @@ public class ImageCommand {
 
             ActionBar.send(player, "");
             Rotation rotation = FakeImage.getRotationFromPlayerEyesight(face, player.getEyeLocation());
-            plugin.getRenderer().addImage(new FakeImage(image, location, face, rotation, width, finalHeight));
+            FakeImage fakeImage = new FakeImage(image.getName(), location, face, rotation, width, finalHeight);
+            plugin.getRenderer().addImage(fakeImage);
         });
         task.onFailure(() -> ActionBar.send(player, ChatColor.RED + "Image placing canceled"));
         task.run("Right click a block to continue");

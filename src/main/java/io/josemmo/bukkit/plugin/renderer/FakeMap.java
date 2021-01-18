@@ -12,7 +12,6 @@ public class FakeMap extends FakeEntity {
     public static final int DIMENSION = 128;
     public static final int MIN_MAP_ID = 10000;
     public static final int MAX_MAP_ID = 32767;
-
     private static final AtomicInteger lastMapId = new AtomicInteger(-1);
     private static FakeMap errorInstance;
     private final int id;
@@ -35,15 +34,28 @@ public class FakeMap extends FakeEntity {
      * Get map instance to show in case of error
      * @return Error instance
      */
-    public static FakeMap getErrorInstance() {
+    private static FakeMap getErrorInstance() {
         if (errorInstance == null) {
-            // TODO: use a resource file instead
             int[] pixels = new int[DIMENSION * DIMENSION];
-            Arrays.fill(pixels, 0xffffffff);
+            Arrays.fill(pixels, new Color(255, 0, 0).getRGB());
             errorInstance = new FakeMap(pixels);
         }
-
         return errorInstance;
+    }
+
+    /**
+     * Get matrix of error maps
+     * @param  width  Width in blocks
+     * @param  height Height in blocks
+     * @return        Error matrix
+     */
+    public static FakeMap[][] getErrorMatrix(int width, int height) {
+        FakeMap errorMap = getErrorInstance();
+        FakeMap[][] matrix = new FakeMap[width][height];
+        for (FakeMap[] column : matrix) {
+            Arrays.fill(column, errorMap);
+        }
+        return matrix;
     }
 
     /**

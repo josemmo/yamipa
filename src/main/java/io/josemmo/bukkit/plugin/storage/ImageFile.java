@@ -7,7 +7,6 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -109,10 +108,7 @@ public class ImageFile {
                 }
             }
         } catch (IOException e) {
-            FakeMap errorMap = FakeMap.getErrorInstance();
-            for (FakeMap[] column : matrix) {
-                Arrays.fill(column, errorMap);
-            }
+            matrix = FakeMap.getErrorMatrix(width, height);
             plugin.warning("Failed to get image data from file \"" + path + "\"");
         }
 
