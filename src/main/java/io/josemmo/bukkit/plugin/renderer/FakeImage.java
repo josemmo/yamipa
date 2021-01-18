@@ -10,6 +10,7 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiFunction;
 
@@ -154,7 +155,7 @@ public class FakeImage extends FakeEntity {
      * @return Array of world area IDs
      */
     public WorldAreaId[] getWorldAreaIds() {
-        Location bottomRight = location.clone().add(getLocationVector.apply(width, height));
+        Location bottomRight = location.clone().add(getLocationVector.apply(width-1, height-1));
         WorldAreaId topLeftWorldAreaId = WorldAreaId.fromLocation(location);
         WorldAreaId bottomRightWorldAreaId = WorldAreaId.fromLocation(bottomRight);
 
@@ -170,6 +171,36 @@ public class FakeImage extends FakeEntity {
             topLeftWorldAreaId,
             bottomRightWorldAreaId
         };
+    }
+
+    /**
+     * Verify whether a point is contained in the image plane
+     * @param  location Location instance (only for coordinates)
+     * @param  face     Block face
+     * @return          TRUE for contained, FALSE otherwise
+     */
+    public boolean contains(Location location, BlockFace face) {
+        // Is point facing the same plane as the image?
+        if (face != this.face) {
+            return false;
+        }
+
+        // Get sorted plane edges
+        Location topLeft = this.location;
+        Location bottomRight = this.location.clone().add(getLocationVector.apply(width-1, height-1));
+        int[] x = new int[]{topLeft.getBlockX(), bottomRight.getBlockX()};
+        int[] y = new int[]{topLeft.getBlockY(), bottomRight.getBlockY()};
+        int[] z = new int[]{topLeft.getBlockZ(), bottomRight.getBlockZ()};
+        Arrays.sort(x);
+        Arrays.sort(y);
+        Arrays.sort(z);
+
+        // Is point located inside the plane limits?
+        int[] point = new int[] {location.getBlockX(), location.getBlockY(), location.getBlockZ()};
+        if (point[0] < x[0] || point[0] > x[1]) return false;
+        if (point[1] < y[0] || point[1] > y[1]) return false;
+        if (point[2] < z[0] || point[2] > z[1]) return false;
+        return true;
     }
 
     /**

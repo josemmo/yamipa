@@ -184,7 +184,9 @@ public class ImageRenderer implements Listener {
 
         // Find first fake image containing the given location
         for (FakeImage image : worldArea.getImages()) {
-            // TODO: is "location" inside "image"?
+            if (image.contains(location, face)) {
+                return image;
+            }
         }
 
         // No match found

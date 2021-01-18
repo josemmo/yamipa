@@ -31,7 +31,7 @@ public class WorldArea {
      * @return TRUE if instance contains fake images, FALSE otherwise
      */
     public boolean hasImages() {
-        return fakeImages.isEmpty();
+        return !fakeImages.isEmpty();
     }
 
     /**

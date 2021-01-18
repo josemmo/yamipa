@@ -92,6 +92,12 @@ public class ImageCommand {
         // Ask player where to place image
         SelectBlockTask task = new SelectBlockTask(player);
         task.onSuccess((location, face) -> {
+            FakeImage existingImage = plugin.getRenderer().getImage(location, face);
+            if (existingImage != null) {
+                ActionBar.send(player, ChatColor.RED + "There's already an image there!");
+                return;
+            }
+
             ActionBar.send(player, "");
             Rotation rotation = FakeImage.getRotationFromPlayerEyesight(face, player.getEyeLocation());
             plugin.getRenderer().addImage(new FakeImage(image, location, face, rotation, width, finalHeight));
