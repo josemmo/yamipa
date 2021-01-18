@@ -31,14 +31,23 @@ public class FakeMap extends FakeEntity {
     }
 
     /**
+     * Pixel to Minecraft color index
+     * @param  pixel RGBA pixel value
+     * @return       Closest Minecraft color index
+     */
+    public static byte pixelToIndex(int pixel) {
+        return MapPalette.matchColor(new Color(pixel, true));
+    }
+
+    /**
      * Get map instance to show in case of error
      * @return Error instance
      */
     private static FakeMap getErrorInstance() {
         if (errorInstance == null) {
-            int[] pixels = new int[DIMENSION * DIMENSION];
-            Arrays.fill(pixels, new Color(255, 0, 0).getRGB());
-            errorInstance = new FakeMap(pixels);
+            byte[] pixels = new byte[DIMENSION * DIMENSION];
+            Arrays.fill(pixels, pixelToIndex(Color.RED.getRGB()));
+            errorInstance = new FakeMap(pixels, DIMENSION, 0, 0);
         }
         return errorInstance;
     }
@@ -60,17 +69,18 @@ public class FakeMap extends FakeEntity {
 
     /**
      * Class constructor
-     * @param pixels Array of RGBA pixels with DIMENSION×DIMENSION elements
+     * @param pixels   Array of Minecraft color indexes
+     * @param scanSize Original image width
+     * @param startX   Initial X pixel coordinate
+     * @param startY   Initial Y pixel coordinate
      */
-    public FakeMap(int[] pixels) {
+    public FakeMap(byte[] pixels, int scanSize, int startX, int startY) {
         this.id = getNextId();
 
-        // Convert RGB pixels to in-game indexes
+        // Copy square of pixels to this instance
         this.pixels = new byte[DIMENSION*DIMENSION];
-        for (int x=0; x<DIMENSION; x++) {
-            for (int y=0; y<DIMENSION; y++) {
-                this.pixels[x + y*DIMENSION] = MapPalette.matchColor(new Color(pixels[x + y*DIMENSION], true));
-            }
+        for (int y=0; y<DIMENSION; y++) {
+            System.arraycopy(pixels, startX+(startY+y)*scanSize, this.pixels, y*DIMENSION, DIMENSION);
         }
 
         plugin.fine("Created FakeMap#" + this.id);

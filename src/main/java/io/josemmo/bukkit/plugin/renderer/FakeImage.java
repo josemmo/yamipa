@@ -4,6 +4,7 @@ import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.PacketContainer;
 import io.josemmo.bukkit.plugin.storage.ImageFile;
 import io.josemmo.bukkit.plugin.utils.DirectionUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Rotation;
 import org.bukkit.block.BlockFace;
@@ -239,12 +240,14 @@ public class FakeImage extends FakeEntity {
      * @param player Player instance
      */
     public void spawn(Player player) {
-        if (frames == null) load();
-        for (FakeItemFrame[] col : frames) {
-            for (FakeItemFrame frame : col) {
-                frame.spawn(player);
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            if (frames == null) load();
+            for (FakeItemFrame[] col : frames) {
+                for (FakeItemFrame frame : col) {
+                    frame.spawn(player);
+                }
             }
-        }
+        });
     }
 
     /**

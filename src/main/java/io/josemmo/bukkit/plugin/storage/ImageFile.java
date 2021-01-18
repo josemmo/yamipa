@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.IntStream;
 
 public class ImageFile {
     private static final YamipaPlugin plugin = YamipaPlugin.getInstance();
@@ -93,18 +94,24 @@ public class ImageFile {
         FakeMap[][] matrix = new FakeMap[width][height];
         try {
             BufferedImage image = getBufferedImage(width*FakeMap.DIMENSION, height*FakeMap.DIMENSION);
+            int imgWidth = image.getWidth();
+
+            // Convert RGBA pixels to Minecraft color indexes
+            int[] rgbPixels = image.getRGB(
+                0, 0,
+                imgWidth, image.getHeight(),
+                null, 0,
+                imgWidth
+            );
+            byte[] pixels = new byte[rgbPixels.length];
+            IntStream.range(0, rgbPixels.length).parallel().forEach(i -> {
+                pixels[i] = FakeMap.pixelToIndex(rgbPixels[i]);
+            });
+
+            // Instantiate fake maps
             for (int col=0; col<width; col++) {
                 for (int row=0; row<height; row++) {
-                    int[] pixels = image.getRGB(
-                        col*FakeMap.DIMENSION,
-                        row*FakeMap.DIMENSION,
-                        FakeMap.DIMENSION,
-                        FakeMap.DIMENSION,
-                        null,
-                        0,
-                        FakeMap.DIMENSION
-                    );
-                    matrix[col][row] = new FakeMap(pixels);
+                    matrix[col][row] = new FakeMap(pixels, imgWidth, col*FakeMap.DIMENSION, row*FakeMap.DIMENSION);
                 }
             }
         } catch (IOException e) {
