@@ -39,8 +39,9 @@ public class ImageFile {
      * Get buffered image
      * @return Buffered image
      * @throws IOException if not a valid image file
+     * @throws NullPointerException if file not found
      */
-    private BufferedImage getBufferedImage() throws IOException {
+    private BufferedImage getBufferedImage() throws Exception {
         return ImageIO.read(new File(path));
     }
 
@@ -50,8 +51,9 @@ public class ImageFile {
      * @param  height New height in pixels
      * @return        Resized buffered image
      * @throws IOException if not a valid image file
+     * @throws NullPointerException if file not found
      */
-    private BufferedImage getBufferedImage(int width, int height) throws IOException {
+    private BufferedImage getBufferedImage(int width, int height) throws Exception {
         Image tmp = getBufferedImage().getScaledInstance(width, height, Image.SCALE_FAST);
         BufferedImage resizedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 
@@ -114,7 +116,7 @@ public class ImageFile {
                     matrix[col][row] = new FakeMap(pixels, imgWidth, col*FakeMap.DIMENSION, row*FakeMap.DIMENSION);
                 }
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             matrix = FakeMap.getErrorMatrix(width, height);
             plugin.warning("Failed to get image data from file \"" + path + "\"");
         }

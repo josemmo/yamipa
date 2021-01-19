@@ -148,13 +148,12 @@ public class ImageRenderer implements Listener {
      * @param isInit    TRUE if called during renderer startup, FALSE otherwise
      */
     public void addImage(FakeImage fakeImage, boolean isInit) {
-        for (WorldAreaId worldAreaId : fakeImage.getWorldAreaIds()) {
-            WorldArea worldArea = worldAreas.computeIfAbsent(worldAreaId, __ -> {
-                plugin.fine("Created WorldArea#(" + worldAreaId + ")");
-                return new WorldArea(worldAreaId);
-            });
-            worldArea.addImage(fakeImage);
-        }
+        WorldAreaId worldAreaId = fakeImage.getWorldAreaId();
+        WorldArea worldArea = worldAreas.computeIfAbsent(worldAreaId, __ -> {
+            plugin.fine("Created WorldArea#(" + worldAreaId + ")");
+            return new WorldArea(worldAreaId);
+        });
+        worldArea.addImage(fakeImage);
         if (!isInit) {
             hasConfigChanged.set(true);
         }
@@ -197,14 +196,13 @@ public class ImageRenderer implements Listener {
      * @param image Fake image instance
      */
     public void removeImage(FakeImage image) {
-        for (WorldAreaId worldAreaId : image.getWorldAreaIds()) {
-            WorldArea worldArea = worldAreas.get(worldAreaId);
-            if (worldArea != null) {
-                worldArea.removeImage(image);
-                if (!worldArea.hasImages()) {
-                    plugin.fine("Destroyed WorldArea#(" + worldAreaId + ")");
-                    worldAreas.remove(worldAreaId);
-                }
+        WorldAreaId worldAreaId = image.getWorldAreaId();
+        WorldArea worldArea = worldAreas.get(worldAreaId);
+        if (worldArea != null) {
+            worldArea.removeImage(image);
+            if (!worldArea.hasImages()) {
+                plugin.fine("Destroyed WorldArea#(" + worldAreaId + ")");
+                worldAreas.remove(worldAreaId);
             }
         }
         hasConfigChanged.set(true);
@@ -257,9 +255,11 @@ public class ImageRenderer implements Listener {
         // Load/unload world areas
         for (WorldArea area : areasToUnload) {
             area.unload(player);
+            plugin.fine("Unloaded WorldArea#(" + area.getId() + ") for Player#" + player.getName());
         }
         for (WorldArea area : areasToLoad) {
             area.load(player);
+            plugin.fine("Loaded WorldArea#(" + area.getId() + ") for Player#" + player.getName());
         }
     }
 

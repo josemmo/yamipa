@@ -14,9 +14,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiFunction;
+import java.util.stream.Stream;
 
 public class FakeImage extends FakeEntity {
-    public static final int MAX_DIMENSION = 10;
+    public static final int MAX_DIMENSION = 20;
     private final String filename;
     private final Location location;
     private final BlockFace face;
@@ -160,26 +161,11 @@ public class FakeImage extends FakeEntity {
     }
 
     /**
-     * Get world area IDs where this image is located
-     * @return Array of world area IDs
+     * Get world area ID where the top left corner of this image is located
+     * @return World area ID
      */
-    public WorldAreaId[] getWorldAreaIds() {
-        Location bottomRight = location.clone().add(getLocationVector.apply(width-1, height-1));
-        WorldAreaId topLeftWorldAreaId = WorldAreaId.fromLocation(location);
-        WorldAreaId bottomRightWorldAreaId = WorldAreaId.fromLocation(bottomRight);
-
-        // Fake image is contained inside a single world area
-        if (topLeftWorldAreaId.equals(bottomRightWorldAreaId)) {
-            return new WorldAreaId[]{
-                topLeftWorldAreaId
-            };
-        }
-
-        // Fake image covers multiple world areas
-        return new WorldAreaId[]{
-            topLeftWorldAreaId,
-            bottomRightWorldAreaId
-        };
+    public WorldAreaId getWorldAreaId() {
+        return WorldAreaId.fromLocation(location);
     }
 
     /**
@@ -258,16 +244,11 @@ public class FakeImage extends FakeEntity {
         if (frames == null) return;
 
         // Get frame IDs
-        List<Integer> frameIds = new ArrayList<>(width*height);
-        for (FakeItemFrame[] col : frames) {
-            for (FakeItemFrame frame : col) {
-                frameIds.add(frame.getId());
-            }
-        }
+        int[] frameIds = Stream.of(frames).flatMap(Stream::of).mapToInt(FakeItemFrame::getId).toArray();
 
         // Send destroy packet
         PacketContainer destroyPacket = new PacketContainer(PacketType.Play.Server.ENTITY_DESTROY);
-        destroyPacket.getIntegerArrays().write(0, frameIds.stream().mapToInt(i->i).toArray());
+        destroyPacket.getIntegerArrays().write(0, frameIds);
         tryToSendPacket(player, destroyPacket);
     }
 

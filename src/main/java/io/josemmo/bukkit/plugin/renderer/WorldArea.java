@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * A World Area is a group of 16 chunks arranged in a 4x4 square.
  */
 public class WorldArea {
+    private final WorldAreaId id;
     private final Set<FakeImage> fakeImages = ConcurrentHashMap.newKeySet();
     private final Set<Player> players = new HashSet<>();
 
@@ -18,12 +19,23 @@ public class WorldArea {
      * @param id World area ID
      */
     public WorldArea(WorldAreaId id) {
+        this.id = id;
+
+        // Initialize current list of players in this area
         for (Player player : id.getWorld().getPlayers()) {
             WorldAreaId playerWorldAreaId = WorldAreaId.fromLocation(player.getLocation());
             if (id.equals(playerWorldAreaId)) {
                 players.add(player);
             }
         }
+    }
+
+    /**
+     * Get world area ID
+     * @return World area ID
+     */
+    public WorldAreaId getId() {
+        return id;
     }
 
     /**
