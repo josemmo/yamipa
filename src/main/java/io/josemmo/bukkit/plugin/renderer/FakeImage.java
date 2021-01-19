@@ -9,10 +9,9 @@ import org.bukkit.Location;
 import org.bukkit.Rotation;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.util.Vector;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
@@ -226,13 +225,16 @@ public class FakeImage extends FakeEntity {
      * @param player Player instance
      */
     public void spawn(Player player) {
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+        BukkitScheduler scheduler = Bukkit.getScheduler();
+        scheduler.runTaskAsynchronously(plugin, () -> {
             if (frames == null) load();
-            for (FakeItemFrame[] col : frames) {
-                for (FakeItemFrame frame : col) {
-                    frame.spawn(player);
+            scheduler.runTask(plugin, () -> {
+                for (FakeItemFrame[] col : frames) {
+                    for (FakeItemFrame frame : col) {
+                        frame.spawn(player);
+                    }
                 }
-            }
+            });
         });
     }
 
