@@ -95,6 +95,14 @@ public class FakeMap extends FakeEntity {
     }
 
     /**
+     * Get raw pixels
+     * @return Array of Minecraft color indexes
+     */
+    public byte[] getPixels() {
+        return pixels;
+    }
+
+    /**
      * Send map pixels to player
      * @param player Player instance
      */

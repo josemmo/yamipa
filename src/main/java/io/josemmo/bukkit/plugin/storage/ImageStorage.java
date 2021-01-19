@@ -15,16 +15,27 @@ public class ImageStorage {
     static public final long POLLING_INTERVAL = 20L * 5; // In server ticks
     static private final YamipaPlugin plugin = YamipaPlugin.getInstance();
     private final String basePath;
+    private final String cachePath;
     private final SortedMap<String, ImageFile> cachedImages = new TreeMap<>();
     private BukkitTask task;
     private WatchService watchService;
 
     /**
      * Class constructor
-     * @param basePath Path to directory containing the images
+     * @param basePath  Path to directory containing the images
+     * @param cachePath Path to directory containing the cached image maps
      */
-    public ImageStorage(String basePath) {
+    public ImageStorage(String basePath, String cachePath) {
         this.basePath = basePath;
+        this.cachePath = cachePath;
+    }
+
+    /**
+     * Get cache path
+     * @return Cache path
+     */
+    public String getCachePath() {
+        return cachePath;
     }
 
     /**
@@ -33,10 +44,13 @@ public class ImageStorage {
      * @throws Exception if failed to start watch service
      */
     public void start() throws Exception {
-        // Create directory if not exists
+        // Create directories if necessary
         File directory = new File(basePath);
         if (directory.mkdirs()) {
             plugin.info("Created images directory as it did not exist");
+        }
+        if (new File(cachePath).mkdirs()) {
+            plugin.info("Created cache directory as it did not exist");
         }
 
         // Do initial directory listing
@@ -70,7 +84,11 @@ public class ImageStorage {
                 String filename = file.getName();
                 synchronized (this) {
                     if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
-                        cachedImages.remove(filename);
+                        ImageFile imageFile = cachedImages.get(filename);
+                        if (imageFile != null) {
+                            imageFile.invalidate();
+                            cachedImages.remove(filename);
+                        }
                         plugin.fine("Detected file deletion at " + filename);
                     } else if (cachedImages.containsKey(filename)) {
                         cachedImages.get(filename).invalidate();

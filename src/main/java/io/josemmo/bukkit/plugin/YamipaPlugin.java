@@ -40,6 +40,17 @@ public class YamipaPlugin extends JavaPlugin {
         return renderer;
     }
 
+    /**
+     * Get configuration value
+     * @param path         Configuration key path
+     * @param defaultValue Default value
+     * @return             Configuration value
+     */
+    private String getConfigValue(String path, String defaultValue) {
+        String value = getConfig().getString(path);
+        return (value == null) ? defaultValue : value;
+    }
+
     @Override
     public void onLoad() {
         instance = this;
@@ -56,13 +67,15 @@ public class YamipaPlugin extends JavaPlugin {
 
         // Read plugin configuration paths
         Path basePath = getDataFolder().toPath();
-        String imagesPath = getConfig().getString("images-path");
-        if (imagesPath == null) imagesPath = "images";
-        String dataPath = getConfig().getString("data-path");
-        if (dataPath == null) dataPath = "images.dat";
+        String imagesPath = getConfigValue("images-path", "images");
+        String cachePath = getConfigValue("cache-path", "cache");
+        String dataPath = getConfigValue("data-path", "images.dat");
 
         // Create image storage
-        storage = new ImageStorage(basePath.resolve(imagesPath).toString());
+        storage = new ImageStorage(
+            basePath.resolve(imagesPath).toString(),
+            basePath.resolve(cachePath).toString()
+        );
         try {
             storage.start();
         } catch (Exception e) {
