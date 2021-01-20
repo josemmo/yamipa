@@ -2,7 +2,7 @@ package io.josemmo.bukkit.plugin.commands;
 
 import dev.jorel.commandapi.annotations.*;
 import dev.jorel.commandapi.annotations.arguments.AIntegerArgument;
-import dev.jorel.commandapi.annotations.arguments.AStringArgument;
+import dev.jorel.commandapi.annotations.arguments.ATextArgument;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
 import io.josemmo.bukkit.plugin.renderer.FakeImage;
 import io.josemmo.bukkit.plugin.storage.ImageFile;
@@ -45,7 +45,7 @@ public class ImageCommand {
 
     @Subcommand("download")
     @Permission("yamipa.download")
-    public static void downloadImage(CommandSender sender, @AStringArgument String url, @AStringArgument String filename) {
+    public static void downloadImage(CommandSender sender, @ATextArgument String url, @ATextArgument String filename) {
         // TODO: not implemented
     }
 
@@ -53,7 +53,7 @@ public class ImageCommand {
     @Permission("yamipa.place")
     public static void placeImage(
         Player player,
-        @AStringArgument String filename,
+        @ATextArgument String filename,
         @AIntegerArgument(min=1, max=FakeImage.MAX_DIMENSION) int width
     ) {
         placeImage(player, filename, width, 0);
@@ -63,7 +63,7 @@ public class ImageCommand {
     @Permission("yamipa.place")
     public static void placeImage(
         Player player,
-        @AStringArgument String filename,
+        @ATextArgument String filename,
         @AIntegerArgument(min=1, max=FakeImage.MAX_DIMENSION) int width,
         @AIntegerArgument(min=1, max=FakeImage.MAX_DIMENSION) int height
     ) {
