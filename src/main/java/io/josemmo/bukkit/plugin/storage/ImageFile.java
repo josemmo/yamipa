@@ -1,6 +1,7 @@
 package io.josemmo.bukkit.plugin.storage;
 
 import io.josemmo.bukkit.plugin.YamipaPlugin;
+import io.josemmo.bukkit.plugin.renderer.FakeImage;
 import io.josemmo.bukkit.plugin.renderer.FakeMap;
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -11,7 +12,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+import java.util.logging.Level;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 
@@ -19,6 +23,7 @@ public class ImageFile {
     public static final String CACHE_EXT = "cache";
     private static final YamipaPlugin plugin = YamipaPlugin.getInstance();
     private final Map<String, FakeMap[][]> cache = new HashMap<>();
+    private final Map<String, Set<FakeImage>> subscribers = new HashMap<>();
     private final String name;
     private final String path;
 
@@ -84,12 +89,13 @@ public class ImageFile {
     }
 
     /**
-     * Get maps
-     * @param  width  Width in blocks
-     * @param  height Height in blocks
-     * @return        Bi-dimensional array of maps
+     * Get maps and subscribe to maps cache
+     * @param  subscriber Fake image instance requesting the maps
+     * @return            Bi-dimensional array of maps
      */
-    public synchronized FakeMap[][] getMaps(int width, int height) {
+    public synchronized FakeMap[][] getMapsAndSubscribe(FakeImage subscriber) {
+        int width = subscriber.getWidth();
+        int height = subscriber.getHeight();
         String cacheKey = width + "-" + height;
 
         // Try to get maps from memory cache
@@ -138,13 +144,17 @@ public class ImageFile {
             // Persist in disk cache
             try {
                 writeMapsToCacheFile(matrix, width, height, cacheFile);
-            } catch (IOException __) {
-                plugin.warning("Failed to write to cache file \"" + cacheFile.getAbsolutePath() + "\"");
+            } catch (IOException e) {
+                plugin.log(Level.SEVERE, "Failed to write to cache file \"" + cacheFile.getAbsolutePath() + "\"", e);
             }
-        } catch (Exception __) {
+        } catch (Exception e) {
             matrix = FakeMap.getErrorMatrix(width, height);
-            plugin.warning("Failed to get image data from file \"" + path + "\"");
+            plugin.log(Level.SEVERE, "Failed to get image data from file \"" + path + "\"", e);
         }
+
+        // Update subscribers for given cached maps
+        subscribers.computeIfAbsent(cacheKey, __ -> new HashSet<>());
+        subscribers.get(cacheKey).add(subscriber);
 
         // Persist in memory cache and return
         cache.put(cacheKey, matrix);
@@ -162,11 +172,11 @@ public class ImageFile {
     private FakeMap[][] readMapsFromCacheFile(File file, int width, int height) throws IOException {
         try (FileInputStream stream = new FileInputStream(file)) {
             FakeMap[][] matrix = new FakeMap[width][height];
-            byte[] buffer = new byte[FakeMap.DIMENSION*FakeMap.DIMENSION];
             for (int col=0; col<width; col++) {
                 for (int row=0; row<height; row++) {
+                    byte[] buffer = new byte[FakeMap.DIMENSION*FakeMap.DIMENSION];
                     stream.read(buffer);
-                    matrix[col][row] = new FakeMap(buffer, FakeMap.DIMENSION, 0, 0);
+                    matrix[col][row] = new FakeMap(buffer);
                 }
             }
             return matrix;
@@ -188,6 +198,30 @@ public class ImageFile {
                     stream.write(maps[col][row].getPixels());
                 }
             }
+        }
+    }
+
+    /**
+     * Unsubscribe from memory cache
+     * <p>
+     * This method is called by FakeImage instances when they get invalidated by a WorldArea.
+     * By notifying their respective source ImageFile, the latter can clear cached maps from memory when no more
+     * FakeItemFrames are using them.
+     * @param subscriber Fake image instance
+     */
+    public synchronized void unsubscribe(FakeImage subscriber) {
+        String cacheKey = subscriber.getWidth() + "-" + subscriber.getHeight();
+        if (!subscribers.containsKey(cacheKey)) return;
+
+        // Remove subscriber
+        Set<FakeImage> currentSubscribers = subscribers.get(cacheKey);
+        currentSubscribers.remove(subscriber);
+
+        // Can we clear cached maps?
+        if (currentSubscribers.isEmpty()) {
+            subscribers.remove(cacheKey);
+            cache.remove(cacheKey);
+            plugin.fine("Invalidated cached maps \"" + cacheKey + "\" in ImageFile#(" + name + ")");
         }
     }
 

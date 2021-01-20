@@ -207,7 +207,7 @@ public class FakeImage extends FakeEntity {
             maps = FakeMap.getErrorMatrix(width, height);
             plugin.warning("File \"" + filename + "\" does not exist");
         } else {
-            maps = file.getMaps(width, height);
+            maps = file.getMapsAndSubscribe(this);
         }
 
         // Generate frames
@@ -261,6 +261,13 @@ public class FakeImage extends FakeEntity {
      */
     public void invalidate() {
         frames = null;
+
+        // Notify invalidation to source ImageFile
+        ImageFile file = getFile();
+        if (file != null) {
+            file.unsubscribe(this);
+        }
+
         plugin.fine("Invalidated FakeImage#(" + location + "," + face + ")");
     }
 }

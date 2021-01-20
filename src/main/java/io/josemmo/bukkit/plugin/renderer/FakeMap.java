@@ -5,17 +5,23 @@ import com.comphenix.protocol.events.PacketContainer;
 import org.bukkit.entity.Player;
 import org.bukkit.map.MapPalette;
 import java.awt.*;
+import java.time.Instant;
 import java.util.Arrays;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class FakeMap extends FakeEntity {
     public static final int DIMENSION = 128;
     public static final int MIN_MAP_ID = 10000;
     public static final int MAX_MAP_ID = 32767;
+    public static final int RESEND_THRESHOLD = 5; // Seconds after sending pixels when resending should be avoided
     private static final AtomicInteger lastMapId = new AtomicInteger(-1);
     private static FakeMap errorInstance;
     private final int id;
     private final byte[] pixels;
+    private final ConcurrentMap<UUID, Long> lastPlayerSendTime = new ConcurrentHashMap<>();
 
     /**
      * Get next unused map ID
@@ -47,7 +53,7 @@ public class FakeMap extends FakeEntity {
         if (errorInstance == null) {
             byte[] pixels = new byte[DIMENSION * DIMENSION];
             Arrays.fill(pixels, pixelToIndex(Color.RED.getRGB()));
-            errorInstance = new FakeMap(pixels, DIMENSION, 0, 0);
+            errorInstance = new FakeMap(pixels);
         }
         return errorInstance;
     }
@@ -87,6 +93,16 @@ public class FakeMap extends FakeEntity {
     }
 
     /**
+     * Class constructor
+     * @param pixels Array of Minecraft color indexes
+     */
+    public FakeMap(byte[] pixels) {
+        this.id = getNextId();
+        this.pixels = pixels;
+        plugin.fine("Created FakeMap#" + this.id);
+    }
+
+    /**
      * Get map ID
      * @return Map ID
      */
@@ -107,6 +123,13 @@ public class FakeMap extends FakeEntity {
      * @param player Player instance
      */
     public void sendPixels(Player player) {
+        UUID uuid = player.getUniqueId();
+        long now = Instant.now().getEpochSecond();
+        if (now-lastPlayerSendTime.getOrDefault(uuid, 0L) <= RESEND_THRESHOLD) {
+            return;
+        }
+
+        // Create map data packet
         PacketContainer mapDataPacket = new PacketContainer(PacketType.Play.Server.MAP);
         mapDataPacket.getModifier().writeDefaults();
         mapDataPacket.getIntegers()
@@ -122,8 +145,10 @@ public class FakeMap extends FakeEntity {
             .write(1, true); // Locked
         mapDataPacket.getByteArrays()
             .write(0, pixels);
-        tryToSendPacket(player, mapDataPacket);
 
+        // Send packet
+        tryToSendPacket(player, mapDataPacket);
+        lastPlayerSendTime.put(uuid, now);
         plugin.fine("Sent pixels for FakeMap#" + id + " to Player#" + player.getName());
     }
 }

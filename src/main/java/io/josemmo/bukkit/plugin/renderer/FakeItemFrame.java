@@ -17,13 +17,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class FakeItemFrame extends FakeEntity {
     public static final int MIN_FRAME_ID = Integer.MAX_VALUE / 4;
     public static final int MAX_FRAME_ID = Integer.MAX_VALUE;
-
     private static final AtomicInteger lastFrameId = new AtomicInteger(MAX_FRAME_ID);
     private final int id;
     private final Location location;
     private final BlockFace face;
     private final Rotation rotation;
     private final FakeMap map;
+    private PacketContainer[] spawnPackets;
 
     /**
      * Get next unused item frame ID
@@ -63,10 +63,11 @@ public class FakeItemFrame extends FakeEntity {
     }
 
     /**
-     * Spawn item frame in player's client
-     * @param player Player instance
+     * Generate spawn packets
      */
-    public void spawn(Player player) {
+    private void generateSpawnPackets() {
+        spawnPackets = new PacketContainer[2];
+
         // Calculate frame position in relation to target block
         double x = location.getBlockX();
         double y = location.getBlockY();
@@ -116,7 +117,7 @@ public class FakeItemFrame extends FakeEntity {
             .write(0, x)
             .write(1, y)
             .write(2, z);
-        tryToSendPacket(player, framePacket);
+        spawnPackets[0] = framePacket;
 
         // Create and attach filled map
         NBTItem mapNbt = new NBTItem(new ItemStack(Material.FILLED_MAP));
@@ -143,9 +144,20 @@ public class FakeItemFrame extends FakeEntity {
         PacketContainer mapPacket = new PacketContainer(PacketType.Play.Server.ENTITY_METADATA);
         mapPacket.getIntegers().write(0, id);
         mapPacket.getWatchableCollectionModifier().write(0, dataWatcher.getWatchableObjects());
-        tryToSendPacket(player, mapPacket);
+        spawnPackets[1] = mapPacket;
+    }
 
-        // Send map pixels
+    /**
+     * Spawn item frame in player's client
+     * @param player Player instance
+     */
+    public void spawn(Player player) {
+        if (spawnPackets == null) {
+            generateSpawnPackets();
+        }
+        for (PacketContainer packet : spawnPackets) {
+            tryToSendPacket(player, packet);
+        }
         map.sendPixels(player);
     }
 }
