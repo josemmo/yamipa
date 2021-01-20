@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -89,6 +90,18 @@ public class ImageFile {
     }
 
     /**
+     * Get image last modified time
+     * @return Last modified time in milliseconds, zero in case of error
+     */
+    public long getLastModified() {
+        try {
+            return Files.getLastModifiedTime(Paths.get(path)).toMillis();
+        } catch (Exception __) {
+            return 0L;
+        }
+    }
+
+    /**
      * Get maps and subscribe to maps cache
      * @param  subscriber Fake image instance requesting the maps
      * @return            Bi-dimensional array of maps
@@ -106,7 +119,7 @@ public class ImageFile {
         // Try to get maps from disk cache
         String cacheFilename = name + "." + cacheKey + "." + CACHE_EXT;
         File cacheFile = Paths.get(plugin.getStorage().getCachePath(), cacheFilename).toFile();
-        if (cacheFile.isFile()) {
+        if (cacheFile.isFile() && cacheFile.lastModified() >= getLastModified()) {
             try {
                 FakeMap[][] maps = readMapsFromCacheFile(cacheFile, width, height);
                 cache.put(cacheKey, maps);
