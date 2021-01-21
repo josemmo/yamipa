@@ -16,7 +16,7 @@ import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
 public class FakeImage extends FakeEntity {
-    public static final int MAX_DIMENSION = 20;
+    public static final int MAX_DIMENSION = 30; // In blocks
     private final String filename;
     private final Location location;
     private final BlockFace face;
