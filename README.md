@@ -40,6 +40,7 @@ This plugin adds the following commands:
 - `/image download <url> <filename>`: Download an image from a URL and place it in the images directory.
 - `/image place <filename> <width> [<height>]`: Place an image of size `width`x`height` blocks.
 - `/image remove`: Remove a placed image from the world without deleting the image file.
+- `/image remove <radius>`: Remove all placed images in a radius of `radius` blocks around the player.
 
 ### Permissions
 By default, only server OPs have all plugin permissions granted:
@@ -48,3 +49,4 @@ By default, only server OPs have all plugin permissions granted:
 - `yamipa.download`
 - `yamipa.place`
 - `yamipa.remove`
+- `yamipa.remove.radius`

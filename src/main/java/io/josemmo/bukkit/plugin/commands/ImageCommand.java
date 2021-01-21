@@ -5,11 +5,13 @@ import dev.jorel.commandapi.annotations.arguments.AIntegerArgument;
 import dev.jorel.commandapi.annotations.arguments.ATextArgument;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
 import io.josemmo.bukkit.plugin.renderer.FakeImage;
+import io.josemmo.bukkit.plugin.renderer.ImageRenderer;
 import io.josemmo.bukkit.plugin.storage.ImageFile;
 import io.josemmo.bukkit.plugin.utils.SelectBlockTask;
 import io.josemmo.bukkit.plugin.utils.ActionBar;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.Rotation;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -21,6 +23,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Set;
 import java.util.SortedMap;
 
 @Command("image")
@@ -34,6 +37,7 @@ public class ImageCommand {
         s.sendMessage(ChatColor.AQUA + "/image download <url> <filename>" + ChatColor.RESET + " — Download image");
         s.sendMessage(ChatColor.AQUA + "/image place <filename>" + ChatColor.RESET + " — Place image");
         s.sendMessage(ChatColor.AQUA + "/image remove" + ChatColor.RESET + " — Remove placed image");
+        s.sendMessage(ChatColor.AQUA + "/image remove <radius>" + ChatColor.RESET + " — Remove placed images in radius");
     }
 
     @Subcommand("list")
@@ -144,20 +148,42 @@ public class ImageCommand {
     @Subcommand("remove")
     @Permission("yamipa.remove")
     public static void removeImage(Player player) {
-        YamipaPlugin plugin = YamipaPlugin.getInstance();
+        ImageRenderer renderer = YamipaPlugin.getInstance().getRenderer();
 
         // Ask user to select fake image
         SelectBlockTask task = new SelectBlockTask(player);
         task.onSuccess((location, face) -> {
-            FakeImage image = plugin.getRenderer().getImage(location, face);
+            FakeImage image = renderer.getImage(location, face);
             if (image == null) {
                 ActionBar.send(player, ChatColor.RED + "That is not a valid image!");
             } else {
                 ActionBar.send(player, "");
-                plugin.getRenderer().removeImage(image);
+                renderer.removeImage(image);
             }
         });
         task.onFailure(() -> ActionBar.send(player, ChatColor.RED + "Image removing canceled"));
         task.run("Right click an image to continue");
+    }
+
+    @Subcommand("remove")
+    @Permission("yamipa.remove.radius")
+    public static void removeImagesInRadius(Player player, @AIntegerArgument(min=1) int radius) {
+        ImageRenderer renderer = YamipaPlugin.getInstance().getRenderer();
+
+        // Get images in area
+        Location loc = player.getLocation();
+        Set<FakeImage> images = renderer.getImages(
+            player.getWorld(),
+            loc.getBlockX()-radius+1,
+            loc.getBlockX()+radius-1,
+            loc.getBlockZ()-radius+1,
+            loc.getBlockZ()+radius-1
+        );
+
+        // Remove found images
+        for (FakeImage image : images) {
+            renderer.removeImage(image);
+        }
+        player.sendMessage("Removed " + images.size() + " placed image(s)");
     }
 }

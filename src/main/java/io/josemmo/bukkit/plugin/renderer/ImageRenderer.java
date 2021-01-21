@@ -192,6 +192,29 @@ public class ImageRenderer implements Listener {
     }
 
     /**
+     * Get images from area
+     * @param  world World instance
+     * @param  minX  Minimum X coordinate
+     * @param  maxX  Maximum X coordinate
+     * @param  minZ  Minimum Z coordinate
+     * @param  maxZ  Maximum Z coordinate
+     * @return       List of found images
+     */
+    public Set<FakeImage> getImages(World world, int minX, int maxX, int minZ, int maxZ) {
+        Set<FakeImage> response = new HashSet<>();
+        for (WorldArea worldArea : worldAreas.values()) {
+            if (!worldArea.getId().getWorld().getName().equals(world.getName())) continue;
+            for (FakeImage image : worldArea.getImages()) {
+                Location loc = image.getLocation();
+                if (loc.getBlockX() < minX || loc.getBlockX() > maxX) continue;
+                if (loc.getBlockZ() < minZ || loc.getBlockZ() > maxZ) continue;
+                response.add(image);
+            }
+        }
+        return response;
+    }
+
+    /**
      * Remove image from renderer
      * @param image Fake image instance
      */
