@@ -31,6 +31,14 @@ public class ImageStorage {
     }
 
     /**
+     * Get base path
+     * @return Base path
+     */
+    public String getBasePath() {
+        return basePath;
+    }
+
+    /**
      * Get cache path
      * @return Cache path
      */

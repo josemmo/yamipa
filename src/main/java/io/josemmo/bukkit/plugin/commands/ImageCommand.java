@@ -8,11 +8,19 @@ import io.josemmo.bukkit.plugin.renderer.FakeImage;
 import io.josemmo.bukkit.plugin.storage.ImageFile;
 import io.josemmo.bukkit.plugin.utils.SelectBlockTask;
 import io.josemmo.bukkit.plugin.utils.ActionBar;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Rotation;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import java.awt.Dimension;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.SortedMap;
 
 @Command("image")
@@ -46,7 +54,33 @@ public class ImageCommand {
     @Subcommand("download")
     @Permission("yamipa.download")
     public static void downloadImage(CommandSender sender, @ATextArgument String url, @ATextArgument String filename) {
-        // TODO: not implemented
+        YamipaPlugin plugin = YamipaPlugin.getInstance();
+
+        // Validate destination file
+        Path basePath = Paths.get(plugin.getStorage().getBasePath());
+        Path destPath = basePath.resolve(filename);
+        if (!destPath.getParent().equals(basePath)) {
+            sender.sendMessage(ChatColor.RED + "Not a valid destination filename");
+            return;
+        }
+        if (destPath.toFile().exists()) {
+            sender.sendMessage(ChatColor.RED + "There's already a file with that name");
+            return;
+        }
+
+        // Download remote URL
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try {
+                InputStream inputStream = new URL(url).openStream();
+                sender.sendMessage("Downloading file...");
+                Files.copy(inputStream, destPath);
+                sender.sendMessage(ChatColor.GREEN + "Done!");
+            } catch (MalformedURLException e) {
+                sender.sendMessage(ChatColor.RED + "The remote URL is not valid");
+            } catch (IOException e) {
+                sender.sendMessage(ChatColor.RED + "An error occurred trying to download the remote file");
+            }
+        });
     }
 
     @Subcommand("place")
