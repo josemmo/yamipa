@@ -74,26 +74,32 @@ public class FakeItemFrame extends FakeEntity {
         double z = location.getBlockZ();
         int pitch = 0;
         int yaw = 0;
+        int orientation = 3;
         switch (face) {
             case UP:
                 ++y;
                 pitch = -64;
+                orientation = 1;
                 break;
             case DOWN:
                 --y;
                 pitch = 64;
+                orientation = 0;
                 break;
             case EAST:
                 ++x;
                 yaw = -64;
+                orientation = 5;
                 break;
             case WEST:
                 --x;
                 yaw = 64;
+                orientation = 4;
                 break;
             case NORTH:
                 --z;
                 yaw = 128;
+                orientation = 2;
                 break;
             case SOUTH:
                 ++z;
@@ -110,7 +116,7 @@ public class FakeItemFrame extends FakeEntity {
             .write(3, 0)
             .write(4, pitch)
             .write(5, yaw)
-            .write(6, 0);
+            .write(6, orientation);
         framePacket.getUUIDs()
             .write(0, UUID.randomUUID());
         framePacket.getDoubles()
