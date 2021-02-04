@@ -24,16 +24,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Set;
-import java.util.SortedMap;
 
 @Command("image")
 @Alias({"yamipa", "images"})
 public class ImageCommand {
+    public static final int ITEMS_PER_PAGE = 9;
+
     @Default
     public static void showHelp(CommandSender s) {
         s.sendMessage(ChatColor.BOLD + "=== Yamipa Plugin Help ===");
         s.sendMessage(ChatColor.AQUA + "/image" + ChatColor.RESET + " — Show this help");
-        s.sendMessage(ChatColor.AQUA + "/image list" + ChatColor.RESET + " — List all images");
+        s.sendMessage(ChatColor.AQUA + "/image list [<page>]" + ChatColor.RESET + " — List all images");
         s.sendMessage(ChatColor.AQUA + "/image download <url> <filename>" + ChatColor.RESET + " — Download image");
         s.sendMessage(ChatColor.AQUA + "/image place <filename>" + ChatColor.RESET + " — Place image");
         s.sendMessage(ChatColor.AQUA + "/image remove" + ChatColor.RESET + " — Remove placed image");
@@ -43,16 +44,34 @@ public class ImageCommand {
     @Subcommand("list")
     @Permission("yamipa.list")
     public static void listImages(CommandSender sender) {
-        SortedMap<String, ImageFile> images = YamipaPlugin.getInstance().getStorage().getAll();
+        listImages(sender, 1);
+    }
+
+    @Subcommand("list")
+    @Permission("yamipa.list")
+    public static void listImages(CommandSender sender, @AIntegerArgument(min=1) int page) {
+        String[] filenames = YamipaPlugin.getInstance().getStorage().getAll().keySet().toArray(new String[0]);
+        int numOfImages = filenames.length;
 
         // Are there any images available?
-        if (images.size() == 0) {
+        if (numOfImages == 0) {
             sender.sendMessage(ChatColor.RED + "No images found in the images directory");
             return;
         }
 
-        // Build list of images
-        images.forEach((filename, __) -> sender.sendMessage("" + ChatColor.GOLD + filename));
+        // Is the page number valid?
+        int firstImageIndex = (page - 1) * ITEMS_PER_PAGE;
+        if (firstImageIndex >= numOfImages) {
+            sender.sendMessage(ChatColor.RED + "Page " + page + " not found");
+            return;
+        }
+
+        // Render list of images
+        int maxPage = (int) Math.ceil((float) numOfImages / ITEMS_PER_PAGE);
+        sender.sendMessage("=== Page " + page + " out of " + maxPage + " ===");
+        for (int i=firstImageIndex; i<Math.min(numOfImages, firstImageIndex+ITEMS_PER_PAGE); ++i) {
+            sender.sendMessage("" + ChatColor.GOLD + filenames[i]);
+        }
     }
 
     @Subcommand("download")

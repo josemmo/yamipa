@@ -36,7 +36,7 @@ data-path: images.dat  # Path to placed images database file
 ## Usage
 This plugin adds the following commands:
 
-- `/image list`: List all available files in the images directory.
+- `/image list [<page>]`: List all available files in the images directory.
 - `/image download <url> <filename>`: Download an image from a URL and place it in the images directory.
 - `/image place <filename> <width> [<height>]`: Place an image of size `width`x`height` blocks.
 - `/image remove`: Remove a placed image from the world without deleting the image file.
