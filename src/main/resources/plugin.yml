@@ -2,7 +2,7 @@ name: ${project.name}
 version: ${project.version}
 main: io.josemmo.bukkit.plugin.YamipaPlugin
 api-version: 1.13
-depend: [CommandAPI, NBTAPI, ProtocolLib]
+depend: [NBTAPI, ProtocolLib]
 
 permissions:
   yamipa.*:
