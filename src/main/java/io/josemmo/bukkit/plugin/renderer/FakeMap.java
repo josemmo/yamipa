@@ -41,6 +41,7 @@ public class FakeMap extends FakeEntity {
      * @param  pixel RGBA pixel value
      * @return       Closest Minecraft color index
      */
+    @SuppressWarnings("deprecation")
     public static byte pixelToIndex(int pixel) {
         return MapPalette.matchColor(new Color(pixel, true));
     }
