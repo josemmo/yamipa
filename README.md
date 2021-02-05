@@ -8,7 +8,6 @@ It is designed with performance and compatibility in mind, so even the most low-
 
 ## Requirements
 - Minecraft >=1.16 (tested on 1.16.4)
-- [NBTAPI](https://www.spigotmc.org/resources/nbt-api.7939/)
 - [ProtocolLib](https://www.spigotmc.org/resources/protocollib.1997/)
 
 ## Installation
@@ -49,3 +48,7 @@ By default, only server OPs have all plugin permissions granted:
 - `yamipa.place`
 - `yamipa.remove`
 - `yamipa.remove.radius`
+
+## License
+Yamipa is licensed under the [MIT License](LICENSE) and includes third-party software licensed under
+the MIT License and the [GPLv3 License](https://www.gnu.org/licenses/gpl-3.0.html).

@@ -49,9 +49,8 @@
         </dependency>
         <dependency>
             <groupId>de.tr7zw</groupId>
-            <artifactId>item-nbt-api-plugin</artifactId>
+            <artifactId>item-nbt-api</artifactId>
             <version>2.7.1</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>dev.jorel</groupId>
@@ -88,13 +87,24 @@
                         <filter>
                             <artifact>dev.jorel:*</artifact>
                             <excludes>
-                                <exclude>META-INF/MANIFEST.MF</exclude>
+                                <exclude>META-INF/**</exclude>
+                            </excludes>
+                        </filter>
+                        <filter>
+                            <artifact>de.tr7zw:*</artifact>
+                            <excludes>
+                                <exclude>META-INF/**</exclude>
+                                <exclude>LICENSE</exclude>
                             </excludes>
                         </filter>
                     </filters>
                     <relocations>
                         <relocation>
                             <pattern>dev.jorel.commandapi-shade</pattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>de.tr7zw.changeme.nbtapi</pattern>
+                            <shadedPattern>de.tr7zw.nbtapi</shadedPattern>
                         </relocation>
                     </relocations>
                 </configuration>
