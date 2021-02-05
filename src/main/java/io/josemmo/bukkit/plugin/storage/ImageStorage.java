@@ -133,11 +133,11 @@ public class ImageStorage {
     }
 
     /**
-     * Get all images
-     * @return List of images
+     * Get all image filenames
+     * @return Array of image filenames
      */
-    public synchronized SortedMap<String, ImageFile> getAll() {
-        return cachedImages;
+    public synchronized String[] getAllFilenames() {
+        return cachedImages.keySet().toArray(new String[0]);
     }
 
     /**

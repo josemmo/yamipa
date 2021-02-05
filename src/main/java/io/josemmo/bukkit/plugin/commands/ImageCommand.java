@@ -1,8 +1,5 @@
 package io.josemmo.bukkit.plugin.commands;
 
-import dev.jorel.commandapi.annotations.*;
-import dev.jorel.commandapi.annotations.arguments.AIntegerArgument;
-import dev.jorel.commandapi.annotations.arguments.ATextArgument;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
 import io.josemmo.bukkit.plugin.renderer.FakeImage;
 import io.josemmo.bukkit.plugin.renderer.ImageRenderer;
@@ -25,12 +22,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Set;
 
-@Command("image")
-@Alias({"yamipa", "images"})
 public class ImageCommand {
     public static final int ITEMS_PER_PAGE = 9;
 
-    @Default
     public static void showHelp(CommandSender s) {
         s.sendMessage(ChatColor.BOLD + "=== Yamipa Plugin Help ===");
         s.sendMessage(ChatColor.AQUA + "/image" + ChatColor.RESET + " — Show this help");
@@ -41,16 +35,8 @@ public class ImageCommand {
         s.sendMessage(ChatColor.AQUA + "/image remove <radius>" + ChatColor.RESET + " — Remove placed images in radius");
     }
 
-    @Subcommand("list")
-    @Permission("yamipa.list")
-    public static void listImages(CommandSender sender) {
-        listImages(sender, 1);
-    }
-
-    @Subcommand("list")
-    @Permission("yamipa.list")
-    public static void listImages(CommandSender sender, @AIntegerArgument(min=1) int page) {
-        String[] filenames = YamipaPlugin.getInstance().getStorage().getAll().keySet().toArray(new String[0]);
+    public static void listImages(CommandSender sender, int page) {
+        String[] filenames = YamipaPlugin.getInstance().getStorage().getAllFilenames();
         int numOfImages = filenames.length;
 
         // Are there any images available?
@@ -74,9 +60,7 @@ public class ImageCommand {
         }
     }
 
-    @Subcommand("download")
-    @Permission("yamipa.download")
-    public static void downloadImage(CommandSender sender, @ATextArgument String url, @ATextArgument String filename) {
+    public static void downloadImage(CommandSender sender, String url, String filename) {
         YamipaPlugin plugin = YamipaPlugin.getInstance();
 
         // Validate destination file
@@ -106,23 +90,11 @@ public class ImageCommand {
         });
     }
 
-    @Subcommand("place")
-    @Permission("yamipa.place")
     public static void placeImage(
         Player player,
-        @ATextArgument String filename,
-        @AIntegerArgument(min=1, max=FakeImage.MAX_DIMENSION) int width
-    ) {
-        placeImage(player, filename, width, 0);
-    }
-
-    @Subcommand("place")
-    @Permission("yamipa.place")
-    public static void placeImage(
-        Player player,
-        @ATextArgument String filename,
-        @AIntegerArgument(min=1, max=FakeImage.MAX_DIMENSION) int width,
-        @AIntegerArgument(min=1, max=FakeImage.MAX_DIMENSION) int height
+        String filename,
+        int width,
+        int height
     ) {
         YamipaPlugin plugin = YamipaPlugin.getInstance();
 
@@ -164,8 +136,6 @@ public class ImageCommand {
         task.run("Right click a block to continue");
     }
 
-    @Subcommand("remove")
-    @Permission("yamipa.remove")
     public static void removeImage(Player player) {
         ImageRenderer renderer = YamipaPlugin.getInstance().getRenderer();
 
@@ -184,9 +154,7 @@ public class ImageCommand {
         task.run("Right click an image to continue");
     }
 
-    @Subcommand("remove")
-    @Permission("yamipa.remove.radius")
-    public static void removeImagesInRadius(Player player, @AIntegerArgument(min=1) int radius) {
+    public static void removeImagesInRadius(Player player, int radius) {
         ImageRenderer renderer = YamipaPlugin.getInstance().getRenderer();
 
         // Get images in area
