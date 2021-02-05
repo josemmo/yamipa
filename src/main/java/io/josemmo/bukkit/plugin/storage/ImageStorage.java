@@ -133,8 +133,16 @@ public class ImageStorage {
     }
 
     /**
+     * Get number of images
+     * @return Number of images
+     */
+    public synchronized int size() {
+        return cachedImages.size();
+    }
+
+    /**
      * Get all image filenames
-     * @return Array of image filenames
+     * @return Sorted array of image filenames
      */
     public synchronized String[] getAllFilenames() {
         return cachedImages.keySet().toArray(new String[0]);

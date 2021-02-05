@@ -57,6 +57,11 @@
             <artifactId>commandapi-shade</artifactId>
             <version>5.8</version>
         </dependency>
+        <dependency>
+            <groupId>org.bstats</groupId>
+            <artifactId>bstats-bukkit</artifactId>
+            <version>1.8</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -97,6 +102,12 @@
                                 <exclude>LICENSE</exclude>
                             </excludes>
                         </filter>
+                        <filter>
+                            <artifact>org.bstats:*</artifact>
+                            <excludes>
+                                <exclude>META-INF/**</exclude>
+                            </excludes>
+                        </filter>
                     </filters>
                     <relocations>
                         <relocation>
@@ -105,6 +116,10 @@
                         <relocation>
                             <pattern>de.tr7zw.changeme.nbtapi</pattern>
                             <shadedPattern>de.tr7zw.nbtapi</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>org.bstats</pattern>
+                            <shadedPattern>${project.groupId}.bstats</shadedPattern>
                         </relocation>
                     </relocations>
                 </configuration>

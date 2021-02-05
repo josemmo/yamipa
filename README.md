@@ -31,6 +31,10 @@ cache-path: cache      # Path to cache directory
 data-path: images.dat  # Path to placed images database file
 ```
 
+This library uses bStats to anonymously report the number of installs. If you don't like this, feel free to
+disable it at any time by adding `enabled: false` to the
+[bStats configuration file](https://bstats.org/getting-started#:~:text=Disabling%20bStats) (it's ok, no hard feelings).
+
 ## Usage
 This plugin adds the following commands:
 

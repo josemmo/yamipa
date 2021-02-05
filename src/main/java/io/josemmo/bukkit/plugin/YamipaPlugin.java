@@ -4,6 +4,7 @@ import dev.jorel.commandapi.CommandAPI;
 import io.josemmo.bukkit.plugin.commands.ImageCommandBridge;
 import io.josemmo.bukkit.plugin.renderer.ImageRenderer;
 import io.josemmo.bukkit.plugin.storage.ImageStorage;
+import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -11,6 +12,7 @@ import java.nio.file.Path;
 import java.util.logging.Level;
 
 public class YamipaPlugin extends JavaPlugin {
+    public static final int BSTATS_PLUGIN_ID = 10243;
     private static YamipaPlugin instance;
     private boolean verbose;
     private ImageStorage storage;
@@ -88,6 +90,18 @@ public class YamipaPlugin extends JavaPlugin {
         // Create image renderer
         renderer = new ImageRenderer(basePath.resolve(dataPath).toString());
         renderer.start();
+
+        // Initialize bStats
+        Metrics metrics = new Metrics(this, BSTATS_PLUGIN_ID);
+        metrics.addCustomChart(new Metrics.SimplePie("number_of_image_files", () -> {
+            int number = storage.size();
+            if (number >= 1000) return "1000+";
+            if (number >= 500) return "500-999";
+            if (number >= 100) return "100-499";
+            if (number >= 50) return "50-99";
+            if (number >= 10) return "10-49";
+            return "0-9";
+        }));
     }
 
     @Override
