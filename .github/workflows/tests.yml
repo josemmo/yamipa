@@ -46,7 +46,7 @@ jobs:
       # Install plugin
       - name: Install plugin
         run: |
-          mkdir plugins/YamipaPlugin/images
+          mkdir -p plugins/YamipaPlugin/images
           cp ../target/YamipaPlugin.jar plugins/
           echo "verbose: true" > plugins/YamipaPlugin/config.yml
           for i in {1..5}; do
