@@ -1,0 +1,59 @@
+name: Tests
+
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        flavor: ['bukkit', 'spigot', 'paper']
+        version: ['1.16.5', '1.16.4', '1.16.3', '1.16.2', '1.16.1']
+    steps:
+      # Download code from repository
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Setup Java
+      - name: Setup JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: '11'
+
+      # Build plugin
+      - name: Build with Maven
+        run: mvn --batch-mode --update-snapshots verify
+
+      # Setup server
+      - name: Setup server
+        env:
+          FLAVOR: ${{ matrix.flavor }}
+          VERSION: ${{ matrix.version }}
+        run: |
+          if [ $FLAVOR == "bukkit" ]; then
+            url="https://cdn.getbukkit.org/craftbukkit/craftbukkit-$VERSION.jar"
+          elif [ $FLAVOR == "spigot" ]; then
+            url="https://cdn.getbukkit.org/spigot/spigot-$VERSION.jar"
+          elif [ $FLAVOR == "paper" ]; then
+            url="https://papermc.io/api/v1/paper/$VERSION/latest/download"
+          fi
+          mkdir -p /var/server/plugins/YamipaPlugin
+          echo "eula=true" > /var/server/eula.txt
+          echo "verbose: true" > /var/server/plugins/YamipaPlugin/config.yml
+          cp ./target/YamipaPlugin.jar /var/server/plugins/
+          wget "$url" -O /var/server/server.jar
+
+      # Test plugin
+      - name: Run plugin in server
+        run: |
+          mkdir /var/server/plugins/YamipaPlugin/images
+          for i in {1..5}; do
+            wget -q "https://picsum.photos/400" -O "/var/server/plugins/YamipaPlugin/images/pic-$i.jpg"
+          done
+          timeout -s SIGINT 1m java -jar /var/server/server.jar nogui | tee server.log || true
+          if ! grep -Fq '[YamipaPlugin] Loading YamipaPlugin' server.log; then exit 1; fi
+          if ! grep -Fq '[YamipaPlugin] Running on VERBOSE mode' server.log; then exit 1; fi
+          if ! grep -Fq '[YamipaPlugin] Found 5 file(s) in images directory' server.log; then exit 1; fi
+          if ! grep -Fq '[YamipaPlugin] Disabling YamipaPlugin' server.log; then exit 1; fi
+          if grep -Fq 'WARN]:' server.log; then exit 1; fi
+          if grep -Fq 'ERROR]:' server.log; then exit 1; fi

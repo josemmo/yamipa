@@ -1,4 +1,5 @@
 # Yet Another Minecraft Image Placing Addon
+[![Tests](https://github.com/josemmo/yamipa/workflows/Tests/badge.svg)](https://github.com/josemmo/yamipa/actions)
 [![Latest Version](https://img.shields.io/github/v/release/josemmo/yamipa)](https://github.com/josemmo/yamipa/releases/latest)
 ![Minecraft Version](https://img.shields.io/badge/minecraft-%3E%3D1.16-blueviolet)
 [![License](https://img.shields.io/github/license/josemmo/yamipa)](LICENSE)

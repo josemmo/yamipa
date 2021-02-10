@@ -1,0 +1,29 @@
+name: Build
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # Download code from repository
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Setup Java
+      - name: Setup JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: '11'
+
+      # Build plugin
+      - name: Build with Maven
+        run: mvn --batch-mode --update-snapshots verify
+
+      # Upload release
+      - name: Upload release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload ${GITHUB_REF##*/} ./target/YamipaPlugin.jar
