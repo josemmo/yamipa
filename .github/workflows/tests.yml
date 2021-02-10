@@ -38,26 +38,25 @@ jobs:
           elif [ $FLAVOR == "paper" ]; then
             url="https://papermc.io/api/v1/paper/$VERSION/latest/download"
           fi
-          mkdir ./server
-          wget -nv "$url" -O ./server/server.jar
-          java -jar ./server/server.jar || true
-          sleep 2
-          sed -i 's/eula=false/eula=true/g' ./server/eula.txt
+          mkdir ./server && cd ./server
+          wget -nv "$url" -O server.jar
+          java -jar server.jar || true
+          sed -i 's/eula=false/eula=true/g' eula.txt
 
       # Install plugin
       - name: Install plugin
         run: |
-          cp ./target/YamipaPlugin.jar ./server/plugins/
-          mkdir ./server/plugins/YamipaPlugin/images
-          echo "verbose: true" > ./server/plugins/YamipaPlugin/config.yml
+          mkdir plugins/YamipaPlugin/images
+          cp ../target/YamipaPlugin.jar plugins/
+          echo "verbose: true" > plugins/YamipaPlugin/config.yml
           for i in {1..5}; do
-            wget -q "https://picsum.photos/400" -O "./server/plugins/YamipaPlugin/images/pic-$i.jpg"
+            wget -q "https://picsum.photos/400" -O "plugins/YamipaPlugin/images/pic-$i.jpg"
           done
 
       # Test plugin
       - name: Run plugin in server
         run: |
-          timeout -s SIGINT 1m java -jar ./server/server.jar nogui | tee server.log || true
+          timeout -s SIGINT 1m java -jar server.jar nogui | tee server.log || true
           if ! grep -Fq '[YamipaPlugin] Loading YamipaPlugin' server.log; then exit 1; fi
           if ! grep -Fq '[YamipaPlugin] Running on VERBOSE mode' server.log; then exit 1; fi
           if ! grep -Fq '[YamipaPlugin] Found 5 file(s) in images directory' server.log; then exit 1; fi
