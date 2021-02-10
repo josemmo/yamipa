@@ -41,6 +41,7 @@ jobs:
           mkdir ./server
           wget -nv "$url" -O ./server/server.jar
           java -jar ./server/server.jar || true
+          sleep 2
           sed -i 's/eula=false/eula=true/g' ./server/eula.txt
 
       # Install plugin
