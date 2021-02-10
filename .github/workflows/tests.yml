@@ -46,15 +46,16 @@ jobs:
       # Install plugin
       - name: Install plugin
         run: |
-          mkdir -p plugins/YamipaPlugin/images
-          cp ../target/YamipaPlugin.jar plugins/
-          echo "verbose: true" > plugins/YamipaPlugin/config.yml
+          mkdir -p ./server/plugins/YamipaPlugin/images
+          cp ./target/YamipaPlugin.jar ./server/plugins/
+          echo "verbose: true" > ./server/plugins/YamipaPlugin/config.yml
           for i in {1..5}; do
-            wget -q "https://picsum.photos/400" -O "plugins/YamipaPlugin/images/pic-$i.jpg"
+            wget -q "https://picsum.photos/400" -O "./server/plugins/YamipaPlugin/images/pic-$i.jpg"
           done
 
       # Test plugin
       - name: Run plugin in server
+        working-directory: ./server
         run: |
           timeout -s SIGINT 1m java -jar server.jar nogui | tee server.log || true
           if ! grep -Fq '[YamipaPlugin] Loading YamipaPlugin' server.log; then exit 1; fi
