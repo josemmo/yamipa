@@ -47,6 +47,7 @@ jobs:
       - name: Install plugin dependencies
         run: |
           url="https://ci.dmulloy2.net/job/ProtocolLib/lastSuccessfulBuild/artifact/target/ProtocolLib.jar"
+          mkdir -p ./server/plugins
           wget -q "$url" -O ./server/plugins/ProtocolLib.jar
 
       # Install plugin
