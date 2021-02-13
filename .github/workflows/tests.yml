@@ -5,6 +5,7 @@ on: [push]
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
@@ -42,6 +43,10 @@ jobs:
           wget -nv "$url" -O server.jar
           java -jar server.jar || true
           sed -i 's/eula=false/eula=true/g' eula.txt
+          echo "allow-nether=false" >> server.properties
+          echo "allow-end=false" >> server.properties
+          echo 'generate-structures=false' >> server.properties
+          echo "level-type=flat" >> server.properties
 
       # Install dependencies
       - name: Install plugin dependencies
@@ -64,7 +69,7 @@ jobs:
       - name: Run plugin in server
         working-directory: ./server
         run: |
-          timeout -s SIGINT 30s java -jar server.jar nogui | tee server.log || true
+          timeout -s SIGINT 90s java -DIReallyKnowWhatIAmDoingISwear -jar server.jar nogui | tee server.log || true
           if ! grep -Fq '[YamipaPlugin] Loading YamipaPlugin' server.log; then
             echo "Plugin did not load"
             exit 1
@@ -75,14 +80,6 @@ jobs:
           fi
           if ! grep -Fq '[YamipaPlugin] Found 5 file(s) in images directory' server.log; then
             echo "Plugin did not read image directory"
-            exit 1
-          fi
-          if ! grep -Fq '[YamipaPlugin] Disabling YamipaPlugin' server.log; then
-            echo "Plugin did not unload"
-            exit 1
-          fi
-          if grep -Fq 'WARN]:' server.log; then
-            echo "Server logged a warning event"
             exit 1
           fi
           if grep -Fq 'ERROR]:' server.log; then
