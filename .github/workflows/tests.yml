@@ -82,7 +82,3 @@ jobs:
             echo "Plugin did not read image directory"
             exit 1
           fi
-          if grep -Fq 'ERROR]:' server.log; then
-            echo "Server logged an error event"
-            exit 1
-          fi
