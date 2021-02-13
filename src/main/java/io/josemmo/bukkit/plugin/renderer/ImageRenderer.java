@@ -15,6 +15,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.*;
 import org.bukkit.scheduler.BukkitTask;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -69,13 +71,17 @@ public class ImageRenderer implements Listener {
      * Load configuration from disk
      */
     private void loadConfig() {
-        CsvConfiguration config = new CsvConfiguration();
+        if (!Files.isRegularFile(Paths.get(configPath))) {
+            plugin.info("No placed fake images configuration file found");
+            return;
+        }
 
         // Try to load configuration
+        CsvConfiguration config = new CsvConfiguration();
         try {
             config.load(configPath);
         } catch (IOException e) {
-            plugin.warning("Failed to load placed fake images from disk");
+            plugin.log(Level.SEVERE, "Failed to load placed fake images from disk", e);
             return;
         }
 
