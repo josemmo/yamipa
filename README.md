@@ -7,6 +7,12 @@
 Yamipa is an Spigot plugin that allows you to place images on any surface in your Minecraft server.
 It is designed with performance and compatibility in mind, so even the most low-specs servers should be able to run it.
 
+<p align="center">
+    <a href="https://i.imgur.com/9rzeKFS.mp4"><img alt="Placing and removing image" src="screenshots/demo.gif" width="250"></a>
+    <a href="screenshots/sample-1.jpg"><img alt="Sample Screenshot" src="screenshots/sample-1.jpg" width="250"></a>
+    <a href="screenshots/sample-2.jpg"><img alt="Sample Screenshot" src="screenshots/sample-2.jpg" width="250"></a>
+</p>
+
 ## Requirements
 - Minecraft >=1.16 (tested on 1.16.4)
 - [ProtocolLib](https://www.spigotmc.org/resources/protocollib.1997/)
