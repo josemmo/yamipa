@@ -12,14 +12,15 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.scheduler.BukkitTask;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
 
-public class SelectBlockTask implements Listener {
+public class SelectBlockTask {
     private static final YamipaPlugin plugin = YamipaPlugin.getInstance();
-    private static final ConcurrentMap<UUID, Boolean> hasAnotherTask = new ConcurrentHashMap<>();
+    private static final Map<UUID, SelectBlockTask> instances = new HashMap<>();
+    private static PlayerInteractionListener listener = null;
     private final Player player;
     private BiConsumer<Location, BlockFace> success;
     private Runnable failure;
@@ -57,14 +58,20 @@ public class SelectBlockTask implements Listener {
         UUID uuid = player.getUniqueId();
 
         // Has this player another active task?
-        if (hasAnotherTask.getOrDefault(uuid, false)) {
+        if (instances.containsKey(uuid)) {
             player.sendMessage(ChatColor.RED + "You already have a pending action!");
             return;
         }
 
+        // Create listener singleton if needed
+        if (listener == null) {
+            listener = new PlayerInteractionListener();
+            plugin.getServer().getPluginManager().registerEvents(listener, plugin);
+            plugin.fine("Created PlayerInteractionListener singleton");
+        }
+
         // Start task
-        hasAnotherTask.put(uuid, true);
-        plugin.getServer().getPluginManager().registerEvents(this, plugin);
+        instances.put(uuid, this);
         actionBarTask = ActionBar.repeat(player, ChatColor.GREEN + helpMessage + ChatColor.RESET +
             " — " + ChatColor.RED + "Left click to cancel");
     }
@@ -73,34 +80,53 @@ public class SelectBlockTask implements Listener {
      * Cancel task
      */
     public void cancel() {
-        HandlerList.unregisterAll(this);
         if (actionBarTask != null) {
             actionBarTask.cancel();
         }
-        hasAnotherTask.remove(player.getUniqueId());
+        instances.remove(player.getUniqueId());
+
+        // Destroy listener singleton if no more active tasks
+        if (instances.isEmpty()) {
+            HandlerList.unregisterAll(listener);
+            listener = null;
+            plugin.fine("Destroyed PlayerInteractionListener singleton");
+        }
     }
 
-    @EventHandler
-    public void onPlayerInteraction(PlayerInteractEvent event) {
-        Action action = event.getAction();
-        Block block = event.getClickedBlock();
+    /**
+     * Internal listener for handling player events
+     */
+    private static class PlayerInteractionListener implements Listener {
+        @EventHandler
+        public void onPlayerInteraction(PlayerInteractEvent event) {
+            Action action = event.getAction();
+            Block block = event.getClickedBlock();
 
-        // Player canceled the task
-        if (action == Action.LEFT_CLICK_AIR || action == Action.LEFT_CLICK_BLOCK) {
-            event.setCancelled(true);
-            cancel();
-            if (failure != null) {
-                failure.run();
+            // Get task responsible for handling this event
+            UUID uuid = event.getPlayer().getUniqueId();
+            SelectBlockTask task = instances.get(uuid);
+            if (task == null) {
+                plugin.warning("Received orphan PlayerInteractEvent from player " + uuid);
+                return;
             }
-            return;
-        }
 
-        // Player selected a block
-        if (action == Action.RIGHT_CLICK_BLOCK && block != null) {
-            event.setCancelled(true);
-            cancel();
-            if (success != null) {
-                success.accept(block.getLocation(), event.getBlockFace());
+            // Player canceled the task
+            if (action == Action.LEFT_CLICK_AIR || action == Action.LEFT_CLICK_BLOCK) {
+                event.setCancelled(true);
+                task.cancel();
+                if (task.failure != null) {
+                    task.failure.run();
+                }
+                return;
+            }
+
+            // Player selected a block
+            if (action == Action.RIGHT_CLICK_BLOCK && block != null) {
+                event.setCancelled(true);
+                task.cancel();
+                if (task.success != null) {
+                    task.success.accept(block.getLocation(), event.getBlockFace());
+                }
             }
         }
     }
