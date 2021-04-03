@@ -59,7 +59,7 @@ jobs:
       - name: Install plugin
         run: |
           mkdir -p ./server/plugins/YamipaPlugin/images
-          cp ./target/YamipaPlugin.jar ./server/plugins/
+          cp ./target/YamipaPlugin-*.jar ./server/plugins/
           echo "verbose: true" > ./server/plugins/YamipaPlugin/config.yml
           for i in {1..5}; do
             wget -q "https://picsum.photos/400" -O "./server/plugins/YamipaPlugin/images/pic-$i.jpg"
