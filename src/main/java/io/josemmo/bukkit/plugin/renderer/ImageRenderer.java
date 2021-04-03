@@ -87,7 +87,6 @@ public class ImageRenderer implements Listener {
 
         // Parse each row
         for (String[] row : config.getRows()) {
-            if (row.length != 9) continue;
             try {
                 String filename = row[0];
                 World world = Objects.requireNonNull(plugin.getServer().getWorld(row[1]));
@@ -101,7 +100,7 @@ public class ImageRenderer implements Listener {
                 int height = Math.min(FakeImage.MAX_DIMENSION, Math.abs(Integer.parseInt(row[8])));
                 addImage(new FakeImage(filename, location, face, rotation, width, height), true);
             } catch (Exception e) {
-                plugin.warning("Invalid fake image properties: " + String.join(";", row));
+                plugin.log(Level.SEVERE, "Invalid fake image properties: " + String.join(";", row), e);
             }
         }
     }
