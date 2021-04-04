@@ -7,10 +7,12 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.scheduler.BukkitTask;
 import java.util.HashMap;
 import java.util.Map;
@@ -128,6 +130,17 @@ public class SelectBlockTask {
                     task.success.accept(block.getLocation(), event.getBlockFace());
                 }
             }
+        }
+
+        @EventHandler(priority = EventPriority.MONITOR)
+        public void onPlayerQuit(PlayerQuitEvent event) {
+            UUID uuid = event.getPlayer().getUniqueId();
+            SelectBlockTask task = instances.get(uuid);
+            if (task == null) {
+                plugin.warning("Received orphan PlayerQuitEvent from player " + uuid);
+                return;
+            }
+            task.cancel();
         }
     }
 }
