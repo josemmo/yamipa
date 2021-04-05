@@ -1,5 +1,11 @@
 package io.josemmo.bukkit.plugin.utils;
 
+import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.events.ListeningWhitelist;
+import com.comphenix.protocol.events.PacketEvent;
+import com.comphenix.protocol.events.PacketListener;
+import com.comphenix.protocol.wrappers.EnumWrappers;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -13,8 +19,10 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.BiConsumer;
@@ -69,6 +77,7 @@ public class SelectBlockTask {
         if (listener == null) {
             listener = new PlayerInteractionListener();
             plugin.getServer().getPluginManager().registerEvents(listener, plugin);
+            ProtocolLibrary.getProtocolManager().addPacketListener(listener);
             plugin.fine("Created PlayerInteractionListener singleton");
         }
 
@@ -90,6 +99,7 @@ public class SelectBlockTask {
         // Destroy listener singleton if no more active tasks
         if (instances.isEmpty()) {
             HandlerList.unregisterAll(listener);
+            ProtocolLibrary.getProtocolManager().removePacketListener(listener);
             listener = null;
             plugin.fine("Destroyed PlayerInteractionListener singleton");
         }
@@ -98,7 +108,7 @@ public class SelectBlockTask {
     /**
      * Internal listener for handling player events
      */
-    private static class PlayerInteractionListener implements Listener {
+    private static class PlayerInteractionListener implements Listener, PacketListener {
         @EventHandler
         public void onPlayerInteraction(PlayerInteractEvent event) {
             Action action = event.getAction();
@@ -107,10 +117,7 @@ public class SelectBlockTask {
             // Get task responsible for handling this event
             UUID uuid = event.getPlayer().getUniqueId();
             SelectBlockTask task = instances.get(uuid);
-            if (task == null) {
-                plugin.warning("Received orphan PlayerInteractEvent from player " + uuid);
-                return;
-            }
+            if (task == null) return;
 
             // Player canceled the task
             if (action == Action.LEFT_CLICK_AIR || action == Action.LEFT_CLICK_BLOCK) {
@@ -136,11 +143,67 @@ public class SelectBlockTask {
         public void onPlayerQuit(PlayerQuitEvent event) {
             UUID uuid = event.getPlayer().getUniqueId();
             SelectBlockTask task = instances.get(uuid);
-            if (task == null) {
-                plugin.warning("Received orphan PlayerQuitEvent from player " + uuid);
+            if (task != null) {
+                task.cancel();
+            }
+        }
+
+        @Override
+        public void onPacketReceiving(PacketEvent event) {
+            EnumWrappers.EntityUseAction action = event.getPacket().getEntityUseActions().read(0);
+            Player player = event.getPlayer();
+
+            // Get task responsible for handling this event
+            UUID uuid = player.getUniqueId();
+            SelectBlockTask task = instances.get(uuid);
+            if (task == null) return;
+
+            // Player left clicked an entity
+            if (action == EnumWrappers.EntityUseAction.ATTACK) {
+                event.setCancelled(true);
+                task.cancel();
+                if (task.failure != null) {
+                    task.failure.run();
+                }
                 return;
             }
-            task.cancel();
+
+            // Player right clicked an entity
+            if (action == EnumWrappers.EntityUseAction.INTERACT_AT) {
+                int maxDistance = 5; // Server should only accept entities within a 4-block radius
+                List<Block> lastTwoTargetBlocks = player.getLastTwoTargetBlocks(null, maxDistance);
+                if (lastTwoTargetBlocks.size() != 2) return;
+                Block targetBlock = lastTwoTargetBlocks.get(1);
+                Block adjacentBlock = lastTwoTargetBlocks.get(0);
+                if (!targetBlock.getType().isOccluding()) return;
+
+                BlockFace targetBlockFace = targetBlock.getFace(adjacentBlock);
+                event.setCancelled(true);
+                task.cancel();
+                if (task.success != null) {
+                    task.success.accept(targetBlock.getLocation(), targetBlockFace);
+                }
+            }
+        }
+
+        @Override
+        public void onPacketSending(PacketEvent event) {
+            // Intentionally left blank
+        }
+
+        @Override
+        public ListeningWhitelist getReceivingWhitelist() {
+            return ListeningWhitelist.newBuilder().types(PacketType.Play.Client.USE_ENTITY).build();
+        }
+
+        @Override
+        public ListeningWhitelist getSendingWhitelist() {
+            return ListeningWhitelist.EMPTY_WHITELIST;
+        }
+
+        @Override
+        public Plugin getPlugin() {
+            return plugin;
         }
     }
 }
