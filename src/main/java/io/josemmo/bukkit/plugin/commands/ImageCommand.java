@@ -12,11 +12,12 @@ import org.bukkit.Location;
 import org.bukkit.Rotation;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.PluginDescriptionFile;
 import java.awt.Dimension;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -78,9 +79,11 @@ public class ImageCommand {
         // Download remote URL
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
-                InputStream inputStream = new URL(url).openStream();
+                URLConnection conn = new URL(url).openConnection();
+                PluginDescriptionFile desc = plugin.getDescription();
+                conn.setRequestProperty("User-Agent", desc.getName() + "/" + desc.getVersion());
                 sender.sendMessage("Downloading file...");
-                Files.copy(inputStream, destPath);
+                Files.copy(conn.getInputStream(), destPath);
                 sender.sendMessage(ChatColor.GREEN + "Done!");
             } catch (MalformedURLException e) {
                 sender.sendMessage(ChatColor.RED + "The remote URL is not valid");
