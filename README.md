@@ -45,8 +45,9 @@ disable it at any time by adding `enabled: false` to the
 ## Usage
 This plugin adds the following commands:
 
-- `/image list [<page>]`: List all available files in the images directory.
+- `/image describe`: Show detailed information about a placed image.
 - `/image download <url> <filename>`: Download an image from a URL and place it in the images directory.
+- `/image list [<page>]`: List all available files in the images directory.
 - `/image place <filename> <width> [<height>]`: Place an image of size `width`x`height` blocks.
 - `/image remove`: Remove a placed image from the world without deleting the image file.
 - `/image remove <radius>`: Remove all placed images in a radius of `radius` blocks around the player.
@@ -54,8 +55,9 @@ This plugin adds the following commands:
 ### Permissions
 By default, only server OPs have all plugin permissions granted:
 
-- `yamipa.list`
+- `yamipa.describe`
 - `yamipa.download`
+- `yamipa.list`
 - `yamipa.place`
 - `yamipa.remove`
 - `yamipa.remove.radius`

@@ -21,6 +21,7 @@ import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Set;
 
@@ -30,8 +31,9 @@ public class ImageCommand {
     public static void showHelp(CommandSender s) {
         s.sendMessage(ChatColor.BOLD + "=== Yamipa Plugin Help ===");
         s.sendMessage(ChatColor.AQUA + "/image" + ChatColor.RESET + " — Show this help");
-        s.sendMessage(ChatColor.AQUA + "/image list [<page>]" + ChatColor.RESET + " — List all images");
+        s.sendMessage(ChatColor.AQUA + "/image describe" + ChatColor.RESET + " — Describe placed image");
         s.sendMessage(ChatColor.AQUA + "/image download <url> <filename>" + ChatColor.RESET + " — Download image");
+        s.sendMessage(ChatColor.AQUA + "/image list [<page>]" + ChatColor.RESET + " — List all images");
         s.sendMessage(ChatColor.AQUA + "/image place <filename>" + ChatColor.RESET + " — Place image");
         s.sendMessage(ChatColor.AQUA + "/image remove" + ChatColor.RESET + " — Remove placed image");
         s.sendMessage(ChatColor.AQUA + "/image remove <radius>" + ChatColor.RESET + " — Remove placed images in radius");
@@ -180,5 +182,49 @@ public class ImageCommand {
             renderer.removeImage(image);
         }
         player.sendMessage("Removed " + images.size() + " placed image(s)");
+    }
+
+    public static void describeImage(Player player) {
+        ImageRenderer renderer = YamipaPlugin.getInstance().getRenderer();
+
+        // Ask user to select fake image
+        SelectBlockTask task = new SelectBlockTask(player);
+        task.onSuccess((location, face) -> {
+            FakeImage image = renderer.getImage(location, face);
+            if (image == null) {
+                ActionBar.send(player, ChatColor.RED + "That is not a valid image!");
+                return;
+            }
+            ActionBar.send(player, "");
+
+            // Send placed image information to player
+            String dateStr = (image.getPlacedAt() == null) ?
+                ChatColor.GRAY + "Some point in time" :
+                new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z").format(image.getPlacedAt());
+            String playerStr;
+            if (image.getPlacedBy() == null) {
+                playerStr = ChatColor.GRAY + "Someone";
+            } else if (image.getPlacedBy().getName() == null) {
+                playerStr = ChatColor.DARK_AQUA + image.getPlacedBy().getUniqueId().toString();
+            } else {
+                playerStr = image.getPlacedBy().getName();
+            }
+            player.sendMessage("");
+            player.sendMessage(ChatColor.GOLD + "Filename: " + ChatColor.RESET + image.getFilename());
+            player.sendMessage(ChatColor.GOLD + "World: " + ChatColor.RESET +
+                image.getLocation().getChunk().getWorld().getName());
+            player.sendMessage(ChatColor.GOLD + "Coordinates: " + ChatColor.RESET +
+                image.getLocation().getBlockX() + ", " +
+                image.getLocation().getBlockY() + ", " +
+                image.getLocation().getBlockZ());
+            player.sendMessage(ChatColor.GOLD + "Block Face: " + ChatColor.RESET + image.getBlockFace());
+            player.sendMessage(ChatColor.GOLD + "Rotation: " + ChatColor.RESET + image.getRotation());
+            player.sendMessage(ChatColor.GOLD + "Dimensions: " + ChatColor.RESET +
+                image.getWidth() + "x" + image.getHeight() + " blocks");
+            player.sendMessage(ChatColor.GOLD + "Placed At: " + ChatColor.RESET + dateStr);
+            player.sendMessage(ChatColor.GOLD + "Placed By: " + ChatColor.RESET + playerStr);
+        });
+        task.onFailure(() -> ActionBar.send(player, ChatColor.RED + "Image describing canceled"));
+        task.run("Right click the image to describe");
     }
 }

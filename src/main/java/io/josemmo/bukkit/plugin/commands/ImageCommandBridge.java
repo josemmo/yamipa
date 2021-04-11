@@ -86,6 +86,14 @@ public class ImageCommandBridge {
             });
         group.withSubcommand(removeInRadius);
 
+        // Describe command
+        CommandAPICommand describe = new CommandAPICommand("describe")
+            .withPermission("yamipa.describe")
+            .executesPlayer((sender, __) -> {
+                ImageCommand.describeImage(sender);
+            });
+        group.withSubcommand(describe);
+
         // Commit commands
         group.register();
     }
