@@ -21,6 +21,7 @@ import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Date;
 import java.util.Set;
 
 public class ImageCommand {
@@ -135,7 +136,8 @@ public class ImageCommand {
 
             ActionBar.send(player, "");
             Rotation rotation = FakeImage.getRotationFromPlayerEyesight(face, player.getEyeLocation());
-            FakeImage fakeImage = new FakeImage(image.getName(), location, face, rotation, width, finalHeight);
+            FakeImage fakeImage = new FakeImage(image.getName(), location, face, rotation,
+                width, finalHeight, new Date(), player);
             plugin.getRenderer().addImage(fakeImage);
         });
         task.onFailure(() -> ActionBar.send(player, ChatColor.RED + "Image placing canceled"));

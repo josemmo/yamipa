@@ -2,10 +2,7 @@ package io.josemmo.bukkit.plugin.renderer;
 
 import io.josemmo.bukkit.plugin.YamipaPlugin;
 import io.josemmo.bukkit.plugin.utils.CsvConfiguration;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.Rotation;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -98,7 +95,13 @@ public class ImageRenderer implements Listener {
                 Rotation rotation = Rotation.valueOf(row[6]);
                 int width = Math.min(FakeImage.MAX_DIMENSION, Math.abs(Integer.parseInt(row[7])));
                 int height = Math.min(FakeImage.MAX_DIMENSION, Math.abs(Integer.parseInt(row[8])));
-                addImage(new FakeImage(filename, location, face, rotation, width, height), true);
+                Date placedAt = (row.length > 9 && !row[9].equals("")) ?
+                    new Date(Long.parseLong(row[9])*1000L) :
+                    null;
+                OfflinePlayer placedBy = (row.length > 10 && !row[10].equals("")) ?
+                    Bukkit.getOfflinePlayer(UUID.fromString(row[10])) :
+                    null;
+                addImage(new FakeImage(filename, location, face, rotation, width, height, placedAt, placedBy), true);
             } catch (Exception e) {
                 plugin.log(Level.SEVERE, "Invalid fake image properties: " + String.join(";", row), e);
             }
@@ -133,7 +136,9 @@ public class ImageRenderer implements Listener {
                 fakeImage.getBlockFace().name(),
                 fakeImage.getRotation().name(),
                 fakeImage.getWidth() + "",
-                fakeImage.getHeight() + ""
+                fakeImage.getHeight() + "",
+                (fakeImage.getPlacedAt() == null) ? "" : (fakeImage.getPlacedAt().getTime() / 1000) + "",
+                (fakeImage.getPlacedBy() == null) ? "" : fakeImage.getPlacedBy().getUniqueId().toString()
             };
             config.addRow(row);
         }

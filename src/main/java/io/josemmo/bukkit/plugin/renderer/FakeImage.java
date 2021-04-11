@@ -6,12 +6,14 @@ import io.josemmo.bukkit.plugin.storage.ImageFile;
 import io.josemmo.bukkit.plugin.utils.DirectionUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.Rotation;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.util.Vector;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
@@ -23,6 +25,8 @@ public class FakeImage extends FakeEntity {
     private final Rotation rotation;
     private final int width;
     private final int height;
+    private final Date placedAt;
+    private final OfflinePlayer placedBy;
     private final BiFunction<Integer, Integer, Vector> getLocationVector;
     private FakeItemFrame[][] frames;
 
@@ -60,14 +64,21 @@ public class FakeImage extends FakeEntity {
      * @param rotation Image rotation
      * @param width    Width in blocks
      * @param height   Height in blocks
+     * @param placedAt Placed at
+     * @param placedBy Placed by
      */
-    public FakeImage(String filename, Location location, BlockFace face, Rotation rotation, int width, int height) {
+    public FakeImage(
+        String filename, Location location, BlockFace face, Rotation rotation, int width, int height,
+        Date placedAt, OfflinePlayer placedBy
+    ) {
         this.filename = filename;
         this.location = location;
         this.face = face;
         this.rotation = rotation;
         this.width = width;
         this.height = height;
+        this.placedAt = placedAt;
+        this.placedBy = placedBy;
 
         // Define function for retrieving item frame positional vector from <row,column> pair
         if (face == BlockFace.SOUTH) {
@@ -157,6 +168,22 @@ public class FakeImage extends FakeEntity {
      */
     public int getHeight() {
         return height;
+    }
+
+    /**
+     * Get placed at date
+     * @return Placed at date
+     */
+    public Date getPlacedAt() {
+        return placedAt;
+    }
+
+    /**
+     * Get placed by player
+     * @return Placed by player instance
+     */
+    public OfflinePlayer getPlacedBy() {
+        return placedBy;
     }
 
     /**
