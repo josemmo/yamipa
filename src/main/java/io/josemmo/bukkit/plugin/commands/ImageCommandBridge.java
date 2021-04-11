@@ -6,6 +6,7 @@ import dev.jorel.commandapi.arguments.IntegerArgument;
 import dev.jorel.commandapi.arguments.TextArgument;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
 import io.josemmo.bukkit.plugin.renderer.FakeImage;
+import org.bukkit.entity.Player;
 
 public class ImageCommandBridge {
     /**
@@ -23,7 +24,8 @@ public class ImageCommandBridge {
         CommandAPICommand list = new CommandAPICommand("list")
             .withPermission("yamipa.list")
             .executes((sender, __) -> {
-                ImageCommand.listImages(sender, 1);
+                boolean isPlayer = (sender instanceof Player);
+                ImageCommand.listImages(sender, isPlayer ? 1 : 0);
             });
         group.withSubcommand(list);
 

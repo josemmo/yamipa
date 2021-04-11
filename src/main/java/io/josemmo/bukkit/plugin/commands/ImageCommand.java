@@ -47,16 +47,19 @@ public class ImageCommand {
         }
 
         // Is the page number valid?
-        int firstImageIndex = (page - 1) * ITEMS_PER_PAGE;
+        int firstImageIndex = Math.max(page-1, 0) * ITEMS_PER_PAGE;
         if (firstImageIndex >= numOfImages) {
             sender.sendMessage(ChatColor.RED + "Page " + page + " not found");
             return;
         }
 
         // Render list of images
-        int maxPage = (int) Math.ceil((float) numOfImages / ITEMS_PER_PAGE);
-        sender.sendMessage("=== Page " + page + " out of " + maxPage + " ===");
-        for (int i=firstImageIndex; i<Math.min(numOfImages, firstImageIndex+ITEMS_PER_PAGE); ++i) {
+        int stopImageIndex = (page == 0) ? numOfImages : Math.min(numOfImages, firstImageIndex+ITEMS_PER_PAGE);
+        if (page > 0) {
+            int maxPage = (int) Math.ceil((float) numOfImages / ITEMS_PER_PAGE);
+            sender.sendMessage("=== Page " + page + " out of " + maxPage + " ===");
+        }
+        for (int i=firstImageIndex; i<stopImageIndex; ++i) {
             sender.sendMessage("" + ChatColor.GOLD + filenames[i]);
         }
     }
