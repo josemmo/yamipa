@@ -6,10 +6,7 @@ import io.josemmo.bukkit.plugin.renderer.ImageRenderer;
 import io.josemmo.bukkit.plugin.storage.ImageFile;
 import io.josemmo.bukkit.plugin.utils.SelectBlockTask;
 import io.josemmo.bukkit.plugin.utils.ActionBar;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.Rotation;
+import org.bukkit.*;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginDescriptionFile;
@@ -24,6 +21,7 @@ import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Set;
+import java.util.UUID;
 
 public class ImageCommand {
     public static final int ITEMS_PER_PAGE = 9;
@@ -35,8 +33,8 @@ public class ImageCommand {
         s.sendMessage(ChatColor.AQUA + "/image download <url> <filename>" + ChatColor.RESET + " — Download image");
         s.sendMessage(ChatColor.AQUA + "/image list [<page>]" + ChatColor.RESET + " — List all images");
         s.sendMessage(ChatColor.AQUA + "/image place <filename>" + ChatColor.RESET + " — Place image");
-        s.sendMessage(ChatColor.AQUA + "/image remove" + ChatColor.RESET + " — Remove placed image");
-        s.sendMessage(ChatColor.AQUA + "/image remove <radius>" + ChatColor.RESET + " — Remove placed images in radius");
+        s.sendMessage(ChatColor.AQUA + "/image remove" + ChatColor.RESET + " — Remove a single placed image");
+        s.sendMessage(ChatColor.AQUA + "/image remove <radius> [<placed-by>]" + ChatColor.RESET + " — Remove placed images");
     }
 
     public static void listImages(CommandSender sender, int page) {
@@ -164,7 +162,7 @@ public class ImageCommand {
         task.run("Right click an image to continue");
     }
 
-    public static void removeImagesInRadius(Player player, int radius) {
+    public static void removeImagesInRadius(Player player, int radius, Player placedBy) {
         ImageRenderer renderer = YamipaPlugin.getInstance().getRenderer();
 
         // Get images in area
@@ -176,6 +174,15 @@ public class ImageCommand {
             loc.getBlockZ()-radius+1,
             loc.getBlockZ()+radius-1
         );
+
+        // Filter out images not placed by targeted player
+        if (placedBy != null) {
+            UUID target = placedBy.getUniqueId();
+            images.removeIf(image -> {
+                UUID thisTarget = (image.getPlacedBy() == null) ? null : image.getPlacedBy().getUniqueId();
+                return !target.equals(thisTarget);
+            });
+        }
 
         // Remove found images
         for (FakeImage image : images) {

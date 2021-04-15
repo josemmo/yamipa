@@ -3,6 +3,7 @@ package io.josemmo.bukkit.plugin.commands;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.Argument;
 import dev.jorel.commandapi.arguments.IntegerArgument;
+import dev.jorel.commandapi.arguments.PlayerArgument;
 import dev.jorel.commandapi.arguments.TextArgument;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
 import io.josemmo.bukkit.plugin.renderer.FakeImage;
@@ -82,9 +83,19 @@ public class ImageCommandBridge {
             .withPermission("yamipa.remove.radius")
             .withArguments(new IntegerArgument("radius", 1))
             .executesPlayer((sender, args) -> {
-                ImageCommand.removeImagesInRadius(sender, (int) args[0]);
+                ImageCommand.removeImagesInRadius(sender, (int) args[0], null);
             });
         group.withSubcommand(removeInRadius);
+
+        // Remove command (in filtered radius)
+        CommandAPICommand removeInFilteredRadius = new CommandAPICommand("remove")
+            .withPermission("yamipa.remove.radius")
+            .withArguments(new IntegerArgument("radius", 1))
+            .withArguments(new PlayerArgument("placedBy"))
+            .executesPlayer((sender, args) -> {
+                ImageCommand.removeImagesInRadius(sender, (int) args[0], (Player) args[1]);
+            });
+        group.withSubcommand(removeInFilteredRadius);
 
         // Describe command
         CommandAPICommand describe = new CommandAPICommand("describe")
