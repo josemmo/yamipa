@@ -13,7 +13,6 @@ It is designed with performance and compatibility in mind, so even the most low-
     <a href="screenshots/sample-1.jpg"><img alt="Sample Screenshot" src="screenshots/sample-1.jpg" width="250"></a>
     <a href="screenshots/sample-2.jpg"><img alt="Sample Screenshot" src="screenshots/sample-2.jpg" width="250"></a>
 </p>
-<h3 align="center">· · ·</h3>
 
 ## Installation
 Download the JAR file for the [latest release](https://github.com/josemmo/yamipa/releases/latest) and copy it to the
@@ -24,8 +23,6 @@ Before installing Yamipa make sure you meet the following requirements:
 
 - CraftBukkit, Spigot or PaperMC v1.16.x
 - [ProtocolLib v4.x.x](https://www.spigotmc.org/resources/protocollib.1997/)
-
----
 
 ## Configuration
 Yamipa is ready-to-go right out of the box. By default, it creates the following files and directories under the
@@ -48,8 +45,6 @@ This library uses bStats to anonymously report the number of installs. If you do
 disable it at any time by adding `enabled: false` to the
 [bStats configuration file](https://bstats.org/getting-started#:~:text=Disabling%20bStats) (it's ok, no hard feelings).
 
----
-
 ## Usage
 This plugin adds the following commands:
 
@@ -59,8 +54,6 @@ This plugin adds the following commands:
 - `/image place <filename> <width> [<height>]`: Place an image of size `width`x`height` blocks.
 - `/image remove`: Remove a placed image from the world without deleting the image file.
 - `/image remove <radius> [<placed-by>]`: Remove all placed images in a radius of `radius` blocks around the player.
-
----
 
 ## Permissions
 If you want more granular control over the players who can use a particular set of commands, permissions are the way to go!
@@ -78,8 +71,6 @@ By default, only server OPs have all permissions granted. You can change this by
 such as [LuckPerms](https://luckperms.net/) or [GroupManager](https://elgarl.github.io/GroupManager/).
 
 Both these plugins have been tested to work with Yamipa, although any similar one should work just fine.
-
----
 
 ## License
 Yamipa is licensed under the [MIT License](LICENSE) and includes third-party software licensed under
