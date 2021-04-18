@@ -139,7 +139,7 @@ public class SelectBlockTask {
             }
         }
 
-        @EventHandler(priority = EventPriority.MONITOR)
+        @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
         public void onPlayerQuit(PlayerQuitEvent event) {
             UUID uuid = event.getPlayer().getUniqueId();
             SelectBlockTask task = instances.get(uuid);
