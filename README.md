@@ -2,7 +2,7 @@
 [![Tests](https://github.com/josemmo/yamipa/workflows/Tests/badge.svg)](https://github.com/josemmo/yamipa/actions)
 [![Latest Version](https://img.shields.io/github/v/release/josemmo/yamipa)](https://github.com/josemmo/yamipa/releases/latest)
 ![Minecraft Version](https://img.shields.io/badge/minecraft-%3E%3D1.16-blueviolet)
-[![bStats Players](https://img.shields.io/bstats/players/10243)](https://bstats.org/plugin/bukkit/Yamipa/10243)
+[![bStats Servers](https://img.shields.io/bstats/servers/10243)](https://bstats.org/plugin/bukkit/Yamipa/10243)
 [![License](https://img.shields.io/github/license/josemmo/yamipa)](LICENSE)
 
 Yamipa is an Spigot plugin that allows you to place images on any surface in your Minecraft server.
