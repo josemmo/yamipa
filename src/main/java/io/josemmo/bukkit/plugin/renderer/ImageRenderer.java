@@ -154,16 +154,16 @@ public class ImageRenderer implements Listener {
 
     /**
      * Add image to renderer
-     * @param fakeImage Fake image instance
-     * @param isInit    TRUE if called during renderer startup, FALSE otherwise
+     * @param image  Fake image instance
+     * @param isInit TRUE if called during renderer startup, FALSE otherwise
      */
-    public void addImage(FakeImage fakeImage, boolean isInit) {
-        WorldAreaId worldAreaId = fakeImage.getWorldAreaId();
+    public void addImage(FakeImage image, boolean isInit) {
+        WorldAreaId worldAreaId = image.getWorldAreaId();
         WorldArea worldArea = worldAreas.computeIfAbsent(worldAreaId, __ -> {
             plugin.fine("Created WorldArea#(" + worldAreaId + ")");
             return new WorldArea(worldAreaId);
         });
-        worldArea.addImage(fakeImage);
+        worldArea.addImage(image);
         if (!isInit) {
             hasConfigChanged.set(true);
         }
@@ -171,10 +171,10 @@ public class ImageRenderer implements Listener {
 
     /**
      * Add image to renderer
-     * @param fakeImage Fake image instance
+     * @param image Fake image instance
      */
-    public void addImage(FakeImage fakeImage) {
-        addImage(fakeImage, false);
+    public void addImage(FakeImage image) {
+        addImage(image, false);
     }
 
     /**
