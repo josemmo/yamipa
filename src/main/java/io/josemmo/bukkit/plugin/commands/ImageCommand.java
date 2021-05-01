@@ -162,7 +162,7 @@ public class ImageCommand {
         task.run("Right click an image to continue");
     }
 
-    public static void removeImagesInRadius(Player player, int radius, Player placedBy) {
+    public static void removeImagesInRadius(Player player, int radius, OfflinePlayer placedBy) {
         ImageRenderer renderer = YamipaPlugin.getInstance().getRenderer();
 
         // Get images in area

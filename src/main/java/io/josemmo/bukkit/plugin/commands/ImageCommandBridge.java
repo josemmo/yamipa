@@ -3,10 +3,11 @@ package io.josemmo.bukkit.plugin.commands;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.Argument;
 import dev.jorel.commandapi.arguments.IntegerArgument;
-import dev.jorel.commandapi.arguments.PlayerArgument;
 import dev.jorel.commandapi.arguments.TextArgument;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
 import io.josemmo.bukkit.plugin.renderer.FakeImage;
+import org.bukkit.ChatColor;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
 public class ImageCommandBridge {
@@ -91,9 +92,14 @@ public class ImageCommandBridge {
         CommandAPICommand removeInFilteredRadius = new CommandAPICommand("remove")
             .withPermission("yamipa.remove.radius")
             .withArguments(new IntegerArgument("radius", 1))
-            .withArguments(new PlayerArgument("placedBy"))
+            .withArguments(new PlacedByArgument("placedBy"))
             .executesPlayer((sender, args) -> {
-                ImageCommand.removeImagesInRadius(sender, (int) args[0], (Player) args[1]);
+                OfflinePlayer player = PlacedByArgument.getPlayer((String) args[1]);
+                if (player == null) {
+                    sender.sendMessage(ChatColor.RED + "That player does not have any placed images!");
+                } else {
+                    ImageCommand.removeImagesInRadius(sender, (int) args[0], player);
+                }
             });
         group.withSubcommand(removeInFilteredRadius);
 

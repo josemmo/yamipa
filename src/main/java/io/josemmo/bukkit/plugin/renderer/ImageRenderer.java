@@ -19,6 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 public class ImageRenderer implements Listener {
     static public final long SAVE_INTERVAL = 20L * 90; // In server ticks
@@ -27,6 +28,7 @@ public class ImageRenderer implements Listener {
     private BukkitTask saveTask;
     private final AtomicBoolean hasConfigChanged = new AtomicBoolean(false);
     private final ConcurrentMap<WorldAreaId, WorldArea> worldAreas = new ConcurrentHashMap<>();
+    private final ConcurrentMap<UUID, Integer> imagesCountByPlayer = new ConcurrentHashMap<>();
     private final Map<UUID, WorldAreaId> playersLocation = new HashMap<>();
 
     /**
@@ -167,6 +169,12 @@ public class ImageRenderer implements Listener {
         if (!isInit) {
             hasConfigChanged.set(true);
         }
+
+        // Increment count of placed images by player
+        OfflinePlayer placedBy = image.getPlacedBy();
+        if (placedBy != null) {
+            imagesCountByPlayer.compute(placedBy.getUniqueId(), (__, prev) -> (prev == null) ? 1 : prev+1);
+        }
     }
 
     /**
@@ -239,6 +247,20 @@ public class ImageRenderer implements Listener {
             }
         }
         hasConfigChanged.set(true);
+
+        // Decrement count of placed images by player
+        OfflinePlayer placedBy = image.getPlacedBy();
+        if (placedBy != null) {
+            imagesCountByPlayer.compute(placedBy.getUniqueId(), (__, prev) -> (prev != null && prev > 1) ? prev-1 : null);
+        }
+    }
+
+    /**
+     * Get set of players who have placed images
+     * @return Offline players
+     */
+    public Set<OfflinePlayer> getPlayersWithPlacedImages() {
+        return imagesCountByPlayer.keySet().stream().map(Bukkit::getOfflinePlayer).collect(Collectors.toSet());
     }
 
     /**
