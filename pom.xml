@@ -29,8 +29,8 @@
             <layout>default</layout>
         </repository>
         <repository>
-            <id>commandapi</id>
-            <url>https://raw.githubusercontent.com/JorelAli/CommandAPI/mvn-repo/</url>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
         </repository>
     </repositories>
 
@@ -53,9 +53,9 @@
             <version>2.7.1</version>
         </dependency>
         <dependency>
-            <groupId>dev.jorel</groupId>
+            <groupId>dev.jorel.CommandAPI</groupId>
             <artifactId>commandapi-shade</artifactId>
-            <version>5.9</version>
+            <version>5.12</version>
         </dependency>
         <dependency>
             <groupId>org.bstats</groupId>
@@ -90,7 +90,7 @@
                     <createDependencyReducedPom>false</createDependencyReducedPom>
                     <filters>
                         <filter>
-                            <artifact>dev.jorel:*</artifact>
+                            <artifact>dev.jorel.CommandAPI:*</artifact>
                             <excludes>
                                 <exclude>META-INF/**</exclude>
                             </excludes>
