@@ -29,12 +29,24 @@ public class ImageCommand {
     public static void showHelp(CommandSender s) {
         s.sendMessage(ChatColor.BOLD + "=== Yamipa Plugin Help ===");
         s.sendMessage(ChatColor.AQUA + "/image" + ChatColor.RESET + " — Show this help");
-        s.sendMessage(ChatColor.AQUA + "/image describe" + ChatColor.RESET + " — Describe placed image");
-        s.sendMessage(ChatColor.AQUA + "/image download <url> <filename>" + ChatColor.RESET + " — Download image");
-        s.sendMessage(ChatColor.AQUA + "/image list [<page>]" + ChatColor.RESET + " — List all images");
-        s.sendMessage(ChatColor.AQUA + "/image place <filename>" + ChatColor.RESET + " — Place image");
-        s.sendMessage(ChatColor.AQUA + "/image remove" + ChatColor.RESET + " — Remove a single placed image");
-        s.sendMessage(ChatColor.AQUA + "/image remove <radius> [<placed-by>]" + ChatColor.RESET + " — Remove placed images");
+        if (s.hasPermission("yamipa.describe")) {
+            s.sendMessage(ChatColor.AQUA + "/image describe" + ChatColor.RESET + " — Describe placed image");
+        }
+        if (s.hasPermission("yamipa.download")) {
+            s.sendMessage(ChatColor.AQUA + "/image download <url> <filename>" + ChatColor.RESET + " — Download image");
+        }
+        if (s.hasPermission("yamipa.list")) {
+            s.sendMessage(ChatColor.AQUA + "/image list [<page>]" + ChatColor.RESET + " — List all images");
+        }
+        if (s.hasPermission("yamipa.place")) {
+            s.sendMessage(ChatColor.AQUA + "/image place <filename>" + ChatColor.RESET + " — Place image");
+        }
+        if (s.hasPermission("yamipa.remove")) {
+            s.sendMessage(ChatColor.AQUA + "/image remove" + ChatColor.RESET + " — Remove a single placed image");
+        }
+        if (s.hasPermission("yamipa.remove.radius")) {
+            s.sendMessage(ChatColor.AQUA + "/image remove <radius> [<placed-by>]" + ChatColor.RESET + " — Remove placed images");
+        }
     }
 
     public static void listImages(CommandSender sender, int page) {

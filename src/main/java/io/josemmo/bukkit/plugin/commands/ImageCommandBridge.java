@@ -15,7 +15,15 @@ public class ImageCommandBridge {
      * Register command
      */
     public static void register() {
-        CommandAPICommand group = new CommandAPICommand("image").withAliases("yamipa", "images");
+        CommandAPICommand group = new CommandAPICommand("image")
+            .withRequirement(sender -> sender.hasPermission("yamipa.*") ||
+                sender.hasPermission("yamipa.describe") ||
+                sender.hasPermission("yamipa.download") ||
+                sender.hasPermission("yamipa.list") ||
+                sender.hasPermission("yamipa.place") ||
+                sender.hasPermission("yamipa.remove") ||
+                sender.hasPermission("yamipa.remove.radius"))
+            .withAliases("yamipa", "images");
 
         // Help command
         group.executes((sender, __) -> {
