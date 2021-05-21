@@ -4,15 +4,15 @@ import dev.jorel.commandapi.arguments.StringArgument;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
 import io.josemmo.bukkit.plugin.renderer.ImageRenderer;
 import org.bukkit.OfflinePlayer;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class PlacedByArgument extends StringArgument {
     public PlacedByArgument(String nodeName) {
         super(nodeName);
         overrideSuggestions(__ -> {
             ImageRenderer renderer = YamipaPlugin.getInstance().getRenderer();
-            List<String> suggestions = new ArrayList<>();
+            Set<String> suggestions = new TreeSet<>();
 
             // Get nicknames and UUID for every player that has at least one placed image
             for (OfflinePlayer player : renderer.getPlayersWithPlacedImages()) {
