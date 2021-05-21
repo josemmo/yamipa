@@ -55,6 +55,25 @@ This plugin adds the following commands:
 - `/image place <filename> <width> [<height>]`: Place an image of size `width`x`height` blocks.
 - `/image remove`: Remove a placed image from the world without deleting the image file.
 
+### Examples
+
+- Show help\
+  `/image`
+- Download an image from a URL and save it with another name\
+  `/image download "https://www.example.com/a/b/c/1234.jpg" imagename.jpg`
+- Start the dialog to place an image with a width of 3 blocks and auto height\
+  `/image place imagename.jpg 3`
+- Start the dialog to place a 3-blocks wide and 2-blocks high image\
+  `/image place imagename.jpg 3 2`
+- Start the dialog to remove a placed image while keeping the original file\
+  `/image remove`
+- Remove all placed images in a radius of 5 blocks around the spawn (sender's world)\
+  `/image clear 0 0 5`
+- Remove all placed images in a radius of 11 blocks around the player\
+  `/image clear ~ ~ 11`
+- Remove all images placed by "EvilPlayer" in a radius of 100 blocks around the sender\
+  `/image clear ~ ~ 100 EvilPlayer`
+
 ## Permissions
 If you want more granular control over the players who can use a particular set of commands, permissions are the way to go!
 
