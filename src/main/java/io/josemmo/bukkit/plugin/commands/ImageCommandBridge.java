@@ -3,10 +3,12 @@ package io.josemmo.bukkit.plugin.commands;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.Argument;
 import dev.jorel.commandapi.arguments.IntegerArgument;
+import dev.jorel.commandapi.arguments.Location2DArgument;
 import dev.jorel.commandapi.arguments.TextArgument;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
 import io.josemmo.bukkit.plugin.renderer.FakeImage;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
@@ -17,12 +19,12 @@ public class ImageCommandBridge {
     public static void register() {
         CommandAPICommand group = new CommandAPICommand("image")
             .withRequirement(sender -> sender.hasPermission("yamipa.*") ||
+                sender.hasPermission("yamipa.clear") ||
                 sender.hasPermission("yamipa.describe") ||
                 sender.hasPermission("yamipa.download") ||
                 sender.hasPermission("yamipa.list") ||
                 sender.hasPermission("yamipa.place") ||
-                sender.hasPermission("yamipa.remove") ||
-                sender.hasPermission("yamipa.remove.radius"))
+                sender.hasPermission("yamipa.remove"))
             .withAliases("yamipa", "images");
 
         // Help command
@@ -87,29 +89,31 @@ public class ImageCommandBridge {
             });
         group.withSubcommand(remove);
 
-        // Remove command (in radius)
-        CommandAPICommand removeInRadius = new CommandAPICommand("remove")
-            .withPermission("yamipa.remove.radius")
+        // Clear command
+        CommandAPICommand clear = new CommandAPICommand("clear")
+            .withPermission("yamipa.clear")
+            .withArguments(new Location2DArgument("origin"))
             .withArguments(new IntegerArgument("radius", 1))
-            .executesPlayer((sender, args) -> {
-                ImageCommand.removeImagesInRadius(sender, (int) args[0], null);
+            .executes((sender, args) -> {
+                ImageCommand.clearImages(sender, (Location) args[0], (int) args[1], null);
             });
-        group.withSubcommand(removeInRadius);
+        group.withSubcommand(clear);
 
-        // Remove command (in filtered radius)
-        CommandAPICommand removeInFilteredRadius = new CommandAPICommand("remove")
-            .withPermission("yamipa.remove.radius")
+        // Clear command (with placed by)
+        CommandAPICommand clearPlacedBy = new CommandAPICommand("clear")
+            .withPermission("yamipa.clear")
+            .withArguments(new Location2DArgument("origin"))
             .withArguments(new IntegerArgument("radius", 1))
             .withArguments(new PlacedByArgument("placedBy"))
-            .executesPlayer((sender, args) -> {
-                OfflinePlayer player = PlacedByArgument.getPlayer((String) args[1]);
+            .executes((sender, args) -> {
+                OfflinePlayer player = PlacedByArgument.getPlayer((String) args[2]);
                 if (player == null) {
                     sender.sendMessage(ChatColor.RED + "That player does not have any placed images!");
                 } else {
-                    ImageCommand.removeImagesInRadius(sender, (int) args[0], player);
+                    ImageCommand.clearImages(sender, (Location) args[0], (int) args[1], player);
                 }
             });
-        group.withSubcommand(removeInFilteredRadius);
+        group.withSubcommand(clearPlacedBy);
 
         // Describe command
         CommandAPICommand describe = new CommandAPICommand("describe")

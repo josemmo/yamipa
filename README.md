@@ -48,24 +48,24 @@ disable it at any time by adding `enabled: false` to the
 ## Usage
 This plugin adds the following commands:
 
+- `/image clear <x y> <r> [<placed-by>]`: Remove all placed images in a radius of `r` blocks around the origin `x, y`.
 - `/image describe`: Show detailed information about a placed image.
 - `/image download <url> <filename>`: Download an image from a URL and place it in the images directory.
 - `/image list [<page>]`: List all available files in the images directory.
 - `/image place <filename> <width> [<height>]`: Place an image of size `width`x`height` blocks.
 - `/image remove`: Remove a placed image from the world without deleting the image file.
-- `/image remove <radius> [<placed-by>]`: Remove all placed images in a radius of `radius` blocks around the player.
 
 ## Permissions
 If you want more granular control over the players who can use a particular set of commands, permissions are the way to go!
 
 Yamipa defines the following permissions, each one corresponding to the command with the same name:
 
+- `yamipa.clear`
 - `yamipa.describe`
 - `yamipa.download`
 - `yamipa.list`
 - `yamipa.place`
 - `yamipa.remove`
-- `yamipa.remove.radius`
 
 By default, only server OPs have all permissions granted. You can change this by using a permission plugin,
 such as [LuckPerms](https://luckperms.net/) or [GroupManager](https://elgarl.github.io/GroupManager/).

@@ -9,12 +9,14 @@ permissions:
   yamipa.*:
     default: op
     children:
+      yamipa.clear: true
       yamipa.describe: true
       yamipa.download: true
       yamipa.list: true
       yamipa.place: true
       yamipa.remove: true
-      yamipa.remove.radius: true
+  yamipa.clear:
+    default: op
   yamipa.describe:
     default: op
   yamipa.download:
@@ -24,6 +26,4 @@ permissions:
   yamipa.place:
     default: op
   yamipa.remove:
-    default: op
-  yamipa.remove.radius:
     default: op

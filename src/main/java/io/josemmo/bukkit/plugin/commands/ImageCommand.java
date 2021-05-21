@@ -29,6 +29,9 @@ public class ImageCommand {
     public static void showHelp(CommandSender s) {
         s.sendMessage(ChatColor.BOLD + "=== Yamipa Plugin Help ===");
         s.sendMessage(ChatColor.AQUA + "/image" + ChatColor.RESET + " — Show this help");
+        if (s.hasPermission("yamipa.clear")) {
+            s.sendMessage(ChatColor.AQUA + "/image clear <x y> <r> [<placed-by>]" + ChatColor.RESET + " — Remove placed images");
+        }
         if (s.hasPermission("yamipa.describe")) {
             s.sendMessage(ChatColor.AQUA + "/image describe" + ChatColor.RESET + " — Describe placed image");
         }
@@ -43,9 +46,6 @@ public class ImageCommand {
         }
         if (s.hasPermission("yamipa.remove")) {
             s.sendMessage(ChatColor.AQUA + "/image remove" + ChatColor.RESET + " — Remove a single placed image");
-        }
-        if (s.hasPermission("yamipa.remove.radius")) {
-            s.sendMessage(ChatColor.AQUA + "/image remove <radius> [<placed-by>]" + ChatColor.RESET + " — Remove placed images");
         }
     }
 
@@ -174,17 +174,16 @@ public class ImageCommand {
         task.run("Right click an image to continue");
     }
 
-    public static void removeImagesInRadius(Player player, int radius, OfflinePlayer placedBy) {
+    public static void clearImages(CommandSender sender, Location origin, int radius, OfflinePlayer placedBy) {
         ImageRenderer renderer = YamipaPlugin.getInstance().getRenderer();
 
         // Get images in area
-        Location loc = player.getLocation();
         Set<FakeImage> images = renderer.getImages(
-            player.getWorld(),
-            loc.getBlockX()-radius+1,
-            loc.getBlockX()+radius-1,
-            loc.getBlockZ()-radius+1,
-            loc.getBlockZ()+radius-1
+            origin.getWorld(),
+            origin.getBlockX()-radius+1,
+            origin.getBlockX()+radius-1,
+            origin.getBlockZ()-radius+1,
+            origin.getBlockZ()+radius-1
         );
 
         // Filter out images not placed by targeted player
@@ -200,7 +199,7 @@ public class ImageCommand {
         for (FakeImage image : images) {
             renderer.removeImage(image);
         }
-        player.sendMessage("Removed " + images.size() + " placed image(s)");
+        sender.sendMessage("Removed " + images.size() + " placed image(s)");
     }
 
     public static void describeImage(Player player) {
