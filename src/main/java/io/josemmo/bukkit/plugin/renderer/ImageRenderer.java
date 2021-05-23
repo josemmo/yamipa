@@ -262,6 +262,14 @@ public class ImageRenderer implements Listener {
     }
 
     /**
+     * Get number of placed images
+     * @return Number of placed images
+     */
+    public int size() {
+        return imagesCountByPlayer.values().stream().reduce(0, Integer::sum);
+    }
+
+    /**
      * Get available world areas from IDs
      * @param  ids World area IDs
      * @return     World area instances
