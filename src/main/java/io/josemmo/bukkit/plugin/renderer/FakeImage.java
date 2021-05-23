@@ -14,11 +14,13 @@ import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.util.Vector;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
 public class FakeImage extends FakeEntity {
     public static final int MAX_DIMENSION = 30; // In blocks
+    public static final UUID UNKNOWN_PLAYER_ID = new UUID(0, 0);
     private final String filename;
     private final Location location;
     private final BlockFace face;

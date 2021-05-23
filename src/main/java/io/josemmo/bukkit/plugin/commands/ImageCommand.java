@@ -189,10 +189,7 @@ public class ImageCommand {
         // Filter out images not placed by targeted player
         if (placedBy != null) {
             UUID target = placedBy.getUniqueId();
-            images.removeIf(image -> {
-                UUID thisTarget = (image.getPlacedBy() == null) ? null : image.getPlacedBy().getUniqueId();
-                return !target.equals(thisTarget);
-            });
+            images.removeIf(image -> !target.equals(image.getPlacedBy().getUniqueId()));
         }
 
         // Remove found images
@@ -220,7 +217,7 @@ public class ImageCommand {
                 ChatColor.GRAY + "Some point in time" :
                 new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z").format(image.getPlacedAt());
             String playerStr;
-            if (image.getPlacedBy() == null) {
+            if (image.getPlacedBy().getUniqueId().equals(FakeImage.UNKNOWN_PLAYER_ID)) {
                 playerStr = ChatColor.GRAY + "Someone";
             } else if (image.getPlacedBy().getName() == null) {
                 playerStr = ChatColor.DARK_AQUA + image.getPlacedBy().getUniqueId().toString();

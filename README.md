@@ -73,6 +73,8 @@ This plugin adds the following commands:
   `/image clear ~ ~ 11`
 - Remove all images placed by "EvilPlayer" in a radius of 100 blocks around the sender\
   `/image clear ~ ~ 100 EvilPlayer`
+- Remove all legacy placed images (without "placed by" metadata)\
+  `/image clear 0 0 9999999 00000000-0000-0000-0000-000000000000`
 
 ## Permissions
 If you want more granular control over the players who can use a particular set of commands, permissions are the way to go!

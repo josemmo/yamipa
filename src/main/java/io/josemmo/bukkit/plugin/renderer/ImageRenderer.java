@@ -22,7 +22,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 public class ImageRenderer implements Listener {
-    static public final long SAVE_INTERVAL = 20L * 90; // In server ticks
+    public static final long SAVE_INTERVAL = 20L * 90; // In server ticks
     private static final YamipaPlugin plugin = YamipaPlugin.getInstance();
     private final String configPath;
     private BukkitTask saveTask;
@@ -100,9 +100,10 @@ public class ImageRenderer implements Listener {
                 Date placedAt = (row.length > 9 && !row[9].equals("")) ?
                     new Date(Long.parseLong(row[9])*1000L) :
                     null;
-                OfflinePlayer placedBy = (row.length > 10 && !row[10].equals("")) ?
-                    Bukkit.getOfflinePlayer(UUID.fromString(row[10])) :
-                    null;
+                UUID placedById = (row.length > 10 && !row[10].equals("")) ?
+                    UUID.fromString(row[10]) :
+                    FakeImage.UNKNOWN_PLAYER_ID;
+                OfflinePlayer placedBy = Bukkit.getOfflinePlayer(placedById);
                 addImage(new FakeImage(filename, location, face, rotation, width, height, placedAt, placedBy), true);
             } catch (Exception e) {
                 plugin.log(Level.SEVERE, "Invalid fake image properties: " + String.join(";", row), e);
@@ -129,6 +130,7 @@ public class ImageRenderer implements Listener {
         CsvConfiguration config = new CsvConfiguration();
         for (FakeImage fakeImage : fakeImages) {
             Location location = fakeImage.getLocation();
+            UUID placedById = fakeImage.getPlacedBy().getUniqueId();
             String[] row = new String[]{
                 fakeImage.getFilename(),
                 location.getChunk().getWorld().getName(),
@@ -140,7 +142,7 @@ public class ImageRenderer implements Listener {
                 fakeImage.getWidth() + "",
                 fakeImage.getHeight() + "",
                 (fakeImage.getPlacedAt() == null) ? "" : (fakeImage.getPlacedAt().getTime() / 1000) + "",
-                (fakeImage.getPlacedBy() == null) ? "" : fakeImage.getPlacedBy().getUniqueId().toString()
+                placedById.equals(FakeImage.UNKNOWN_PLAYER_ID) ? "" : placedById.toString()
             };
             config.addRow(row);
         }
@@ -171,10 +173,8 @@ public class ImageRenderer implements Listener {
         }
 
         // Increment count of placed images by player
-        OfflinePlayer placedBy = image.getPlacedBy();
-        if (placedBy != null) {
-            imagesCountByPlayer.compute(placedBy.getUniqueId(), (__, prev) -> (prev == null) ? 1 : prev+1);
-        }
+        UUID placedById = image.getPlacedBy().getUniqueId();
+        imagesCountByPlayer.compute(placedById, (__, prev) -> (prev == null) ? 1 : prev+1);
     }
 
     /**
@@ -249,10 +249,8 @@ public class ImageRenderer implements Listener {
         hasConfigChanged.set(true);
 
         // Decrement count of placed images by player
-        OfflinePlayer placedBy = image.getPlacedBy();
-        if (placedBy != null) {
-            imagesCountByPlayer.compute(placedBy.getUniqueId(), (__, prev) -> (prev != null && prev > 1) ? prev-1 : null);
-        }
+        UUID placedById = image.getPlacedBy().getUniqueId();
+        imagesCountByPlayer.compute(placedById, (__, prev) -> (prev != null && prev > 1) ? prev-1 : null);
     }
 
     /**
