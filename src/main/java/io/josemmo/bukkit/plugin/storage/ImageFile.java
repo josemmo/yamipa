@@ -3,6 +3,8 @@ package io.josemmo.bukkit.plugin.storage;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
 import io.josemmo.bukkit.plugin.renderer.FakeImage;
 import io.josemmo.bukkit.plugin.renderer.FakeMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -33,7 +35,7 @@ public class ImageFile {
      * @param name Image file name
      * @param path Path to image file
      */
-    protected ImageFile(String name, String path) {
+    protected ImageFile(@NotNull String name, @NotNull String path) {
         this.name = name;
         this.path = path;
     }
@@ -42,7 +44,7 @@ public class ImageFile {
      * Get image file name
      * @return Image file name
      */
-    public String getName() {
+    public @NotNull String getName() {
         return name;
     }
 
@@ -52,7 +54,7 @@ public class ImageFile {
      * @throws IOException if not a valid image file
      * @throws NullPointerException if file not found
      */
-    private BufferedImage getBufferedImage() throws Exception {
+    private @NotNull BufferedImage getBufferedImage() throws Exception {
         return ImageIO.read(new File(path));
     }
 
@@ -64,7 +66,7 @@ public class ImageFile {
      * @throws IOException if not a valid image file
      * @throws NullPointerException if file not found
      */
-    private BufferedImage getBufferedImage(int width, int height) throws Exception {
+    private @NotNull BufferedImage getBufferedImage(int width, int height) throws Exception {
         Image tmp = getBufferedImage().getScaledInstance(width, height, Image.SCALE_FAST);
         BufferedImage resizedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 
@@ -80,7 +82,7 @@ public class ImageFile {
      * Get original size in pixels
      * @return Dimension instance or NULL if not a valid image file
      */
-    public Dimension getSize() {
+    public @Nullable Dimension getSize() {
         try {
             BufferedImage image = getBufferedImage();
             return new Dimension(image.getWidth(), image.getHeight());
@@ -106,7 +108,7 @@ public class ImageFile {
      * @param  subscriber Fake image instance requesting the maps
      * @return            Bi-dimensional array of maps
      */
-    public synchronized FakeMap[][] getMapsAndSubscribe(FakeImage subscriber) {
+    public synchronized @NotNull FakeMap[][] getMapsAndSubscribe(@NotNull FakeImage subscriber) {
         int width = subscriber.getWidth();
         int height = subscriber.getHeight();
         String cacheKey = width + "-" + height;
@@ -182,7 +184,7 @@ public class ImageFile {
      * @return        Bi-dimensional array of maps
      * @throws IOException if failed to parse cache file
      */
-    private FakeMap[][] readMapsFromCacheFile(File file, int width, int height) throws IOException {
+    private @NotNull FakeMap[][] readMapsFromCacheFile(@NotNull File file, int width, int height) throws IOException {
         try (FileInputStream stream = new FileInputStream(file)) {
             FakeMap[][] matrix = new FakeMap[width][height];
             for (int col=0; col<width; col++) {
@@ -204,7 +206,7 @@ public class ImageFile {
      * @param file   Cache file
      * @throws IOException if failed to write to cache file
      */
-    private void writeMapsToCacheFile(FakeMap[][] maps, int width, int height, File file) throws IOException {
+    private void writeMapsToCacheFile(@NotNull FakeMap[][] maps, int width, int height, @NotNull File file) throws IOException {
         try (FileOutputStream stream = new FileOutputStream(file)) {
             for (int col=0; col<width; col++) {
                 for (int row=0; row<height; row++) {
@@ -222,7 +224,7 @@ public class ImageFile {
      * FakeItemFrames are using them.
      * @param subscriber Fake image instance
      */
-    public synchronized void unsubscribe(FakeImage subscriber) {
+    public synchronized void unsubscribe(@NotNull FakeImage subscriber) {
         String cacheKey = subscriber.getWidth() + "-" + subscriber.getHeight();
         if (!subscribers.containsKey(cacheKey)) return;
 

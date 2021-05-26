@@ -11,6 +11,8 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.*;
 import org.bukkit.scheduler.BukkitTask;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -35,7 +37,7 @@ public class ImageRenderer implements Listener {
      * Class constructor
      * @param configPath Path to configuration file
      */
-    public ImageRenderer(String configPath) {
+    public ImageRenderer(@NotNull String configPath) {
         this.configPath = configPath;
     }
 
@@ -161,7 +163,7 @@ public class ImageRenderer implements Listener {
      * @param image  Fake image instance
      * @param isInit TRUE if called during renderer startup, FALSE otherwise
      */
-    public void addImage(FakeImage image, boolean isInit) {
+    public void addImage(@NotNull FakeImage image, boolean isInit) {
         WorldAreaId worldAreaId = image.getWorldAreaId();
         WorldArea worldArea = worldAreas.computeIfAbsent(worldAreaId, __ -> {
             plugin.fine("Created WorldArea#(" + worldAreaId + ")");
@@ -181,7 +183,7 @@ public class ImageRenderer implements Listener {
      * Add image to renderer
      * @param image Fake image instance
      */
-    public void addImage(FakeImage image) {
+    public void addImage(@NotNull FakeImage image) {
         addImage(image, false);
     }
 
@@ -191,7 +193,7 @@ public class ImageRenderer implements Listener {
      * @param  face     Fake image block face
      * @return          Fake image instance or NULL if not found
      */
-    public FakeImage getImage(Location location, BlockFace face) {
+    public @Nullable FakeImage getImage(@NotNull Location location, @NotNull BlockFace face) {
         WorldAreaId worldAreaId = WorldAreaId.fromLocation(location);
         WorldArea worldArea = worldAreas.get(worldAreaId);
         if (worldArea == null) {
@@ -218,7 +220,7 @@ public class ImageRenderer implements Listener {
      * @param  maxZ  Maximum Z coordinate
      * @return       List of found images
      */
-    public Set<FakeImage> getImages(World world, int minX, int maxX, int minZ, int maxZ) {
+    public @NotNull Set<FakeImage> getImages(@NotNull World world, int minX, int maxX, int minZ, int maxZ) {
         Set<FakeImage> response = new HashSet<>();
         for (WorldArea worldArea : worldAreas.values()) {
             if (!worldArea.getId().getWorld().getName().equals(world.getName())) continue;
@@ -236,7 +238,7 @@ public class ImageRenderer implements Listener {
      * Remove image from renderer
      * @param image Fake image instance
      */
-    public void removeImage(FakeImage image) {
+    public void removeImage(@NotNull FakeImage image) {
         WorldAreaId worldAreaId = image.getWorldAreaId();
         WorldArea worldArea = worldAreas.get(worldAreaId);
         if (worldArea != null) {
@@ -257,7 +259,7 @@ public class ImageRenderer implements Listener {
      * Get set of players who have placed images
      * @return Offline players
      */
-    public Set<OfflinePlayer> getPlayersWithPlacedImages() {
+    public @NotNull Set<OfflinePlayer> getPlayersWithPlacedImages() {
         return imagesCountByPlayer.keySet().stream().map(Bukkit::getOfflinePlayer).collect(Collectors.toSet());
     }
 
@@ -269,12 +271,31 @@ public class ImageRenderer implements Listener {
         return imagesCountByPlayer.values().stream().reduce(0, Integer::sum);
     }
 
+//    /**
+//     * Get number of placed images grouped by player
+//     * <p>
+//     * NOTE: Response is sorted by image count (descending)
+//     * @return Images count by player
+//     */
+//    public @NotNull Map<OfflinePlayer, Integer> getImagesCountByPlayer() {
+//        List<Map.Entry<UUID, Integer>> sortedEntries = new ArrayList<>(imagesCountByPlayer.entrySet());
+//        sortedEntries.sort(Map.Entry.comparingByValue(Comparator.reverseOrder()));
+//
+//        Map<OfflinePlayer, Integer> sortedMap = new LinkedHashMap<>();
+//        for (Map.Entry<UUID, Integer> entry : sortedEntries) {
+//            UUID playerId = entry.getKey();
+//            sortedMap.put((playerId == null) ? null : Bukkit.getOfflinePlayer(playerId), entry.getValue());
+//        }
+//
+//        return sortedMap;
+//    }
+
     /**
      * Get available world areas from IDs
      * @param  ids World area IDs
      * @return     World area instances
      */
-    private Set<WorldArea> getWorldAreas(WorldAreaId[] ids) {
+    private @NotNull Set<WorldArea> getWorldAreas(@NotNull WorldAreaId[] ids) {
         Set<WorldArea> instances = new HashSet<>();
         for (WorldAreaId id : ids) {
             if (!worldAreas.containsKey(id)) continue;
@@ -288,7 +309,7 @@ public class ImageRenderer implements Listener {
      * @param player   Player instance
      * @param location New player location
      */
-    private void onPlayerLocationChange(Player player, Location location) {
+    private void onPlayerLocationChange(@NotNull Player player, @NotNull Location location) {
         UUID uuid = player.getUniqueId();
 
         // Has player moved to another world area?
@@ -325,12 +346,12 @@ public class ImageRenderer implements Listener {
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
-    public void onPlayerJoin(PlayerJoinEvent event) {
+    public void onPlayerJoin(@NotNull PlayerJoinEvent event) {
         onPlayerLocationChange(event.getPlayer(), event.getPlayer().getLocation());
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
-    public void onPlayerQuit(PlayerQuitEvent event) {
+    public void onPlayerQuit(@NotNull PlayerQuitEvent event) {
         Player player = event.getPlayer();
         UUID uuid = player.getUniqueId();
 
@@ -347,24 +368,24 @@ public class ImageRenderer implements Listener {
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
-    public void onPlayerRespawn(PlayerRespawnEvent event) {
+    public void onPlayerRespawn(@NotNull PlayerRespawnEvent event) {
         onPlayerLocationChange(event.getPlayer(), event.getPlayer().getLocation());
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
-    public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
+    public void onPlayerChangedWorld(@NotNull PlayerChangedWorldEvent event) {
         onPlayerLocationChange(event.getPlayer(), event.getPlayer().getLocation());
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
-    public void onPlayerTeleport(PlayerTeleportEvent event) {
+    public void onPlayerTeleport(@NotNull PlayerTeleportEvent event) {
         if (event.getTo() == null) return;
         if (event.getFrom().getChunk().equals(event.getTo().getChunk())) return;
         onPlayerLocationChange(event.getPlayer(), event.getTo());
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
-    public void onPlayerMove(PlayerMoveEvent event) {
+    public void onPlayerMove(@NotNull PlayerMoveEvent event) {
         if (event.getTo() == null) return;
         if (event.getFrom().getChunk().equals(event.getTo().getChunk())) return;
         onPlayerLocationChange(event.getPlayer(), event.getTo());

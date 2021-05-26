@@ -4,6 +4,7 @@ import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.PacketContainer;
 import org.bukkit.entity.Player;
 import org.bukkit.map.MapPalette;
+import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.time.Instant;
 import java.util.Arrays;
@@ -50,7 +51,7 @@ public class FakeMap extends FakeEntity {
      * Get map instance to show in case of error
      * @return Error instance
      */
-    private static FakeMap getErrorInstance() {
+    private static @NotNull FakeMap getErrorInstance() {
         if (errorInstance == null) {
             byte[] pixels = new byte[DIMENSION * DIMENSION];
             Arrays.fill(pixels, pixelToIndex(Color.RED.getRGB()));
@@ -65,7 +66,7 @@ public class FakeMap extends FakeEntity {
      * @param  height Height in blocks
      * @return        Error matrix
      */
-    public static FakeMap[][] getErrorMatrix(int width, int height) {
+    public static @NotNull FakeMap[][] getErrorMatrix(int width, int height) {
         FakeMap errorMap = getErrorInstance();
         FakeMap[][] matrix = new FakeMap[width][height];
         for (FakeMap[] column : matrix) {
@@ -123,7 +124,7 @@ public class FakeMap extends FakeEntity {
      * Send map pixels to player
      * @param player Player instance
      */
-    public void sendPixels(Player player) {
+    public void sendPixels(@NotNull Player player) {
         UUID uuid = player.getUniqueId();
         long now = Instant.now().getEpochSecond();
         if (now-lastPlayerSendTime.getOrDefault(uuid, 0L) <= RESEND_THRESHOLD) {

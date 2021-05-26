@@ -1,5 +1,6 @@
 package io.josemmo.bukkit.plugin.utils;
 
+import org.jetbrains.annotations.NotNull;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -20,7 +21,7 @@ public class CsvConfiguration {
      * Get rows
      * @return List of rows
      */
-    public List<String[]> getRows() {
+    public @NotNull List<String[]> getRows() {
         return data;
     }
 
@@ -28,7 +29,7 @@ public class CsvConfiguration {
      * Add row
      * @param row Row
      */
-    public void addRow(String[] row) {
+    public void addRow(@NotNull String[] row) {
         data.add(row);
     }
 
@@ -37,7 +38,7 @@ public class CsvConfiguration {
      * @param path File path
      * @throws IOException if failed to read file
      */
-    public void load(String path) throws IOException {
+    public void load(@NotNull String path) throws IOException {
         Stream<String> stream = Files.lines(Paths.get(path), CHARSET);
         stream.forEach(line -> {
             line = line.trim();
@@ -52,7 +53,7 @@ public class CsvConfiguration {
      * @param path File path
      * @throws IOException if failed to write file
      */
-    public void save(String path) throws IOException {
+    public void save(@NotNull String path) throws IOException {
         try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(path), CHARSET)) {
             for (String[] row : getRows()) {
                 writer.write(String.join(COLUMN_DELIMITER, row) + "\n");

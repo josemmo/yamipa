@@ -11,6 +11,7 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.NotNull;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -45,7 +46,7 @@ public class FakeItemFrame extends FakeEntity {
      * @param rotation Frame rotation
      * @param map      Fake map to render
      */
-    public FakeItemFrame(Location location, BlockFace face, Rotation rotation, FakeMap map) {
+    public FakeItemFrame(@NotNull Location location, @NotNull BlockFace face, @NotNull Rotation rotation, @NotNull FakeMap map) {
         this.id = getNextId();
         this.location = location;
         this.face = face;
@@ -157,7 +158,7 @@ public class FakeItemFrame extends FakeEntity {
      * Spawn item frame in player's client
      * @param player Player instance
      */
-    public void spawn(Player player) {
+    public void spawn(@NotNull Player player) {
         if (spawnPackets == null) {
             generateSpawnPackets();
         }

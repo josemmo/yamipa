@@ -21,6 +21,8 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +42,7 @@ public class SelectBlockTask {
      * Class constructor
      * @param player Target player instance
      */
-    public SelectBlockTask(Player player) {
+    public SelectBlockTask(@NotNull Player player) {
         this.player = player;
     }
 
@@ -48,7 +50,7 @@ public class SelectBlockTask {
      * Set on success callback
      * @param callback Success callback
      */
-    public void onSuccess(BiConsumer<Location, BlockFace> callback) {
+    public void onSuccess(@Nullable BiConsumer<@NotNull Location, @NotNull BlockFace> callback) {
         this.success = callback;
     }
 
@@ -56,7 +58,7 @@ public class SelectBlockTask {
      * Set on failure (e.g. canceled) callback
      * @param callback Failure callback
      */
-    public void onFailure(Runnable callback) {
+    public void onFailure(@Nullable Runnable callback) {
         this.failure = callback;
     }
 
@@ -64,7 +66,7 @@ public class SelectBlockTask {
      * Run task
      * @param helpMessage Help message for the player
      */
-    public void run(String helpMessage) {
+    public void run(@NotNull String helpMessage) {
         UUID uuid = player.getUniqueId();
 
         // Has this player another active task?

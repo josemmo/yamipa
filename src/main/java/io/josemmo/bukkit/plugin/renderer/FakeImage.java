@@ -12,6 +12,8 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.util.Vector;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.UUID;
@@ -38,7 +40,7 @@ public class FakeImage extends FakeEntity {
      * @param  location Player eye location
      * @return          Image rotation
      */
-    public static Rotation getRotationFromPlayerEyesight(BlockFace face, Location location) {
+    public static @NotNull Rotation getRotationFromPlayerEyesight(@NotNull BlockFace face, @NotNull Location location) {
         // Images placed on N/S/E/W faces never have rotation
         if (face != BlockFace.UP && face != BlockFace.DOWN) {
             return Rotation.NONE;
@@ -70,8 +72,14 @@ public class FakeImage extends FakeEntity {
      * @param placedBy Placed by
      */
     public FakeImage(
-        String filename, Location location, BlockFace face, Rotation rotation, int width, int height,
-        Date placedAt, OfflinePlayer placedBy
+        @NotNull String filename,
+        @NotNull Location location,
+        @NotNull BlockFace face,
+        @NotNull Rotation rotation,
+        int width,
+        int height,
+        @Nullable Date placedAt,
+        @NotNull OfflinePlayer placedBy
     ) {
         this.filename = filename;
         this.location = location;
@@ -120,7 +128,7 @@ public class FakeImage extends FakeEntity {
      * Get image filename
      * @return Image filename
      */
-    public String getFilename() {
+    public @NotNull String getFilename() {
         return filename;
     }
 
@@ -128,7 +136,7 @@ public class FakeImage extends FakeEntity {
      * Get image file instance
      * @return Image file instance or NULL if not found
      */
-    public ImageFile getFile() {
+    public @Nullable ImageFile getFile() {
         return plugin.getStorage().get(filename);
     }
 
@@ -136,7 +144,7 @@ public class FakeImage extends FakeEntity {
      * Get location instance
      * @return Location instance
      */
-    public Location getLocation() {
+    public @NotNull Location getLocation() {
         return location;
     }
 
@@ -144,7 +152,7 @@ public class FakeImage extends FakeEntity {
      * Get image block face
      * @return Image block face
      */
-    public BlockFace getBlockFace() {
+    public @NotNull BlockFace getBlockFace() {
         return face;
     }
 
@@ -152,7 +160,7 @@ public class FakeImage extends FakeEntity {
      * Get image rotation
      * @return Image rotation
      */
-    public Rotation getRotation() {
+    public @NotNull Rotation getRotation() {
         return rotation;
     }
 
@@ -176,7 +184,7 @@ public class FakeImage extends FakeEntity {
      * Get placed at date
      * @return Placed at date
      */
-    public Date getPlacedAt() {
+    public @Nullable Date getPlacedAt() {
         return placedAt;
     }
 
@@ -184,7 +192,7 @@ public class FakeImage extends FakeEntity {
      * Get placed by player
      * @return Placed by player instance
      */
-    public OfflinePlayer getPlacedBy() {
+    public @NotNull OfflinePlayer getPlacedBy() {
         return placedBy;
     }
 
@@ -192,7 +200,7 @@ public class FakeImage extends FakeEntity {
      * Get world area ID where the top left corner of this image is located
      * @return World area ID
      */
-    public WorldAreaId getWorldAreaId() {
+    public @NotNull WorldAreaId getWorldAreaId() {
         return WorldAreaId.fromLocation(location);
     }
 
@@ -202,7 +210,7 @@ public class FakeImage extends FakeEntity {
      * @param  face     Block face
      * @return          TRUE for contained, FALSE otherwise
      */
-    public boolean contains(Location location, BlockFace face) {
+    public boolean contains(@NotNull Location location, @NotNull BlockFace face) {
         // Is point facing the same plane as the image?
         if (face != this.face) {
             return false;
@@ -253,7 +261,7 @@ public class FakeImage extends FakeEntity {
      * Spawn image for a player
      * @param player Player instance
      */
-    public void spawn(Player player) {
+    public void spawn(@NotNull Player player) {
         BukkitScheduler scheduler = Bukkit.getScheduler();
         scheduler.runTaskAsynchronously(plugin, () -> {
             if (frames == null) load();
@@ -271,7 +279,7 @@ public class FakeImage extends FakeEntity {
      * Destroy image for a player
      * @param player Player instance
      */
-    public void destroy(Player player) {
+    public void destroy(@NotNull Player player) {
         if (frames == null) return;
 
         // Get frame IDs

@@ -3,6 +3,7 @@ package io.josemmo.bukkit.plugin.renderer;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 
 public class WorldAreaId {
@@ -15,7 +16,7 @@ public class WorldAreaId {
      * @param  location Location instance
      * @return          World area ID
      */
-    public static WorldAreaId fromLocation(Location location) {
+    public static @NotNull WorldAreaId fromLocation(@NotNull Location location) {
         Chunk chunk = location.getChunk();
         return new WorldAreaId(chunk.getWorld(), chunk.getX() >> 2, chunk.getZ() >> 2);
     }
@@ -26,7 +27,7 @@ public class WorldAreaId {
      * @param x     World area X coordinate
      * @param z     World area Z coordinate
      */
-    public WorldAreaId(World world, int x, int z) {
+    public WorldAreaId(@NotNull World world, int x, int z) {
         this.world = world;
         this.x = x;
         this.z = z;
@@ -36,7 +37,7 @@ public class WorldAreaId {
      * Get world instance
      * @return World instance
      */
-    public World getWorld() {
+    public @NotNull World getWorld() {
         return world;
     }
 
@@ -44,7 +45,7 @@ public class WorldAreaId {
      * Get colliding world area IDs plus this one
      * @return List of neighbors
      */
-    public WorldAreaId[] getNeighborhood() {
+    public @NotNull WorldAreaId[] getNeighborhood() {
         return new WorldAreaId[]{
             new WorldAreaId(world, x-1, z-1),
             new WorldAreaId(world, x, z-1),
@@ -72,7 +73,7 @@ public class WorldAreaId {
     }
 
     @Override
-    public String toString() {
+    public @NotNull String toString() {
         return world.getName() + "," + x + "," + z;
     }
 }

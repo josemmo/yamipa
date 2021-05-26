@@ -5,6 +5,7 @@ import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.PacketContainer;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 import java.util.logging.Level;
 
 public abstract class FakeEntity {
@@ -16,7 +17,7 @@ public abstract class FakeEntity {
      * @param player Player who will receive the packet
      * @param packet Packet to send
      */
-    protected static void tryToSendPacket(Player player, PacketContainer packet) {
+    protected static void tryToSendPacket(@NotNull Player player, @NotNull PacketContainer packet) {
         try {
             connection.sendServerPacket(player, packet);
         } catch (Exception e) {

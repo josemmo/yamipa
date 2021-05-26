@@ -1,6 +1,7 @@
 package io.josemmo.bukkit.plugin.utils;
 
 import org.bukkit.block.BlockFace;
+import org.jetbrains.annotations.NotNull;
 
 public class DirectionUtils {
     /**
@@ -8,7 +9,7 @@ public class DirectionUtils {
      * @param  yaw Yaw angle
      * @return     Cardinal direction
      */
-    public static BlockFace getCardinalDirection(float yaw) {
+    public static @NotNull BlockFace getCardinalDirection(float yaw) {
         if (yaw < 0) {
             yaw += 360;
         }

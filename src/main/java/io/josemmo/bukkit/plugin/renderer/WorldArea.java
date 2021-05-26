@@ -1,6 +1,7 @@
 package io.josemmo.bukkit.plugin.renderer;
 
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -18,7 +19,7 @@ public class WorldArea {
      * Class constructor
      * @param id World area ID
      */
-    public WorldArea(WorldAreaId id) {
+    public WorldArea(@NotNull WorldAreaId id) {
         this.id = id;
 
         // Initialize current list of players in this area
@@ -34,7 +35,7 @@ public class WorldArea {
      * Get world area ID
      * @return World area ID
      */
-    public WorldAreaId getId() {
+    public @NotNull WorldAreaId getId() {
         return id;
     }
 
@@ -50,7 +51,7 @@ public class WorldArea {
      * Get all fake images
      * @return Set of fake images
      */
-    public Set<FakeImage> getImages() {
+    public @NotNull Set<FakeImage> getImages() {
         return fakeImages;
     }
 
@@ -58,7 +59,7 @@ public class WorldArea {
      * Add fake image
      * @param image Fake image instance
      */
-    public void addImage(FakeImage image) {
+    public void addImage(@NotNull FakeImage image) {
         fakeImages.add(image);
         for (Player player : players) {
             image.spawn(player);
@@ -69,7 +70,7 @@ public class WorldArea {
      * Remove fake image
      * @param image Fake image instance
      */
-    public void removeImage(FakeImage image) {
+    public void removeImage(@NotNull FakeImage image) {
         fakeImages.remove(image);
         for (Player player : players) {
             image.destroy(player);
@@ -80,7 +81,7 @@ public class WorldArea {
      * Load for player
      * @param player Player instance
      */
-    public void load(Player player) {
+    public void load(@NotNull Player player) {
         players.add(player);
         for (FakeImage image : fakeImages) {
             image.spawn(player);
@@ -91,7 +92,7 @@ public class WorldArea {
      * Remove player from world area
      * @param player Player instance
      */
-    public void removePlayer(Player player) {
+    public void removePlayer(@NotNull Player player) {
         players.remove(player);
         if (players.isEmpty()) {
             for (FakeImage image : fakeImages) {
@@ -104,7 +105,7 @@ public class WorldArea {
      * Unload for player
      * @param player Player instance
      */
-    public void unload(Player player) {
+    public void unload(@NotNull Player player) {
         for (FakeImage image : fakeImages) {
             image.destroy(player);
         }

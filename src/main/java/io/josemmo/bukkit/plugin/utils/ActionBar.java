@@ -9,6 +9,7 @@ import io.josemmo.bukkit.plugin.YamipaPlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
+import org.jetbrains.annotations.NotNull;
 import java.util.logging.Level;
 
 public class ActionBar {
@@ -19,7 +20,7 @@ public class ActionBar {
      * @param player  Player who will receive the message
      * @param message Message to send
      */
-    public static void send(Player player, String message) {
+    public static void send(@NotNull Player player, @NotNull String message) {
         PacketContainer titlePacket = new PacketContainer(PacketType.Play.Server.TITLE);
         titlePacket.getTitleActions().write(0, EnumWrappers.TitleAction.ACTIONBAR);
         titlePacket.getChatComponents().write(0, WrappedChatComponent.fromText(message));
@@ -36,7 +37,7 @@ public class ActionBar {
      * @param  message Message to send
      * @return         New task instance
      */
-    public static BukkitTask repeat(Player player, String message) {
+    public static @NotNull BukkitTask repeat(@NotNull Player player, @NotNull String message) {
         return Bukkit.getScheduler().runTaskTimer(plugin, () -> ActionBar.send(player, message), 0L, 40L);
     }
 }

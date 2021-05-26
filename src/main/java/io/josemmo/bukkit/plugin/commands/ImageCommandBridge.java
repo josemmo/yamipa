@@ -11,6 +11,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 public class ImageCommandBridge {
     /**
@@ -131,7 +132,7 @@ public class ImageCommandBridge {
      * Get filename argument
      * @return Filename argument
      */
-    private static Argument getFilenameArgument() {
+    private static @NotNull Argument getFilenameArgument() {
         return new TextArgument("filename")
             .overrideSuggestions(__ -> YamipaPlugin.getInstance().getStorage().getAllFilenames());
     }

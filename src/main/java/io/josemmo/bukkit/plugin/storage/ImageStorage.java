@@ -3,6 +3,8 @@ package io.josemmo.bukkit.plugin.storage;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.scheduler.BukkitTask;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
@@ -25,7 +27,7 @@ public class ImageStorage {
      * @param basePath  Path to directory containing the images
      * @param cachePath Path to directory containing the cached image maps
      */
-    public ImageStorage(String basePath, String cachePath) {
+    public ImageStorage(@NotNull String basePath, @NotNull String cachePath) {
         this.basePath = basePath;
         this.cachePath = cachePath;
     }
@@ -34,7 +36,7 @@ public class ImageStorage {
      * Get base path
      * @return Base path
      */
-    public String getBasePath() {
+    public @NotNull String getBasePath() {
         return basePath;
     }
 
@@ -42,7 +44,7 @@ public class ImageStorage {
      * Get cache path
      * @return Cache path
      */
-    public String getCachePath() {
+    public @NotNull String getCachePath() {
         return cachePath;
     }
 
@@ -144,7 +146,7 @@ public class ImageStorage {
      * Get all image filenames
      * @return Sorted array of image filenames
      */
-    public synchronized String[] getAllFilenames() {
+    public synchronized @NotNull String[] getAllFilenames() {
         return cachedImages.keySet().toArray(new String[0]);
     }
 
@@ -153,7 +155,7 @@ public class ImageStorage {
      * @param  filename Filename
      * @return          Image instance or NULL if not found
      */
-    public synchronized ImageFile get(String filename) {
+    public synchronized @Nullable ImageFile get(@NotNull String filename) {
         return cachedImages.get(filename);
     }
 }

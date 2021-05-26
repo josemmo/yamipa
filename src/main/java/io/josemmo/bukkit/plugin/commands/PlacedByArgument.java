@@ -4,11 +4,13 @@ import dev.jorel.commandapi.arguments.StringArgument;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
 import io.josemmo.bukkit.plugin.renderer.ImageRenderer;
 import org.bukkit.OfflinePlayer;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 import java.util.TreeSet;
 
 public class PlacedByArgument extends StringArgument {
-    public PlacedByArgument(String nodeName) {
+    public PlacedByArgument(@NotNull String nodeName) {
         super(nodeName);
         overrideSuggestions(__ -> {
             ImageRenderer renderer = YamipaPlugin.getInstance().getRenderer();
@@ -31,7 +33,7 @@ public class PlacedByArgument extends StringArgument {
      * @param  argument Argument string
      * @return          Offline player or NULL if not found
      */
-    public static OfflinePlayer getPlayer(String argument) {
+    public static @Nullable OfflinePlayer getPlayer(@NotNull String argument) {
         ImageRenderer renderer = YamipaPlugin.getInstance().getRenderer();
         for (OfflinePlayer player : renderer.getPlayersWithPlacedImages()) {
             if (argument.equals(player.getName()) || argument.equals(player.getUniqueId().toString())) {

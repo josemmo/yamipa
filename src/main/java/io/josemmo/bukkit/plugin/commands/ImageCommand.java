@@ -10,6 +10,8 @@ import org.bukkit.*;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginDescriptionFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import java.awt.Dimension;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -26,7 +28,7 @@ import java.util.UUID;
 public class ImageCommand {
     public static final int ITEMS_PER_PAGE = 9;
 
-    public static void showHelp(CommandSender s) {
+    public static void showHelp(@NotNull CommandSender s) {
         s.sendMessage(ChatColor.BOLD + "=== Yamipa Plugin Help ===");
         s.sendMessage(ChatColor.AQUA + "/image" + ChatColor.RESET + " — Show this help");
         if (s.hasPermission("yamipa.clear")) {
@@ -49,7 +51,7 @@ public class ImageCommand {
         }
     }
 
-    public static void listImages(CommandSender sender, int page) {
+    public static void listImages(@NotNull CommandSender sender, int page) {
         String[] filenames = YamipaPlugin.getInstance().getStorage().getAllFilenames();
         int numOfImages = filenames.length;
 
@@ -77,7 +79,7 @@ public class ImageCommand {
         }
     }
 
-    public static void downloadImage(CommandSender sender, String url, String filename) {
+    public static void downloadImage(@NotNull CommandSender sender, @NotNull String url, @NotNull String filename) {
         YamipaPlugin plugin = YamipaPlugin.getInstance();
 
         // Validate destination file
@@ -110,8 +112,8 @@ public class ImageCommand {
     }
 
     public static void placeImage(
-        Player player,
-        String filename,
+        @NotNull Player player,
+        @NotNull String filename,
         int width,
         int height
     ) {
@@ -156,7 +158,7 @@ public class ImageCommand {
         task.run("Right click a block to continue");
     }
 
-    public static void removeImage(Player player) {
+    public static void removeImage(@NotNull Player player) {
         ImageRenderer renderer = YamipaPlugin.getInstance().getRenderer();
 
         // Ask user to select fake image
@@ -174,7 +176,12 @@ public class ImageCommand {
         task.run("Right click an image to continue");
     }
 
-    public static void clearImages(CommandSender sender, Location origin, int radius, OfflinePlayer placedBy) {
+    public static void clearImages(
+        @NotNull CommandSender sender,
+        @NotNull Location origin,
+        int radius,
+        @Nullable OfflinePlayer placedBy
+    ) {
         ImageRenderer renderer = YamipaPlugin.getInstance().getRenderer();
 
         // Get images in area
@@ -199,7 +206,7 @@ public class ImageCommand {
         sender.sendMessage("Removed " + images.size() + " placed image(s)");
     }
 
-    public static void describeImage(Player player) {
+    public static void describeImage(@NotNull Player player) {
         ImageRenderer renderer = YamipaPlugin.getInstance().getRenderer();
 
         // Ask user to select fake image

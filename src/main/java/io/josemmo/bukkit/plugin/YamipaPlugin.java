@@ -9,6 +9,8 @@ import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 import java.util.function.Function;
 import java.util.logging.Level;
@@ -24,7 +26,7 @@ public class YamipaPlugin extends JavaPlugin {
      * Get plugin instance
      * @return Plugin instance
      */
-    public static YamipaPlugin getInstance() {
+    public static @NotNull YamipaPlugin getInstance() {
         return instance;
     }
 
@@ -32,7 +34,7 @@ public class YamipaPlugin extends JavaPlugin {
      * Get image storage instance
      * @return Image storage instance
      */
-    public ImageStorage getStorage() {
+    public @NotNull ImageStorage getStorage() {
         return storage;
     }
 
@@ -40,7 +42,7 @@ public class YamipaPlugin extends JavaPlugin {
      * Get image renderer instance
      * @return Image renderer instance
      */
-    public ImageRenderer getRenderer() {
+    public @NotNull ImageRenderer getRenderer() {
         return renderer;
     }
 
@@ -50,7 +52,7 @@ public class YamipaPlugin extends JavaPlugin {
      * @param defaultValue Default value
      * @return             Configuration value
      */
-    private String getConfigValue(String path, String defaultValue) {
+    private @NotNull String getConfigValue(@NotNull String path, @NotNull String defaultValue) {
         String value = getConfig().getString(path);
         return (value == null) ? defaultValue : value;
     }
@@ -123,7 +125,7 @@ public class YamipaPlugin extends JavaPlugin {
      * @param message Message
      * @param e       Throwable instance, NULL to ignore
      */
-    public void log(Level level, String message, Throwable e) {
+    public void log(@NotNull Level level, @NotNull String message, @Nullable Throwable e) {
         // Fix log level
         if (level.intValue() < Level.INFO.intValue()) {
             if (!verbose) return;
@@ -143,23 +145,15 @@ public class YamipaPlugin extends JavaPlugin {
      * @param level   Record level
      * @param message Message
      */
-    public void log(Level level, String message) {
+    public void log(@NotNull Level level, @NotNull String message) {
         log(level, message, null);
-    }
-
-    /**
-     * Log severe message
-     * @param message Message
-     */
-    public void severe(String message) {
-        log(Level.SEVERE, message);
     }
 
     /**
      * Log warning message
      * @param message Message
      */
-    public void warning(String message) {
+    public void warning(@NotNull String message) {
         log(Level.WARNING, message);
     }
 
@@ -167,7 +161,7 @@ public class YamipaPlugin extends JavaPlugin {
      * Log info message
      * @param message Message
      */
-    public void info(String message) {
+    public void info(@NotNull String message) {
         log(Level.INFO, message);
     }
 
@@ -175,7 +169,7 @@ public class YamipaPlugin extends JavaPlugin {
      * Log fine message
      * @param message Message
      */
-    public void fine(String message) {
+    public void fine(@NotNull String message) {
         log(Level.FINE, message);
     }
 }
