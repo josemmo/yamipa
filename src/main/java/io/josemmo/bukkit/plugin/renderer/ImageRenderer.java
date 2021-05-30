@@ -164,12 +164,15 @@ public class ImageRenderer implements Listener {
      * @param isInit TRUE if called during renderer startup, FALSE otherwise
      */
     public void addImage(@NotNull FakeImage image, boolean isInit) {
-        WorldAreaId worldAreaId = image.getWorldAreaId();
-        WorldArea worldArea = worldAreas.computeIfAbsent(worldAreaId, __ -> {
-            plugin.fine("Created WorldArea#(" + worldAreaId + ")");
-            return new WorldArea(worldAreaId);
-        });
-        worldArea.addImage(image);
+        for (WorldAreaId worldAreaId : image.getWorldAreaIds()) {
+            WorldArea worldArea = worldAreas.computeIfAbsent(worldAreaId, __ -> {
+                plugin.fine("Created WorldArea#(" + worldAreaId + ")");
+                return new WorldArea(worldAreaId);
+            });
+            worldArea.addImage(image);
+        }
+
+        // Set configuration changed flag
         if (!isInit) {
             hasConfigChanged.set(true);
         }
@@ -239,15 +242,16 @@ public class ImageRenderer implements Listener {
      * @param image Fake image instance
      */
     public void removeImage(@NotNull FakeImage image) {
-        WorldAreaId worldAreaId = image.getWorldAreaId();
-        WorldArea worldArea = worldAreas.get(worldAreaId);
-        if (worldArea != null) {
+        for (WorldAreaId worldAreaId : image.getWorldAreaIds()) {
+            WorldArea worldArea = worldAreas.get(worldAreaId);
             worldArea.removeImage(image);
             if (!worldArea.hasImages()) {
                 plugin.fine("Destroyed WorldArea#(" + worldAreaId + ")");
                 worldAreas.remove(worldAreaId);
             }
         }
+
+        // Set configuration changed flag
         hasConfigChanged.set(true);
 
         // Decrement count of placed images by player

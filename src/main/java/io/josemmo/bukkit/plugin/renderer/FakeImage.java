@@ -197,11 +197,18 @@ public class FakeImage extends FakeEntity {
     }
 
     /**
-     * Get world area ID where the top left corner of this image is located
-     * @return World area ID
+     * Get the world area IDs where this image is located
+     * @return Array of world area IDs
      */
-    public @NotNull WorldAreaId getWorldAreaId() {
-        return WorldAreaId.fromLocation(location);
+    public @NotNull WorldAreaId[] getWorldAreaIds() {
+        WorldAreaId topLeft = WorldAreaId.fromLocation(location);
+        WorldAreaId bottomRight = WorldAreaId.fromLocation(
+            location.clone().add(getLocationVector.apply(width-1, height-1))
+        );
+        if (topLeft.equals(bottomRight)) {
+            return new WorldAreaId[]{topLeft};
+        }
+        return new WorldAreaId[]{topLeft, bottomRight};
     }
 
     /**

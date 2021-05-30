@@ -4,6 +4,7 @@ import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 public class WorldAreaId {
@@ -60,7 +61,7 @@ public class WorldAreaId {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(@Nullable Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         WorldAreaId that = (WorldAreaId) o;
