@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -48,6 +49,9 @@ public class ImageCommand {
         }
         if (s.hasPermission("yamipa.remove")) {
             s.sendMessage(ChatColor.AQUA + "/image remove" + ChatColor.RESET + " — Remove a single placed image");
+        }
+        if (s.hasPermission("yamipa.top")) {
+            s.sendMessage(ChatColor.AQUA + "/image top" + ChatColor.RESET + " — List players with the most images");
         }
     }
 
@@ -248,5 +252,48 @@ public class ImageCommand {
         });
         task.onFailure(() -> ActionBar.send(player, ChatColor.RED + "Image describing canceled"));
         task.run("Right click the image to describe");
+    }
+
+    public static void showTopPlayers(@NotNull CommandSender sender) {
+        UUID senderId = (sender instanceof Player) ? ((Player) sender).getUniqueId() : null;
+        Map<OfflinePlayer, Integer> stats = YamipaPlugin.getInstance().getRenderer().getImagesCountByPlayer();
+
+        // Render header
+        sender.sendMessage("=== Top players with the most placed images ===");
+        if (stats.isEmpty()) {
+            sender.sendMessage(ChatColor.RED + "No one on this server has placed a single image!");
+            return;
+        }
+
+        int rank = 0;
+        int printedLines = 0;
+        boolean hasShownSender = (senderId == null); // Assume sender has already been shown if it's not a player
+        for (Map.Entry<OfflinePlayer, Integer> item : stats.entrySet()) {
+            OfflinePlayer player = item.getKey();
+            int value = item.getValue();
+            ++rank;
+
+            // Skip line if irrelevant
+            if (player.getUniqueId().equals(senderId)) {
+                hasShownSender = true;
+            } else if (!hasShownSender && printedLines == ITEMS_PER_PAGE-1) {
+                continue; // Leave last line empty for sender rank
+            } else if (printedLines >= ITEMS_PER_PAGE) {
+                break; // Stop printing players when chat is filled
+            }
+
+            // Prepare player name or UUID
+            String playerName = (player.getName() == null) ?
+                ChatColor.GOLD + player.getUniqueId().toString() :
+                ChatColor.GREEN + player.getName();
+
+            // Render player line
+            sender.sendMessage(
+                "" + ChatColor.BOLD + (rank > 1000 ? "1000+" : rank) + ChatColor.RESET + ". " +
+                playerName + ChatColor.RESET +
+                ChatColor.GRAY + " — " + value + " " + (value == 1 ? "image" : "images")
+            );
+            ++printedLines;
+        }
     }
 }

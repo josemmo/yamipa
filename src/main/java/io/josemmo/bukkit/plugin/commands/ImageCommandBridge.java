@@ -25,7 +25,8 @@ public class ImageCommandBridge {
                 sender.hasPermission("yamipa.download") ||
                 sender.hasPermission("yamipa.list") ||
                 sender.hasPermission("yamipa.place") ||
-                sender.hasPermission("yamipa.remove"))
+                sender.hasPermission("yamipa.remove") ||
+                sender.hasPermission("yamipa.top"))
             .withAliases("yamipa", "images");
 
         // Help command
@@ -123,6 +124,14 @@ public class ImageCommandBridge {
                 ImageCommand.describeImage(sender);
             });
         group.withSubcommand(describe);
+
+        // Top command
+        CommandAPICommand top = new CommandAPICommand("top")
+            .withPermission("yamipa.top")
+            .executes((sender, __) -> {
+                ImageCommand.showTopPlayers(sender);
+            });
+        group.withSubcommand(top);
 
         // Commit commands
         group.register();

@@ -15,6 +15,7 @@ permissions:
       yamipa.list: true
       yamipa.place: true
       yamipa.remove: true
+      yamipa.top: true
   yamipa.clear:
     default: op
   yamipa.describe:
@@ -26,4 +27,6 @@ permissions:
   yamipa.place:
     default: op
   yamipa.remove:
+    default: op
+  yamipa.top:
     default: op

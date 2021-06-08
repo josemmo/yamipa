@@ -54,6 +54,7 @@ This plugin adds the following commands:
 - `/image list [<page>]`: List all available files in the images directory.
 - `/image place <filename> <width> [<height>]`: Place an image of size `width`x`height` blocks.
 - `/image remove`: Remove a placed image from the world without deleting the image file.
+- `/image top`: List players with the most placed images.
 
 ### Examples
 
@@ -87,6 +88,7 @@ Yamipa defines the following permissions, each one corresponding to the command 
 - `yamipa.list`
 - `yamipa.place`
 - `yamipa.remove`
+- `yamipa.top`
 
 By default, only server OPs have all permissions granted. You can change this by using a permission plugin,
 such as [LuckPerms](https://luckperms.net/) or [GroupManager](https://elgarl.github.io/GroupManager/).

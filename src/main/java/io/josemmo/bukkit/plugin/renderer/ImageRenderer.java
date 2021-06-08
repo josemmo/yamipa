@@ -276,6 +276,24 @@ public class ImageRenderer implements Listener {
     }
 
     /**
+     * Get number of placed images grouped by player
+     * <p>
+     * NOTE: Response is sorted by image count (descending)
+     * @return Images count by player
+     */
+    public @NotNull Map<OfflinePlayer, Integer> getImagesCountByPlayer() {
+        List<Map.Entry<UUID, Integer>> sortedEntries = new ArrayList<>(imagesCountByPlayer.entrySet());
+        sortedEntries.sort(Map.Entry.comparingByValue(Comparator.reverseOrder()));
+
+        Map<OfflinePlayer, Integer> sortedMap = new LinkedHashMap<>();
+        for (Map.Entry<UUID, Integer> entry : sortedEntries) {
+            sortedMap.put(Bukkit.getOfflinePlayer(entry.getKey()), entry.getValue());
+        }
+
+        return sortedMap;
+    }
+
+    /**
      * Get available world areas from IDs
      * @param  ids World area IDs
      * @return     World area instances
