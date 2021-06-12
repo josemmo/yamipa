@@ -1,11 +1,8 @@
 package io.josemmo.bukkit.plugin.utils;
 
-import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
-import com.comphenix.protocol.events.PacketContainer;
-import com.comphenix.protocol.wrappers.EnumWrappers;
-import com.comphenix.protocol.wrappers.WrappedChatComponent;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
+import io.josemmo.bukkit.plugin.packets.ActionBarPacket;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
@@ -21,11 +18,10 @@ public class ActionBar {
      * @param message Message to send
      */
     public static void send(@NotNull Player player, @NotNull String message) {
-        PacketContainer titlePacket = new PacketContainer(PacketType.Play.Server.TITLE);
-        titlePacket.getTitleActions().write(0, EnumWrappers.TitleAction.ACTIONBAR);
-        titlePacket.getChatComponents().write(0, WrappedChatComponent.fromText(message));
+        ActionBarPacket actionBarPacket = new ActionBarPacket();
+        actionBarPacket.setText(message);
         try {
-            ProtocolLibrary.getProtocolManager().sendServerPacket(player, titlePacket);
+            ProtocolLibrary.getProtocolManager().sendServerPacket(player, actionBarPacket);
         } catch (Exception e) {
             plugin.log(Level.SEVERE, "Failed to send ActionBar to " + player.getName(), e);
         }

@@ -1,9 +1,10 @@
 package io.josemmo.bukkit.plugin.renderer;
 
-import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.PacketContainer;
-import com.comphenix.protocol.wrappers.WrappedDataWatcher;
 import de.tr7zw.changeme.nbtapi.NBTItem;
+import io.josemmo.bukkit.plugin.packets.DestroyEntityPacket;
+import io.josemmo.bukkit.plugin.packets.EntityMetadataPacket;
+import io.josemmo.bukkit.plugin.packets.SpawnEntityPacket;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Rotation;
@@ -12,7 +13,6 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class FakeItemFrame extends FakeEntity {
@@ -53,14 +53,6 @@ public class FakeItemFrame extends FakeEntity {
         this.rotation = rotation;
         this.map = map;
         plugin.fine("Created FakeItemFrame#" + this.id + " using FakeMap#" + this.map.getId());
-    }
-
-    /**
-     * Get item frame ID
-     * @return Item frame ID
-     */
-    public int getId() {
-        return id;
     }
 
     /**
@@ -107,51 +99,24 @@ public class FakeItemFrame extends FakeEntity {
         }
 
         // Create item frame entity
-        PacketContainer framePacket = new PacketContainer(PacketType.Play.Server.SPAWN_ENTITY);
-        framePacket.getEntityTypeModifier()
-            .write(0, EntityType.ITEM_FRAME);
-        framePacket.getIntegers()
-            .write(0, id)
-            .write(1, 0)
-            .write(2, 0)
-            .write(3, 0)
-            .write(4, pitch)
-            .write(5, yaw)
-            .write(6, orientation);
-        framePacket.getUUIDs()
-            .write(0, UUID.randomUUID());
-        framePacket.getDoubles()
-            .write(0, x)
-            .write(1, y)
-            .write(2, z);
-        spawnPackets[0] = framePacket;
+        SpawnEntityPacket framePacket = new SpawnEntityPacket();
+        spawnPackets[0] = framePacket.setId(id)
+            .setEntityType(EntityType.ITEM_FRAME)
+            .setPosition(x, y, z)
+            .setRotation(pitch, yaw)
+            .setData(orientation);
 
         // Create and attach filled map
         NBTItem mapNbt = new NBTItem(new ItemStack(Material.FILLED_MAP));
         mapNbt.setInteger("map", map.getId());
         ItemStack mapItemStack = mapNbt.getItem();
 
-        WrappedDataWatcher dataWatcher = new WrappedDataWatcher();
-        WrappedDataWatcher.Serializer byteSerializer = WrappedDataWatcher.Registry.get(Byte.class);
-        WrappedDataWatcher.Serializer itemStackSerializer = WrappedDataWatcher.Registry.getItemStackSerializer(false);
-        WrappedDataWatcher.Serializer integerSerializer = WrappedDataWatcher.Registry.get(Integer.class);
-        dataWatcher.setObject(
-            new WrappedDataWatcher.WrappedDataWatcherObject(0, byteSerializer),
-            (byte) 0x20 // Invisible
-        );
-        dataWatcher.setObject(
-            new WrappedDataWatcher.WrappedDataWatcherObject(7, itemStackSerializer),
-            mapItemStack
-        );
-        dataWatcher.setObject(
-            new WrappedDataWatcher.WrappedDataWatcherObject(8, integerSerializer),
-            rotation.ordinal()
-        );
-
-        PacketContainer mapPacket = new PacketContainer(PacketType.Play.Server.ENTITY_METADATA);
-        mapPacket.getIntegers().write(0, id);
-        mapPacket.getWatchableCollectionModifier().write(0, dataWatcher.getWatchableObjects());
-        spawnPackets[1] = mapPacket;
+        EntityMetadataPacket mapPacket = new EntityMetadataPacket();
+        spawnPackets[1] = mapPacket.setId(id)
+            .setInvisible(true)
+            .setItem(mapItemStack)
+            .setRotation(rotation)
+            .build();
     }
 
     /**
@@ -166,5 +131,15 @@ public class FakeItemFrame extends FakeEntity {
             tryToSendPacket(player, packet);
         }
         map.sendPixels(player);
+    }
+
+    /**
+     * Destroy item frame from player's client
+     * @param player Player instance
+     */
+    public void destroy(@NotNull Player player) {
+        DestroyEntityPacket destroyPacket = new DestroyEntityPacket();
+        destroyPacket.setId(id);
+        tryToSendPacket(player, destroyPacket);
     }
 }

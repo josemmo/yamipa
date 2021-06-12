@@ -1,7 +1,5 @@
 package io.josemmo.bukkit.plugin.renderer;
 
-import com.comphenix.protocol.PacketType;
-import com.comphenix.protocol.events.PacketContainer;
 import io.josemmo.bukkit.plugin.storage.ImageFile;
 import io.josemmo.bukkit.plugin.utils.DirectionUtils;
 import org.bukkit.Bukkit;
@@ -18,7 +16,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.UUID;
 import java.util.function.BiFunction;
-import java.util.stream.Stream;
 
 public class FakeImage extends FakeEntity {
     public static final int MAX_DIMENSION = 30; // In blocks
@@ -288,14 +285,11 @@ public class FakeImage extends FakeEntity {
      */
     public void destroy(@NotNull Player player) {
         if (frames == null) return;
-
-        // Get frame IDs
-        int[] frameIds = Stream.of(frames).flatMap(Stream::of).mapToInt(FakeItemFrame::getId).toArray();
-
-        // Send destroy packet
-        PacketContainer destroyPacket = new PacketContainer(PacketType.Play.Server.ENTITY_DESTROY);
-        destroyPacket.getIntegerArrays().write(0, frameIds);
-        tryToSendPacket(player, destroyPacket);
+        for (FakeItemFrame[] col : frames) {
+            for (FakeItemFrame frame : col) {
+                frame.destroy(player);
+            }
+        }
     }
 
     /**

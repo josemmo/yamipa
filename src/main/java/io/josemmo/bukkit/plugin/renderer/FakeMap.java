@@ -1,7 +1,6 @@
 package io.josemmo.bukkit.plugin.renderer;
 
-import com.comphenix.protocol.PacketType;
-import com.comphenix.protocol.events.PacketContainer;
+import io.josemmo.bukkit.plugin.packets.MapDataPacket;
 import org.bukkit.entity.Player;
 import org.bukkit.map.MapPalette;
 import org.jetbrains.annotations.NotNull;
@@ -132,21 +131,13 @@ public class FakeMap extends FakeEntity {
         }
 
         // Create map data packet
-        PacketContainer mapDataPacket = new PacketContainer(PacketType.Play.Server.MAP);
-        mapDataPacket.getModifier().writeDefaults();
-        mapDataPacket.getIntegers()
-            .write(0, id)
-            .write(1, 0) // X
-            .write(2, 0) // Z
-            .write(3, DIMENSION) // Columns
-            .write (4, DIMENSION); // Rows
-        mapDataPacket.getBytes()
-            .write(0, (byte) 0); // Scale (fully zoomed-in map)
-        mapDataPacket.getBooleans()
-            .write(0, false) // Tracking Position
-            .write(1, true); // Locked
-        mapDataPacket.getByteArrays()
-            .write(0, pixels);
+        MapDataPacket mapDataPacket = new MapDataPacket();
+        mapDataPacket.setId(id)
+            .setScale(0) // Fully zoomed-in
+            .setLocked(true)
+            .setTrackingPosition(false)
+            .setArea(DIMENSION, DIMENSION, 0, 0)
+            .setPixels(pixels);
 
         // Send packet
         tryToSendPacket(player, mapDataPacket);
