@@ -96,32 +96,17 @@
                     <createDependencyReducedPom>false</createDependencyReducedPom>
                     <filters>
                         <filter>
-                            <artifact>dev.jorel.CommandAPI:*</artifact>
-                            <excludes>
-                                <exclude>META-INF/**</exclude>
-                            </excludes>
-                        </filter>
-                        <filter>
-                            <artifact>de.tr7zw:*</artifact>
+                            <artifact>*:*</artifact>
                             <excludes>
                                 <exclude>META-INF/**</exclude>
                                 <exclude>LICENSE</exclude>
                             </excludes>
                         </filter>
-                        <filter>
-                            <artifact>org.bstats:*</artifact>
-                            <excludes>
-                                <exclude>META-INF/**</exclude>
-                            </excludes>
-                        </filter>
                     </filters>
                     <relocations>
                         <relocation>
-                            <pattern>dev.jorel.commandapi-shade</pattern>
-                        </relocation>
-                        <relocation>
                             <pattern>de.tr7zw.changeme.nbtapi</pattern>
-                            <shadedPattern>de.tr7zw.nbtapi</shadedPattern>
+                            <shadedPattern>${project.groupId}.nbtapi</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>org.bstats</pattern>
@@ -151,5 +136,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>
