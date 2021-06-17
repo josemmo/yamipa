@@ -114,7 +114,11 @@ public class Command {
     private @NotNull ArgumentBuilder buildElement(@NotNull ArgumentBuilder parent, int argIndex) {
         // Chain command elements from the bottom-up
         if (argIndex < arguments.size()) {
-            parent.then(buildElement(arguments.get(argIndex).build(), argIndex+1));
+            parent.then(buildElement(arguments.get(argIndex).build(), argIndex+1)).executes(ctx -> {
+                CommandSender sender = Internals.getBukkitSender(ctx.getSource());
+                sender.sendMessage(ChatColor.RED + "Missing required arguments");
+                return 1;
+            });
             return parent;
         }
 
