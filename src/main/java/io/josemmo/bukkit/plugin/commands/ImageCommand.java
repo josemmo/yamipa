@@ -31,27 +31,27 @@ public class ImageCommand {
 
     public static void showHelp(@NotNull CommandSender s) {
         s.sendMessage(ChatColor.BOLD + "=== Yamipa Plugin Help ===");
-        s.sendMessage(ChatColor.AQUA + "/image" + ChatColor.RESET + " — Show this help");
+        s.sendMessage(ChatColor.AQUA + "/image" + ChatColor.RESET + " - Show this help");
         if (s.hasPermission("yamipa.clear")) {
-            s.sendMessage(ChatColor.AQUA + "/image clear <x z w> <r> [<player>]" + ChatColor.RESET + " — Remove placed images");
+            s.sendMessage(ChatColor.AQUA + "/image clear <x z w> <r> [<player>]" + ChatColor.RESET + " - Remove placed images");
         }
         if (s.hasPermission("yamipa.describe")) {
-            s.sendMessage(ChatColor.AQUA + "/image describe" + ChatColor.RESET + " — Describe placed image");
+            s.sendMessage(ChatColor.AQUA + "/image describe" + ChatColor.RESET + " - Describe placed image");
         }
         if (s.hasPermission("yamipa.download")) {
-            s.sendMessage(ChatColor.AQUA + "/image download <url> <filename>" + ChatColor.RESET + " — Download image");
+            s.sendMessage(ChatColor.AQUA + "/image download <url> <filename>" + ChatColor.RESET + " - Download image");
         }
         if (s.hasPermission("yamipa.list")) {
-            s.sendMessage(ChatColor.AQUA + "/image list [<page>]" + ChatColor.RESET + " — List all images");
+            s.sendMessage(ChatColor.AQUA + "/image list [<page>]" + ChatColor.RESET + " - List all images");
         }
         if (s.hasPermission("yamipa.place")) {
-            s.sendMessage(ChatColor.AQUA + "/image place <filename> <w> [<h>]" + ChatColor.RESET + " — Place image");
+            s.sendMessage(ChatColor.AQUA + "/image place <filename> <w> [<h>]" + ChatColor.RESET + " - Place image");
         }
         if (s.hasPermission("yamipa.remove")) {
-            s.sendMessage(ChatColor.AQUA + "/image remove" + ChatColor.RESET + " — Remove a single placed image");
+            s.sendMessage(ChatColor.AQUA + "/image remove" + ChatColor.RESET + " - Remove a single placed image");
         }
         if (s.hasPermission("yamipa.top")) {
-            s.sendMessage(ChatColor.AQUA + "/image top" + ChatColor.RESET + " — List players with the most images");
+            s.sendMessage(ChatColor.AQUA + "/image top" + ChatColor.RESET + " - List players with the most images");
         }
     }
 
@@ -284,7 +284,7 @@ public class ImageCommand {
             sender.sendMessage(
                 "" + ChatColor.BOLD + (rank > 1000 ? "1000+" : rank) + ChatColor.RESET + ". " +
                 playerName + ChatColor.RESET +
-                ChatColor.GRAY + " — " + value + " " + (value == 1 ? "image" : "images")
+                ChatColor.GRAY + " - " + value + " " + (value == 1 ? "image" : "images")
             );
             ++printedLines;
         }

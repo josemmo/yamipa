@@ -86,7 +86,7 @@ public class SelectBlockTask {
         // Start task
         instances.put(uuid, this);
         actionBarTask = ActionBar.repeat(player, ChatColor.GREEN + helpMessage + ChatColor.RESET +
-            " — " + ChatColor.RED + "Left click to cancel");
+            " - " + ChatColor.RED + "Left click to cancel");
     }
 
     /**
