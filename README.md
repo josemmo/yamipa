@@ -48,7 +48,7 @@ disable it at any time by adding `enabled: false` to the
 ## Usage
 This plugin adds the following commands:
 
-- `/image clear <x y> <r> [<placed-by>]`: Remove all placed images in a radius of `r` blocks around the origin `x, y`.
+- `/image clear <x z world> <r> [<placed-by>]`: Remove all placed images in a radius of `r` blocks around an origin.
 - `/image describe`: Show detailed information about a placed image.
 - `/image download <url> <filename>`: Download an image from a URL and place it in the images directory.
 - `/image list [<page>]`: List all available files in the images directory.
@@ -68,14 +68,12 @@ This plugin adds the following commands:
   `/image place imagename.jpg 3 2`
 - Start the dialog to remove a placed image while keeping the original file\
   `/image remove`
-- Remove all placed images in a radius of 5 blocks around the spawn (sender's world)\
-  `/image clear 0 0 5`
-- Remove all placed images in a radius of 11 blocks around the player\
-  `/image clear ~ ~ 11`
-- Remove all images placed by "EvilPlayer" in a radius of 100 blocks around the sender\
-  `/image clear ~ ~ 100 EvilPlayer`
+- Remove all placed images in a radius of 5 blocks around the spawn\
+  `/image clear 0 0 world 5`
+- Remove all images placed by "EvilPlayer" in a radius of 100 blocks in the nether\
+  `/image clear 50 70 world_nether 100 EvilPlayer`
 - Remove all legacy placed images (without "placed by" metadata)\
-  `/image clear 0 0 9999999 00000000-0000-0000-0000-000000000000`
+  `/image clear 0 0 world 9999999 00000000-0000-0000-0000-000000000000`
 
 ## Permissions
 If you want more granular control over the players who can use a particular set of commands, permissions are the way to go!

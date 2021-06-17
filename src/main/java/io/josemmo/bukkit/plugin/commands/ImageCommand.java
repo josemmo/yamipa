@@ -33,7 +33,7 @@ public class ImageCommand {
         s.sendMessage(ChatColor.BOLD + "=== Yamipa Plugin Help ===");
         s.sendMessage(ChatColor.AQUA + "/image" + ChatColor.RESET + " — Show this help");
         if (s.hasPermission("yamipa.clear")) {
-            s.sendMessage(ChatColor.AQUA + "/image clear <x y> <r> [<placed-by>]" + ChatColor.RESET + " — Remove placed images");
+            s.sendMessage(ChatColor.AQUA + "/image clear <x z w> <r> [<player>]" + ChatColor.RESET + " — Remove placed images");
         }
         if (s.hasPermission("yamipa.describe")) {
             s.sendMessage(ChatColor.AQUA + "/image describe" + ChatColor.RESET + " — Describe placed image");
@@ -45,7 +45,7 @@ public class ImageCommand {
             s.sendMessage(ChatColor.AQUA + "/image list [<page>]" + ChatColor.RESET + " — List all images");
         }
         if (s.hasPermission("yamipa.place")) {
-            s.sendMessage(ChatColor.AQUA + "/image place <filename>" + ChatColor.RESET + " — Place image");
+            s.sendMessage(ChatColor.AQUA + "/image place <filename> <w> [<h>]" + ChatColor.RESET + " — Place image");
         }
         if (s.hasPermission("yamipa.remove")) {
             s.sendMessage(ChatColor.AQUA + "/image remove" + ChatColor.RESET + " — Remove a single placed image");
@@ -117,18 +117,11 @@ public class ImageCommand {
 
     public static void placeImage(
         @NotNull Player player,
-        @NotNull String filename,
+        @NotNull ImageFile image,
         int width,
         int height
     ) {
         YamipaPlugin plugin = YamipaPlugin.getInstance();
-
-        // Get image instance
-        ImageFile image = plugin.getStorage().get(filename);
-        if (image == null) {
-            player.sendMessage(ChatColor.RED + "The requested file does not exist");
-            return;
-        }
 
         // Get image size in blocks
         Dimension sizeInPixels = image.getSize();

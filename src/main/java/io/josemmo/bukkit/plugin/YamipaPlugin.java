@@ -1,7 +1,5 @@
 package io.josemmo.bukkit.plugin;
 
-import dev.jorel.commandapi.CommandAPI;
-import dev.jorel.commandapi.CommandAPIConfig;
 import io.josemmo.bukkit.plugin.commands.ImageCommandBridge;
 import io.josemmo.bukkit.plugin.renderer.ImageRenderer;
 import io.josemmo.bukkit.plugin.storage.ImageStorage;
@@ -60,19 +58,18 @@ public class YamipaPlugin extends JavaPlugin {
     @Override
     public void onLoad() {
         instance = this;
-        CommandAPI.onLoad(new CommandAPIConfig());
-        ImageCommandBridge.register();
     }
 
     @Override
     public void onEnable() {
-        CommandAPI.onEnable(this);
-
         // Initialize logger
         verbose = getConfig().getBoolean("verbose");
         if (verbose) {
             info("Running on VERBOSE mode");
         }
+
+        // Register plugin commands
+        ImageCommandBridge.register(this);
 
         // Read plugin configuration paths
         Path basePath = getDataFolder().toPath();
