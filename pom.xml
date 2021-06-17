@@ -64,11 +64,6 @@
             <version>2.7.1</version>
         </dependency>
         <dependency>
-            <groupId>dev.jorel.CommandAPI</groupId>
-            <artifactId>commandapi-shade</artifactId>
-            <version>5.12</version>
-        </dependency>
-        <dependency>
             <groupId>org.bstats</groupId>
             <artifactId>bstats-bukkit</artifactId>
             <version>1.8</version>
