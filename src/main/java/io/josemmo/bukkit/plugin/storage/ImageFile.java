@@ -113,6 +113,10 @@ public class ImageFile {
         int height = subscriber.getHeight();
         String cacheKey = width + "-" + height;
 
+        // Update subscribers for given cached maps
+        subscribers.computeIfAbsent(cacheKey, __ -> new HashSet<>());
+        subscribers.get(cacheKey).add(subscriber);
+
         // Try to get maps from memory cache
         if (cache.containsKey(cacheKey)) {
             return cache.get(cacheKey);
@@ -166,10 +170,6 @@ public class ImageFile {
             matrix = FakeMap.getErrorMatrix(width, height);
             plugin.log(Level.SEVERE, "Failed to get image data from file \"" + path + "\"", e);
         }
-
-        // Update subscribers for given cached maps
-        subscribers.computeIfAbsent(cacheKey, __ -> new HashSet<>());
-        subscribers.get(cacheKey).add(subscriber);
 
         // Persist in memory cache and return
         cache.put(cacheKey, matrix);

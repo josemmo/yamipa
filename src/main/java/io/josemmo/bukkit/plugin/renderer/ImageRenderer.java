@@ -250,6 +250,7 @@ public class ImageRenderer implements Listener {
                 worldAreas.remove(worldAreaId);
             }
         }
+        image.invalidate();
 
         // Set configuration changed flag
         hasConfigChanged.set(true);
