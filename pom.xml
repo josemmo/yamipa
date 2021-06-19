@@ -26,16 +26,10 @@
         <repository>
             <id>codemc-repo</id>
             <url>https://repo.codemc.io/repository/maven-public/</url>
-            <layout>default</layout>
         </repository>
         <repository>
             <id>minecraft-libraries</id>
-            <name>Minecraft Libraries</name>
             <url>https://libraries.minecraft.net</url>
-        </repository>
-        <repository>
-            <id>jitpack.io</id>
-            <url>https://jitpack.io</url>
         </repository>
     </repositories>
 

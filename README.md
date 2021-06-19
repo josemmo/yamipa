@@ -1,7 +1,7 @@
 # Yet Another Minecraft Image Placing Addon
 [![Tests](https://github.com/josemmo/yamipa/workflows/Tests/badge.svg)](https://github.com/josemmo/yamipa/actions)
 [![Latest Version](https://img.shields.io/github/v/release/josemmo/yamipa)](https://github.com/josemmo/yamipa/releases/latest)
-![Minecraft Version](https://img.shields.io/badge/minecraft-%3E%3D1.16-blueviolet)
+![Minecraft Version](https://img.shields.io/badge/minecraft-1.16%20%7C%7C%201.17-blueviolet)
 [![bStats Servers](https://img.shields.io/bstats/servers/10243)](https://bstats.org/plugin/bukkit/Yamipa/10243)
 [![License](https://img.shields.io/github/license/josemmo/yamipa)](LICENSE)
 
@@ -21,8 +21,8 @@ Download the JAR file for the [latest release](https://github.com/josemmo/yamipa
 ### Requirements
 Before installing Yamipa make sure you meet the following requirements:
 
-- CraftBukkit, Spigot or PaperMC v1.16.x
-- [ProtocolLib v4.x.x](https://www.spigotmc.org/resources/protocollib.1997/)
+- CraftBukkit, Spigot or PaperMC v1.16 or v1.17
+- [ProtocolLib](https://www.spigotmc.org/resources/protocollib.1997/) v4.6.1 or higher
 
 ## Configuration
 Yamipa is ready-to-go right out of the box. By default, it creates the following files and directories under the
@@ -94,5 +94,4 @@ such as [LuckPerms](https://luckperms.net/) or [GroupManager](https://elgarl.git
 Both these plugins have been tested to work with Yamipa, although any similar one should work just fine.
 
 ## License
-Yamipa is licensed under the [MIT License](LICENSE) and includes third-party software licensed under
-the MIT License and the [GPLv3 License](https://www.gnu.org/licenses/gpl-3.0.html).
+Yamipa is licensed under the [MIT License](LICENSE).
