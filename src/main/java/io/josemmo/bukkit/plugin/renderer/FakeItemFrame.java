@@ -1,7 +1,9 @@
 package io.josemmo.bukkit.plugin.renderer;
 
 import com.comphenix.protocol.events.PacketContainer;
-import de.tr7zw.changeme.nbtapi.NBTItem;
+import com.comphenix.protocol.utility.MinecraftReflection;
+import com.comphenix.protocol.wrappers.nbt.NbtCompound;
+import com.comphenix.protocol.wrappers.nbt.NbtFactory;
 import io.josemmo.bukkit.plugin.packets.DestroyEntityPacket;
 import io.josemmo.bukkit.plugin.packets.EntityMetadataPacket;
 import io.josemmo.bukkit.plugin.packets.SpawnEntityPacket;
@@ -107,14 +109,15 @@ public class FakeItemFrame extends FakeEntity {
             .setData(orientation);
 
         // Create and attach filled map
-        NBTItem mapNbt = new NBTItem(new ItemStack(Material.FILLED_MAP));
-        mapNbt.setInteger("map", map.getId());
-        ItemStack mapItemStack = mapNbt.getItem();
+        ItemStack itemStack = MinecraftReflection.getBukkitItemStack(new ItemStack(Material.FILLED_MAP));
+        NbtCompound itemStackNbt = NbtFactory.ofCompound("tag");
+        itemStackNbt.put("map", map.getId());
+        NbtFactory.setItemTag(itemStack, itemStackNbt);
 
         EntityMetadataPacket mapPacket = new EntityMetadataPacket();
         spawnPackets[1] = mapPacket.setId(id)
             .setInvisible(true)
-            .setItem(mapItemStack)
+            .setItem(itemStack)
             .setRotation(rotation)
             .build();
     }
