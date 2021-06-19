@@ -2,6 +2,7 @@ package io.josemmo.bukkit.plugin.packets;
 
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.PacketContainer;
+import io.josemmo.bukkit.plugin.utils.Internals;
 import org.jetbrains.annotations.NotNull;
 
 public class DestroyEntityPacket extends PacketContainer {
@@ -10,7 +11,11 @@ public class DestroyEntityPacket extends PacketContainer {
     }
 
     public @NotNull DestroyEntityPacket setId(int id) {
-        getIntegerArrays().write(0, new int[]{id});
+        if (Internals.MINECRAFT_VERSION < 17) {
+            getIntegerArrays().write(0, new int[]{id});
+        } else {
+            getIntegers().write(0, id);
+        }
         return this;
     }
 }

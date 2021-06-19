@@ -10,12 +10,18 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 public class Internals {
+    public static final float MINECRAFT_VERSION;
     private static final CommandDispatcher<?> DISPATCHER;
     private static final CommandMap COMMAND_MAP;
     private static final Method GET_BUKKIT_SENDER_METHOD;
 
     static {
         try {
+            // Get Minecraft version
+            String version = Bukkit.getVersion();
+            version = version.substring(version.lastIndexOf("(MC: 1.")+7, version.length()-1);
+            MINECRAFT_VERSION = Float.parseFloat(version);
+
             // Get "org.bukkit.craftbukkit.CraftServer" references
             Server obcInstance = Bukkit.getServer();
             Class<?> obcClass = obcInstance.getClass();

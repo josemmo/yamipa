@@ -135,7 +135,6 @@ public class FakeMap extends FakeEntity {
         mapDataPacket.setId(id)
             .setScale(0) // Fully zoomed-in
             .setLocked(true)
-            .setTrackingPosition(false)
             .setArea(DIMENSION, DIMENSION, 0, 0)
             .setPixels(pixels);
 
