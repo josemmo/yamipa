@@ -1,0 +1,12 @@
+{
+    "name": "@yamipa/automata",
+    "description": "Minecraft Automata for testing Yamipa",
+    "type": "module",
+    "scripts": {
+        "start": "node index.js"
+    },
+    "dependencies": {
+        "mineflayer": "^3.7.0",
+        "rcon-client": "^4.2.3"
+    }
+}

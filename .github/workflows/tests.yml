@@ -5,7 +5,7 @@ on: [push]
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 8
     strategy:
       fail-fast: false
       matrix:
@@ -22,6 +22,17 @@ jobs:
         with:
           distribution: 'adopt'
           java-version: '11'
+
+      # Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+
+      # Setup automata
+      - name: Setup automata
+        working-directory: ./automata
+        run: npm install
 
       # Build plugin
       - name: Build with Maven
@@ -44,6 +55,9 @@ jobs:
           wget -nv "$url" -O server.jar
           java -jar server.jar || true
           sed -i 's/eula=false/eula=true/g' eula.txt
+          echo "online-mode=false" >> server.properties
+          echo "enable-rcon=true" >> server.properties
+          echo "rcon.password=rcon" >> server.properties
           echo "allow-nether=false" >> server.properties
           echo "allow-end=false" >> server.properties
           echo 'generate-structures=false' >> server.properties
@@ -70,6 +84,7 @@ jobs:
       - name: Run plugin in server
         working-directory: ./server
         run: |
+          (cd ../automata && npm run start) &
           timeout -s SIGINT 90s java -DIReallyKnowWhatIAmDoingISwear -jar server.jar nogui | tee server.log || true
           if ! grep -Fq '[YamipaPlugin] Loading YamipaPlugin' server.log; then
             echo "Plugin did not load"
@@ -81,5 +96,21 @@ jobs:
           fi
           if ! grep -Fq '[YamipaPlugin] Found 5 file(s) in images directory' server.log; then
             echo "Plugin did not read image directory"
+            exit 1
+          fi
+          if ! grep -Fq '[YamipaPlugin] Fixed command permissions' server.log; then
+            echo "Plugin did not fixed command permissions"
+            exit 1
+          fi
+          if ! grep -Fq '[YamipaPlugin] Created FakeImage' server.log; then
+            echo "Plugin did not place the fake image"
+            exit 1
+          fi
+          if ! grep -Fq '[YamipaPlugin] Invalidated FakeImage' server.log; then
+            echo "Plugin did not remove the fake image"
+            exit 1
+          fi
+          if grep -iFq 'exception' server.log; then
+            echo "Server threw an exception"
             exit 1
           fi
