@@ -3,33 +3,36 @@ import { wait } from './src/common.js'
 import { getRconClient, waitForServer } from './src/rcon.js'
 
 (async() => {
-    console.log('Waiting for Minecraft server to be ready...')
+    console.log('[AUTOMATA] Waiting for Minecraft server to be ready...')
     await waitForServer()
 
-    console.log('Making test account an OP...')
+    console.log('[AUTOMATA] Making test account an OP...')
     const conn = await getRconClient()
-    await conn.send('op @p')
-    await conn.send('gamemode creative @p')
+    await conn.send('op test')
+    await conn.send('gamemode creative test')
     await conn.end()
 
-    console.log('Logging in as test account...')
+    console.log('[AUTOMATA] Logging in as test account...')
     const bot = await startBot()
     await bot.look(0, -Math.PI/2)
+    bot.chat('/clear @p')
+    await wait(2000)
     bot.chat('/give @p minecraft:dirt')
+    await wait(2000)
 
-    console.log('Placing image on the floor...')
+    console.log('[AUTOMATA] Placing image on the floor...')
     bot.chat('/image place pic-1.jpg 4 4')
     await wait(2000)
     placeBlockOnTheFloor(bot)
     await wait(2000)
 
-    console.log('Removing image from floor...')
+    console.log('[AUTOMATA] Removing image from floor...')
     bot.chat('/image remove')
     await wait(2000)
     placeBlockOnTheFloor(bot)
     await wait(2000)
 
-    console.log('Logging off...')
+    console.log('[AUTOMATA] Logging off...')
     bot.end()
-    console.log('Done!')
+    console.log('[AUTOMATA] Done!')
 })()
