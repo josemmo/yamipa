@@ -6,15 +6,18 @@ import { getRconClient, waitForServer } from './src/rcon.js'
     console.log('[AUTOMATA] Waiting for Minecraft server to be ready...')
     await waitForServer()
 
+    console.log('[AUTOMATA] Logging in as test account...')
+    const bot = await startBot()
+    await bot.look(0, -Math.PI/2)
+
     console.log('[AUTOMATA] Making test account an OP...')
     const conn = await getRconClient()
     await conn.send('op test')
     await conn.send('gamemode creative test')
     await conn.end()
+    await wait(2000)
 
-    console.log('[AUTOMATA] Logging in as test account...')
-    const bot = await startBot()
-    await bot.look(0, -Math.PI/2)
+    console.log('[AUTOMATA] Preparing test account...')
     bot.chat('/clear @p')
     await wait(2000)
     bot.chat('/give @p minecraft:dirt')
