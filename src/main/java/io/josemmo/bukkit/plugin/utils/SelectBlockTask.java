@@ -152,13 +152,20 @@ public class SelectBlockTask {
 
         @Override
         public void onPacketReceiving(PacketEvent event) {
-            EnumWrappers.EntityUseAction action = event.getPacket().getEntityUseActions().read(0);
             Player player = event.getPlayer();
 
             // Get task responsible for handling this event
             UUID uuid = player.getUniqueId();
             SelectBlockTask task = instances.get(uuid);
             if (task == null) return;
+
+            // Get action
+            EnumWrappers.EntityUseAction action;
+            if (Internals.MINECRAFT_VERSION < 17) {
+                action = event.getPacket().getEntityUseActions().read(0);
+            } else {
+                action = event.getPacket().getEnumEntityUseActions().read(0).getAction();
+            }
 
             // Player left clicked an entity
             if (action == EnumWrappers.EntityUseAction.ATTACK) {
