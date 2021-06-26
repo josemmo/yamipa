@@ -13,7 +13,6 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
-import java.util.Objects;
 
 public class ImageCommandBridge {
     public static final String COMMAND_NAME = "yamipa";
@@ -161,7 +160,8 @@ public class ImageCommandBridge {
 
     private static void fixPermissions(@NotNull String commandName) {
         org.bukkit.command.Command command = Internals.getCommandMap().getCommand(commandName);
-        Objects.requireNonNull(command);
-        command.setPermission(null);
+        if (command != null) { // Command may have been aliased to null in "commands.yml"
+            command.setPermission(null);
+        }
     }
 }
