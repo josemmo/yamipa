@@ -4,6 +4,7 @@ import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.PacketContainer;
 import io.josemmo.bukkit.plugin.utils.Internals;
 import org.jetbrains.annotations.NotNull;
+import java.util.Collections;
 
 public class DestroyEntityPacket extends PacketContainer {
     public DestroyEntityPacket() {
@@ -11,10 +12,12 @@ public class DestroyEntityPacket extends PacketContainer {
     }
 
     public @NotNull DestroyEntityPacket setId(int id) {
-        if (Internals.MINECRAFT_VERSION < 17) {
+        if (Internals.MINECRAFT_VERSION < 17) { // Minecraft 1.16.x
             getIntegerArrays().write(0, new int[]{id});
-        } else {
+        } else if (Internals.MINECRAFT_VERSION < 17.1) { // Minecraft 1.17
             getIntegers().write(0, id);
+        } else { // Minecraft 1.17.x
+            getIntLists().write(0, Collections.singletonList(id));
         }
         return this;
     }
