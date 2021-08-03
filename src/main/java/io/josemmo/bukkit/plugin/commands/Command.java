@@ -154,6 +154,7 @@ public class Command {
         @NotNull CommandContext<?> ctx
     ) throws CommandSyntaxException {
         List<Object> argValues = new ArrayList<>();
+        argValues.add(ctx.getNodes().get(0).getNode().getName());
         for (Argument argument : arguments) {
             Object value = ctx.getArgument(argument.getName(), Object.class);
             value = argument.parse(sender, value);
