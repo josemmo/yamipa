@@ -43,11 +43,12 @@ jobs:
         env:
           FLAVOR: ${{ matrix.flavor }}
           VERSION: ${{ matrix.version }}
+          GETBUKKIT_SUBDOMAIN: ${{ startsWith(matrix.version, '1.16') && 'cdn' || 'download' }}
         run: |
           if [ $FLAVOR == "bukkit" ]; then
-            url="https://cdn.getbukkit.org/craftbukkit/craftbukkit-$VERSION.jar"
+            url="https://$GETBUKKIT_SUBDOMAIN.getbukkit.org/craftbukkit/craftbukkit-$VERSION.jar"
           elif [ $FLAVOR == "spigot" ]; then
-            url="https://cdn.getbukkit.org/spigot/spigot-$VERSION.jar"
+            url="https://$GETBUKKIT_SUBDOMAIN.getbukkit.org/spigot/spigot-$VERSION.jar"
           elif [ $FLAVOR == "paper" ]; then
             url="https://papermc.io/api/v1/paper/$VERSION/latest/download"
           elif [ $FLAVOR == "purpur" ]; then
