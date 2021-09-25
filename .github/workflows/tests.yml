@@ -20,7 +20,7 @@ jobs:
       - name: Setup JDK
         uses: actions/setup-java@v2
         with:
-          distribution: 'adopt'
+          distribution: 'temurin'
           java-version: ${{ startsWith(matrix.version, '1.16') && '11' || '16' }}
 
       # Setup Node.js
