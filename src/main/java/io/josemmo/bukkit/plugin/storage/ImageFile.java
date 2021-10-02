@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
@@ -70,39 +69,40 @@ public class ImageFile {
      * @throws IOException if failed to render images from file
      */
     private byte[][] renderImages(int width, int height) throws IOException {
-        // Read all images in sequence (ImageReader does not support parallelization)
         ImageReader reader = getImageReader();
-        List<Image> images = new ArrayList<>();
-        for (int i=0; i<reader.getNumImages(true); ++i) {
-            images.add(reader.read(i));
-        }
-        reader.dispose();
+        int numOfImages = reader.getNumImages(true);
 
-        // Resize and convert pixels to Minecraft's indexed palette
-        return IntStream.range(0, images.size()).parallel().mapToObj(i -> {
-            // Resize image
-            Image tmp = images.get(i).getScaledInstance(width, height, Image.SCALE_FAST);
-            BufferedImage resizedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        // Create temporal canvas
+        BufferedImage tmpImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D tmpGraphics = tmpImage.createGraphics();
 
-            // Copy data from temporary to resized instance
-            Graphics2D g2d = resizedImage.createGraphics();
-            g2d.drawImage(tmp, 0, 0, null);
-            g2d.dispose();
+        // Read images from file
+        byte[][] renderedImages = new byte[numOfImages][width*height];
+        for (int imageIndex=0; imageIndex<numOfImages; ++imageIndex) {
+            // Resize image and paint over temporal canvas
+            Image scaledImage = reader.read(imageIndex).getScaledInstance(width, height, Image.SCALE_FAST);
+            tmpGraphics.drawImage(scaledImage, 0, 0, null);
+            scaledImage.flush();
 
             // Convert RGBA pixels to Minecraft color indexes
-            int[] rgbPixels = resizedImage.getRGB(
+            int[] rgbPixels = tmpImage.getRGB(
                 0, 0,
                 width, height,
                 null, 0,
                 width
             );
-            byte[] pixels = new byte[rgbPixels.length];
-            IntStream.range(0, rgbPixels.length).parallel().forEach(j -> {
-                pixels[j] = FakeMap.pixelToIndex(rgbPixels[j]);
+            final int finalImageIndex = imageIndex;
+            IntStream.range(0, rgbPixels.length).parallel().forEach(pixelIndex -> {
+                renderedImages[finalImageIndex][pixelIndex] = FakeMap.pixelToIndex(rgbPixels[pixelIndex]);
             });
+        }
 
-            return pixels;
-        }).toArray(byte[][]::new);
+        // Free resources
+        reader.dispose();
+        tmpGraphics.dispose();
+        tmpImage.flush();
+
+        return renderedImages;
     }
 
     /**
