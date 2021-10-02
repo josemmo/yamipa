@@ -243,7 +243,7 @@ public class FakeImage extends FakeEntity {
      */
     private void load() {
         ImageFile file = getFile();
-        FakeMap[][] maps;
+        FakeMap[][][] maps;
         if (file == null) {
             maps = FakeMap.getErrorMatrix(width, height);
             plugin.warning("File \"" + filename + "\" does not exist");

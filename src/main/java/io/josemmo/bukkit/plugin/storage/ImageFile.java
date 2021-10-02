@@ -6,6 +6,8 @@ import io.josemmo.bukkit.plugin.renderer.FakeMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -24,8 +26,10 @@ import java.util.stream.IntStream;
 
 public class ImageFile {
     public static final String CACHE_EXT = "cache";
+    public static final byte[] CACHE_SIGNATURE = new byte[] {0x59, 0x4d, 0x50}; // "YMP"
+    public static final int CACHE_VERSION = 1;
     private static final YamipaPlugin plugin = YamipaPlugin.getInstance();
-    private final Map<String, FakeMap[][]> cache = new HashMap<>();
+    private final Map<String, FakeMap[][][]> cache = new HashMap<>();
     private final Map<String, Set<FakeImage>> subscribers = new HashMap<>();
     private final String name;
     private final String path;
@@ -49,33 +53,52 @@ public class ImageFile {
     }
 
     /**
-     * Get buffered image
-     * @return Buffered image
-     * @throws IOException if not a valid image file
-     * @throws NullPointerException if file not found
-     */
-    private @NotNull BufferedImage getBufferedImage() throws Exception {
-        return ImageIO.read(new File(path));
-    }
-
-    /**
-     * Get resized buffered image
+     * Render images using Minecraft palette
      * @param  width  New width in pixels
      * @param  height New height in pixels
-     * @return        Resized buffered image
+     * @return        Bi-dimensional array of Minecraft images (image index, pixel index)
      * @throws IOException if not a valid image file
      * @throws NullPointerException if file not found
      */
-    private @NotNull BufferedImage getBufferedImage(int width, int height) throws Exception {
-        Image tmp = getBufferedImage().getScaledInstance(width, height, Image.SCALE_FAST);
-        BufferedImage resizedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+    private byte[][] renderImages(int width, int height) throws Exception {
+        ImageInputStream inputStream = ImageIO.createImageInputStream(new File(path));
+        ImageReader reader = ImageIO.getImageReaders(inputStream).next();
+        reader.setInput(inputStream);
 
-        // Copy data from temporary to resized instance
-        Graphics2D g2d = resizedImage.createGraphics();
-        g2d.drawImage(tmp, 0, 0, null);
-        g2d.dispose();
+        int numOfImages = reader.getNumImages(true);
+        byte[][] renderedImages = IntStream.range(0, numOfImages).parallel().mapToObj(i -> {
+            try {
+                // Allocate resized image instance
+                Image tmp = reader.read(i).getScaledInstance(width, height, Image.SCALE_FAST);
+                BufferedImage resizedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 
-        return resizedImage;
+                // Copy data from temporary to resized instance
+                Graphics2D g2d = resizedImage.createGraphics();
+                g2d.drawImage(tmp, 0, 0, null);
+                g2d.dispose();
+
+                // Convert RGBA pixels to Minecraft color indexes
+                int[] rgbPixels = resizedImage.getRGB(
+                    0, 0,
+                    width, height,
+                    null, 0,
+                    width
+                );
+                byte[] pixels = new byte[rgbPixels.length];
+                IntStream.range(0, rgbPixels.length).parallel().forEach(j -> {
+                    pixels[j] = FakeMap.pixelToIndex(rgbPixels[j]);
+                });
+
+                return pixels;
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }).toArray(byte[][]::new);
+
+        // Free reader
+        reader.dispose();
+
+        return renderedImages;
     }
 
     /**
@@ -84,8 +107,12 @@ public class ImageFile {
      */
     public @Nullable Dimension getSize() {
         try {
-            BufferedImage image = getBufferedImage();
-            return new Dimension(image.getWidth(), image.getHeight());
+            ImageInputStream inputStream = ImageIO.createImageInputStream(new File(path));
+            ImageReader reader = ImageIO.getImageReaders(inputStream).next();
+            reader.setInput(inputStream);
+            Dimension dimension = new Dimension(reader.getWidth(0), reader.getHeight(0));
+            reader.dispose();
+            return dimension;
         } catch (Exception e) {
             return null;
         }
@@ -106,9 +133,9 @@ public class ImageFile {
     /**
      * Get maps and subscribe to maps cache
      * @param  subscriber Fake image instance requesting the maps
-     * @return            Bi-dimensional array of maps
+     * @return            Tri-dimensional array of maps (column, row, time)
      */
-    public synchronized @NotNull FakeMap[][] getMapsAndSubscribe(@NotNull FakeImage subscriber) {
+    public synchronized @NotNull FakeMap[][][] getMapsAndSubscribe(@NotNull FakeImage subscriber) {
         int width = subscriber.getWidth();
         int height = subscriber.getHeight();
         String cacheKey = width + "-" + height;
@@ -127,48 +154,48 @@ public class ImageFile {
         File cacheFile = Paths.get(plugin.getStorage().getCachePath(), cacheFilename).toFile();
         if (cacheFile.isFile() && cacheFile.lastModified() >= getLastModified()) {
             try {
-                FakeMap[][] maps = readMapsFromCacheFile(cacheFile, width, height);
+                FakeMap[][][] maps = readMapsFromCacheFile(cacheFile, width, height);
                 cache.put(cacheKey, maps);
                 return maps;
+            } catch (IllegalArgumentException e) {
+                plugin.info("Cache file \"" + cacheFile.getAbsolutePath() + "\" is outdated and will be overwritten");
             } catch (Exception e) {
-                plugin.warning("Cache file \"" + cacheFile.getAbsolutePath() + "\" is corrupted");
+                plugin.log(Level.WARNING, "Cache file \"" + cacheFile.getAbsolutePath() + "\" is corrupted", e);
             }
         }
 
         // Generate maps from original image
-        FakeMap[][] matrix = new FakeMap[width][height];
+        FakeMap[][][] matrix;
         try {
-            BufferedImage image = getBufferedImage(width*FakeMap.DIMENSION, height*FakeMap.DIMENSION);
-            int imgWidth = image.getWidth();
-
-            // Convert RGBA pixels to Minecraft color indexes
-            int[] rgbPixels = image.getRGB(
-                0, 0,
-                imgWidth, image.getHeight(),
-                null, 0,
-                imgWidth
-            );
-            byte[] pixels = new byte[rgbPixels.length];
-            IntStream.range(0, rgbPixels.length).parallel().forEach(i -> {
-                pixels[i] = FakeMap.pixelToIndex(rgbPixels[i]);
-            });
+            int widthInPixels = width*FakeMap.DIMENSION;
+            int heightInPixels = height*FakeMap.DIMENSION;
+            byte[][] images = renderImages(widthInPixels, heightInPixels);
 
             // Instantiate fake maps
-            for (int col=0; col<width; col++) {
-                for (int row=0; row<height; row++) {
-                    matrix[col][row] = new FakeMap(pixels, imgWidth, col*FakeMap.DIMENSION, row*FakeMap.DIMENSION);
+            FakeMap[][][] tmpMatrix = new FakeMap[width][height][images.length];
+            IntStream.range(0, images.length).forEach(i -> {
+                for (int col=0; col<width; col++) {
+                    for (int row=0; row<height; row++) {
+                        tmpMatrix[col][row][i] = new FakeMap(
+                            images[i],
+                            widthInPixels,
+                            col*FakeMap.DIMENSION,
+                            row*FakeMap.DIMENSION
+                        );
+                    }
                 }
-            }
+            });
+            matrix = tmpMatrix;
 
             // Persist in disk cache
             try {
-                writeMapsToCacheFile(matrix, width, height, cacheFile);
+                writeMapsToCacheFile(matrix, cacheFile);
             } catch (IOException e) {
                 plugin.log(Level.SEVERE, "Failed to write to cache file \"" + cacheFile.getAbsolutePath() + "\"", e);
             }
         } catch (Exception e) {
             matrix = FakeMap.getErrorMatrix(width, height);
-            plugin.log(Level.SEVERE, "Failed to get image data from file \"" + path + "\"", e);
+            plugin.log(Level.SEVERE, "Failed to render image(s) from file \"" + path + "\"", e);
         }
 
         // Persist in memory cache and return
@@ -181,36 +208,64 @@ public class ImageFile {
      * @param  file   Cache file
      * @param  width  Width in blocks
      * @param  height Height in blocks
-     * @return        Bi-dimensional array of maps
+     * @return        Tri-dimensional array of maps (column, row, time)
+     * @throws IllegalArgumentException if not a valid or outdated cache file
      * @throws IOException if failed to parse cache file
      */
-    private @NotNull FakeMap[][] readMapsFromCacheFile(@NotNull File file, int width, int height) throws IOException {
+    private @NotNull FakeMap[][][] readMapsFromCacheFile(@NotNull File file, int width, int height) throws Exception {
         try (FileInputStream stream = new FileInputStream(file)) {
-            FakeMap[][] matrix = new FakeMap[width][height];
-            for (int col=0; col<width; col++) {
-                for (int row=0; row<height; row++) {
-                    byte[] buffer = new byte[FakeMap.DIMENSION*FakeMap.DIMENSION];
-                    stream.read(buffer);
-                    matrix[col][row] = new FakeMap(buffer);
+            // Validate file signature
+            for (byte expectedByte : CACHE_SIGNATURE) {
+                if ((byte) stream.read() != expectedByte) {
+                    throw new IllegalArgumentException("Invalid file signature");
                 }
             }
-            return matrix;
+
+            // Validate version number
+            if ((byte) stream.read() != CACHE_VERSION) {
+                throw new IllegalArgumentException("Incompatible file format version");
+            }
+
+            // Get number of animation frames
+            int numOfImages = stream.read();
+            if (numOfImages < 1) {
+                throw new IOException("Invalid number of animation frames: " + numOfImages);
+            }
+
+            // Read pixels
+            FakeMap[][][] maps = new FakeMap[width][height][numOfImages];
+            for (int col=0; col<width; ++col) {
+                for (int row=0; row<height; ++row) {
+                    for (int image=0; image<numOfImages; ++image) {
+                        byte[] buffer = new byte[FakeMap.DIMENSION*FakeMap.DIMENSION];
+                        stream.read(buffer);
+                        maps[col][row][image] = new FakeMap(buffer);
+                    }
+                }
+            }
+            return maps;
         }
     }
 
     /**
      * Write maps to cache file
-     * @param maps   Bi-dimensional array of maps
-     * @param width  Width in blocks
-     * @param height Height in blocks
+     * @param maps   Tri-dimensional array of maps (column, row, time)
      * @param file   Cache file
      * @throws IOException if failed to write to cache file
      */
-    private void writeMapsToCacheFile(@NotNull FakeMap[][] maps, int width, int height, @NotNull File file) throws IOException {
+    private void writeMapsToCacheFile(@NotNull FakeMap[][][] maps, @NotNull File file) throws IOException {
         try (FileOutputStream stream = new FileOutputStream(file)) {
-            for (int col=0; col<width; col++) {
-                for (int row=0; row<height; row++) {
-                    stream.write(maps[col][row].getPixels());
+            // Add file header
+            stream.write(CACHE_SIGNATURE);   // "YMP" signature
+            stream.write(CACHE_VERSION);     // Format version
+            stream.write(maps[0][0].length); // Number of animation frames
+
+            // Add pixels
+            for (int col=0; col<maps.length; ++col) {
+                for (int row=0; row<maps[0].length; ++row) {
+                    for (int image=0; image<maps[0][0].length; ++image) {
+                        stream.write(maps[col][row][image].getPixels());
+                    }
                 }
             }
         }
