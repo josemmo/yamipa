@@ -30,6 +30,8 @@ public class FakeImage extends FakeEntity {
     private final OfflinePlayer placedBy;
     private final BiFunction<Integer, Integer, Vector> getLocationVector;
     private FakeItemFrame[][] frames;
+    private int numOfSteps = -1; // Number of animated image frames
+    private int currentStep = -1;
 
     /**
      * Get image rotation from player eyesight
@@ -250,6 +252,7 @@ public class FakeImage extends FakeEntity {
         } else {
             maps = file.getMapsAndSubscribe(this);
         }
+        numOfSteps = maps[0][0].length;
 
         // Generate frames
         frames = new FakeItemFrame[width][height];
@@ -268,14 +271,33 @@ public class FakeImage extends FakeEntity {
     public void spawn(@NotNull Player player) {
         BukkitScheduler scheduler = Bukkit.getScheduler();
         scheduler.runTaskAsynchronously(plugin, () -> {
-            if (frames == null) load();
+            // Load frames from disk if not already loaded
+            if (frames == null) {
+                load();
+            }
+
+            // Spawn frames in player's client from main server thread
             scheduler.runTask(plugin, () -> {
                 for (FakeItemFrame[] col : frames) {
                     for (FakeItemFrame frame : col) {
                         frame.spawn(player);
+                        frame.render(player, 0);
                     }
                 }
             });
+
+            // TODO: for testing, do NOT create a new task for each player
+            if (numOfSteps > 1) {
+                plugin.fine("Spawned repeating task for FakeImage#(" + location + "," + face + ")");
+                scheduler.scheduleSyncRepeatingTask(plugin, () -> {
+                    currentStep = (currentStep + 1) % numOfSteps;
+                    for (FakeItemFrame[] col : frames) {
+                        for (FakeItemFrame frame : col) {
+                            frame.render(player, currentStep);
+                        }
+                    }
+                }, 0, 5); // Every ~5 ticks (0.25 seconds)
+            }
         });
     }
 

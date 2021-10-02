@@ -16,10 +16,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
@@ -53,52 +51,58 @@ public class ImageFile {
     }
 
     /**
+     * Get image reader
+     * @return Image reader instance
+     * @throws IOException if failed to get suitable image reader
+     */
+    private @NotNull ImageReader getImageReader() throws IOException {
+        ImageInputStream inputStream = ImageIO.createImageInputStream(new File(path));
+        ImageReader reader = ImageIO.getImageReaders(inputStream).next();
+        reader.setInput(inputStream);
+        return reader;
+    }
+
+    /**
      * Render images using Minecraft palette
      * @param  width  New width in pixels
      * @param  height New height in pixels
      * @return        Bi-dimensional array of Minecraft images (image index, pixel index)
-     * @throws IOException if not a valid image file
-     * @throws NullPointerException if file not found
+     * @throws IOException if failed to render images from file
      */
-    private byte[][] renderImages(int width, int height) throws Exception {
-        ImageInputStream inputStream = ImageIO.createImageInputStream(new File(path));
-        ImageReader reader = ImageIO.getImageReaders(inputStream).next();
-        reader.setInput(inputStream);
-
-        int numOfImages = reader.getNumImages(true);
-        byte[][] renderedImages = IntStream.range(0, numOfImages).parallel().mapToObj(i -> {
-            try {
-                // Allocate resized image instance
-                Image tmp = reader.read(i).getScaledInstance(width, height, Image.SCALE_FAST);
-                BufferedImage resizedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-
-                // Copy data from temporary to resized instance
-                Graphics2D g2d = resizedImage.createGraphics();
-                g2d.drawImage(tmp, 0, 0, null);
-                g2d.dispose();
-
-                // Convert RGBA pixels to Minecraft color indexes
-                int[] rgbPixels = resizedImage.getRGB(
-                    0, 0,
-                    width, height,
-                    null, 0,
-                    width
-                );
-                byte[] pixels = new byte[rgbPixels.length];
-                IntStream.range(0, rgbPixels.length).parallel().forEach(j -> {
-                    pixels[j] = FakeMap.pixelToIndex(rgbPixels[j]);
-                });
-
-                return pixels;
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }).toArray(byte[][]::new);
-
-        // Free reader
+    private byte[][] renderImages(int width, int height) throws IOException {
+        // Read all images in sequence (ImageReader does not support parallelization)
+        ImageReader reader = getImageReader();
+        List<Image> images = new ArrayList<>();
+        for (int i=0; i<reader.getNumImages(true); ++i) {
+            images.add(reader.read(i));
+        }
         reader.dispose();
 
-        return renderedImages;
+        // Resize and convert pixels to Minecraft's indexed palette
+        return IntStream.range(0, images.size()).parallel().mapToObj(i -> {
+            // Resize image
+            Image tmp = images.get(i).getScaledInstance(width, height, Image.SCALE_FAST);
+            BufferedImage resizedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+
+            // Copy data from temporary to resized instance
+            Graphics2D g2d = resizedImage.createGraphics();
+            g2d.drawImage(tmp, 0, 0, null);
+            g2d.dispose();
+
+            // Convert RGBA pixels to Minecraft color indexes
+            int[] rgbPixels = resizedImage.getRGB(
+                0, 0,
+                width, height,
+                null, 0,
+                width
+            );
+            byte[] pixels = new byte[rgbPixels.length];
+            IntStream.range(0, rgbPixels.length).parallel().forEach(j -> {
+                pixels[j] = FakeMap.pixelToIndex(rgbPixels[j]);
+            });
+
+            return pixels;
+        }).toArray(byte[][]::new);
     }
 
     /**
@@ -107,9 +111,7 @@ public class ImageFile {
      */
     public @Nullable Dimension getSize() {
         try {
-            ImageInputStream inputStream = ImageIO.createImageInputStream(new File(path));
-            ImageReader reader = ImageIO.getImageReaders(inputStream).next();
-            reader.setInput(inputStream);
+            ImageReader reader = getImageReader();
             Dimension dimension = new Dimension(reader.getWidth(0), reader.getHeight(0));
             reader.dispose();
             return dimension;

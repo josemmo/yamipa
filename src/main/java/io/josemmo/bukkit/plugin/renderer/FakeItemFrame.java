@@ -110,9 +110,6 @@ public class FakeItemFrame extends FakeEntity {
         for (FakeMap map : maps) {
             map.sendPixels(player);
         }
-
-        // TODO: for testing
-        render(player, 0);
     }
 
     /**
