@@ -63,7 +63,7 @@ public class FakeMap extends FakeEntity {
      * Get matrix of error maps
      * @param  width  Width in blocks
      * @param  height Height in blocks
-     * @return        Tri-dimensional array of maps (column, row, time)
+     * @return        Tri-dimensional array of maps (column, row, step)
      */
     public static @NotNull FakeMap[][][] getErrorMatrix(int width, int height) {
         FakeMap[] errorMaps = new FakeMap[] {getErrorInstance()};

@@ -65,22 +65,22 @@ public class ImageFile {
      * Render images using Minecraft palette
      * @param  width  New width in pixels
      * @param  height New height in pixels
-     * @return        Bi-dimensional array of Minecraft images (image index, pixel index)
+     * @return        Bi-dimensional array of Minecraft images (step, pixel index)
      * @throws IOException if failed to render images from file
      */
     private byte[][] renderImages(int width, int height) throws IOException {
         ImageReader reader = getImageReader();
-        int numOfImages = reader.getNumImages(true);
+        int numOfSteps = reader.getNumImages(true);
 
         // Create temporal canvas
         BufferedImage tmpImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D tmpGraphics = tmpImage.createGraphics();
 
         // Read images from file
-        byte[][] renderedImages = new byte[numOfImages][width*height];
-        for (int imageIndex=0; imageIndex<numOfImages; ++imageIndex) {
+        byte[][] renderedImages = new byte[numOfSteps][width*height];
+        for (int step=0; step<numOfSteps; ++step) {
             // Resize image and paint over temporal canvas
-            Image scaledImage = reader.read(imageIndex).getScaledInstance(width, height, Image.SCALE_FAST);
+            Image scaledImage = reader.read(step).getScaledInstance(width, height, Image.SCALE_FAST);
             tmpGraphics.drawImage(scaledImage, 0, 0, null);
             scaledImage.flush();
 
@@ -91,9 +91,9 @@ public class ImageFile {
                 null, 0,
                 width
             );
-            final int finalImageIndex = imageIndex;
+            final int stepButFinal = step;
             IntStream.range(0, rgbPixels.length).parallel().forEach(pixelIndex -> {
-                renderedImages[finalImageIndex][pixelIndex] = FakeMap.pixelToIndex(rgbPixels[pixelIndex]);
+                renderedImages[stepButFinal][pixelIndex] = FakeMap.pixelToIndex(rgbPixels[pixelIndex]);
             });
         }
 
@@ -135,7 +135,7 @@ public class ImageFile {
     /**
      * Get maps and subscribe to maps cache
      * @param  subscriber Fake image instance requesting the maps
-     * @return            Tri-dimensional array of maps (column, row, time)
+     * @return            Tri-dimensional array of maps (column, row, step)
      */
     public synchronized @NotNull FakeMap[][][] getMapsAndSubscribe(@NotNull FakeImage subscriber) {
         int width = subscriber.getWidth();
@@ -210,7 +210,7 @@ public class ImageFile {
      * @param  file   Cache file
      * @param  width  Width in blocks
      * @param  height Height in blocks
-     * @return        Tri-dimensional array of maps (column, row, time)
+     * @return        Tri-dimensional array of maps (column, row, step)
      * @throws IllegalArgumentException if not a valid or outdated cache file
      * @throws IOException if failed to parse cache file
      */
@@ -228,20 +228,20 @@ public class ImageFile {
                 throw new IllegalArgumentException("Incompatible file format version");
             }
 
-            // Get number of animation frames
-            int numOfImages = stream.read();
-            if (numOfImages < 1) {
-                throw new IOException("Invalid number of animation frames: " + numOfImages);
+            // Get number of animation steps
+            int numOfSteps = stream.read();
+            if (numOfSteps < 1) {
+                throw new IOException("Invalid number of animation steps: " + numOfSteps);
             }
 
             // Read pixels
-            FakeMap[][][] maps = new FakeMap[width][height][numOfImages];
+            FakeMap[][][] maps = new FakeMap[width][height][numOfSteps];
             for (int col=0; col<width; ++col) {
                 for (int row=0; row<height; ++row) {
-                    for (int image=0; image<numOfImages; ++image) {
+                    for (int step=0; step<numOfSteps; ++step) {
                         byte[] buffer = new byte[FakeMap.DIMENSION*FakeMap.DIMENSION];
                         stream.read(buffer);
-                        maps[col][row][image] = new FakeMap(buffer);
+                        maps[col][row][step] = new FakeMap(buffer);
                     }
                 }
             }
@@ -251,7 +251,7 @@ public class ImageFile {
 
     /**
      * Write maps to cache file
-     * @param maps   Tri-dimensional array of maps (column, row, time)
+     * @param maps   Tri-dimensional array of maps (column, row, step)
      * @param file   Cache file
      * @throws IOException if failed to write to cache file
      */
@@ -260,13 +260,13 @@ public class ImageFile {
             // Add file header
             stream.write(CACHE_SIGNATURE);   // "YMP" signature
             stream.write(CACHE_VERSION);     // Format version
-            stream.write(maps[0][0].length); // Number of animation frames
+            stream.write(maps[0][0].length); // Number of animation steps
 
             // Add pixels
             for (int col=0; col<maps.length; ++col) {
                 for (int row=0; row<maps[0].length; ++row) {
-                    for (int image=0; image<maps[0][0].length; ++image) {
-                        stream.write(maps[col][row][image].getPixels());
+                    for (int step=0; step<maps[0][0].length; ++step) {
+                        stream.write(maps[col][row][step].getPixels());
                     }
                 }
             }

@@ -114,14 +114,14 @@ public class FakeItemFrame extends FakeEntity {
 
     /**
      * Send frame of animation to player
-     * @param player   Player instance
-     * @param mapIndex Map index to send
+     * @param player Player instance
+     * @param step   Map step to send
      */
-    public void render(@NotNull Player player, int mapIndex) {
+    public void render(@NotNull Player player, int step) {
         // Create and attach filled map
         ItemStack itemStack = MinecraftReflection.getBukkitItemStack(new ItemStack(Material.FILLED_MAP));
         NbtCompound itemStackNbt = NbtFactory.ofCompound("tag");
-        itemStackNbt.put("map", maps[mapIndex].getId());
+        itemStackNbt.put("map", maps[step].getId());
         NbtFactory.setItemTag(itemStack, itemStackNbt);
 
         // Build entity metadata packet
