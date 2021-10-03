@@ -12,14 +12,17 @@ import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 
 public class FakeImage extends FakeEntity {
     public static final int MAX_DIMENSION = 30; // In blocks
     public static final UUID UNKNOWN_PLAYER_ID = new UUID(0, 0);
+    private static final ScheduledExecutorService animationScheduler = Executors.newScheduledThreadPool(5);
     private final String filename;
     private final Location location;
     private final BlockFace face;
@@ -30,8 +33,12 @@ public class FakeImage extends FakeEntity {
     private final OfflinePlayer placedBy;
     private final BiFunction<Integer, Integer, Vector> getLocationVector;
     private FakeItemFrame[][] frames;
-    private int numOfSteps = -1; // Number of animated image frames
-    private int currentStep = -1;
+
+    // Animation-related attributes
+    private ScheduledFuture<?> task;
+    private final Set<Player> animatingPlayers = new HashSet<>();
+    private int numOfSteps = -1;  // Total number of animation steps
+    private int currentStep = -1; // Current animation step
 
     /**
      * Get image rotation from player eyesight
@@ -276,28 +283,24 @@ public class FakeImage extends FakeEntity {
                 load();
             }
 
-            // Spawn frames in player's client from main server thread
             scheduler.runTask(plugin, () -> {
+                // Spawn frames in player's client
                 for (FakeItemFrame[] col : frames) {
                     for (FakeItemFrame frame : col) {
                         frame.spawn(player);
                         frame.render(player, 0);
                     }
                 }
-            });
 
-            // TODO: for testing, do NOT create a new task for each player
-            if (numOfSteps > 1) {
-                plugin.fine("Spawned repeating task for FakeImage#(" + location + "," + face + ")");
-                scheduler.scheduleSyncRepeatingTask(plugin, () -> {
-                    currentStep = (currentStep + 1) % numOfSteps;
-                    for (FakeItemFrame[] col : frames) {
-                        for (FakeItemFrame frame : col) {
-                            frame.render(player, currentStep);
-                        }
+                // Add player to animation task
+                if (numOfSteps > 1) {
+                    animatingPlayers.add(player);
+                    if (task == null) {
+                        task = animationScheduler.scheduleAtFixedRate(this::nextStep, 0, 100, TimeUnit.MILLISECONDS);
+                        plugin.fine("Spawned animation task for FakeImage#(" + location + "," + face + ")");
                     }
-                }, 0, 5); // Every ~5 ticks (0.25 seconds)
-            }
+                }
+            });
         });
     }
 
@@ -306,10 +309,18 @@ public class FakeImage extends FakeEntity {
      * @param player Player instance
      */
     public void destroy(@NotNull Player player) {
-        if (frames == null) return;
-        for (FakeItemFrame[] col : frames) {
-            for (FakeItemFrame frame : col) {
-                frame.destroy(player);
+        // Unregister player from animation task
+        animatingPlayers.remove(player);
+        if (animatingPlayers.isEmpty()) {
+            destroyAnimationTask();
+        }
+
+        // Send packets to destroy item frames
+        if (frames != null) {
+            for (FakeItemFrame[] col : frames) {
+                for (FakeItemFrame frame : col) {
+                    frame.destroy(player);
+                }
             }
         }
     }
@@ -321,6 +332,8 @@ public class FakeImage extends FakeEntity {
      */
     public void invalidate() {
         frames = null;
+        animatingPlayers.clear();
+        destroyAnimationTask();
 
         // Notify invalidation to source ImageFile
         ImageFile file = getFile();
@@ -329,5 +342,33 @@ public class FakeImage extends FakeEntity {
         }
 
         plugin.fine("Invalidated FakeImage#(" + location + "," + face + ")");
+    }
+
+    /**
+     * Send next animation step to all registered players
+     */
+    private void nextStep() {
+        currentStep = (currentStep + 1) % numOfSteps;
+        for (Player player : animatingPlayers) {
+            for (FakeItemFrame[] col : frames) {
+                for (FakeItemFrame frame : col) {
+                    frame.render(player, currentStep);
+                }
+            }
+        }
+    }
+
+    /**
+     * Destroy animation task
+     */
+    private void destroyAnimationTask() {
+        if (task == null) {
+            // No active animation task
+            return;
+        }
+        task.cancel(true);
+        task = null;
+        currentStep = -1;
+        plugin.fine("Destroyed animation task for FakeImage#(" + location + "," + face + ")");
     }
 }
