@@ -70,7 +70,7 @@ public class ImageFile {
      */
     private byte[][] renderImages(int width, int height) throws IOException {
         ImageReader reader = getImageReader();
-        int numOfSteps = reader.getNumImages(true);
+        int numOfSteps = Math.min(reader.getNumImages(true), FakeImage.MAX_STEPS);
 
         // Create temporal canvas
         BufferedImage tmpImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
@@ -229,8 +229,8 @@ public class ImageFile {
             }
 
             // Get number of animation steps
-            int numOfSteps = stream.read();
-            if (numOfSteps < 1) {
+            int numOfSteps = stream.read() | (stream.read() << 8);
+            if (numOfSteps < 1 || numOfSteps > FakeImage.MAX_STEPS) {
                 throw new IOException("Invalid number of animation steps: " + numOfSteps);
             }
 
@@ -257,15 +257,18 @@ public class ImageFile {
      */
     private void writeMapsToCacheFile(@NotNull FakeMap[][][] maps, @NotNull File file) throws IOException {
         try (FileOutputStream stream = new FileOutputStream(file)) {
+            int numOfSteps = maps[0][0].length;
+
             // Add file header
-            stream.write(CACHE_SIGNATURE);   // "YMP" signature
-            stream.write(CACHE_VERSION);     // Format version
-            stream.write(maps[0][0].length); // Number of animation steps
+            stream.write(CACHE_SIGNATURE); // "YMP" signature
+            stream.write(CACHE_VERSION);   // Format version
+            stream.write(numOfSteps & 0xff);        // Number of animation steps (first byte)
+            stream.write((numOfSteps >> 8) & 0xff); // Number of animation steps (second byte)
 
             // Add pixels
             for (int col=0; col<maps.length; ++col) {
                 for (int row=0; row<maps[0].length; ++row) {
-                    for (int step=0; step<maps[0][0].length; ++step) {
+                    for (int step=0; step<numOfSteps; ++step) {
                         stream.write(maps[col][row][step].getPixels());
                     }
                 }

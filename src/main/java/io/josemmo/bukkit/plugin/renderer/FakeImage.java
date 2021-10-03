@@ -21,6 +21,7 @@ import java.util.function.BiFunction;
 
 public class FakeImage extends FakeEntity {
     public static final int MAX_DIMENSION = 30; // In blocks
+    public static final int MAX_STEPS = 500; // For animated images
     public static final UUID UNKNOWN_PLAYER_ID = new UUID(0, 0);
     private static final ScheduledExecutorService animationScheduler = Executors.newScheduledThreadPool(5);
     private final String filename;
