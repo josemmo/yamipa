@@ -7,9 +7,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
+import javax.imageio.metadata.IIOMetadata;
+import javax.imageio.metadata.IIOMetadataNode;
 import javax.imageio.stream.ImageInputStream;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -72,28 +75,48 @@ public class ImageFile {
         ImageReader reader = getImageReader();
         int numOfSteps = Math.min(reader.getNumImages(true), FakeImage.MAX_STEPS);
 
-        // Create temporal canvas
-        BufferedImage tmpImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        // Create temporary canvas
+        int originalWidth = reader.getWidth(0);
+        int originalHeight = reader.getHeight(0);
+        BufferedImage tmpImage = new BufferedImage(originalWidth, originalHeight, BufferedImage.TYPE_4BYTE_ABGR);
         Graphics2D tmpGraphics = tmpImage.createGraphics();
+
+        // Create temporary scaled canvas (for resizing)
+        BufferedImage tmpScaledImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D tmpScaledGraphics = tmpScaledImage.createGraphics();
 
         // Read images from file
         byte[][] renderedImages = new byte[numOfSteps][width*height];
         for (int step=0; step<numOfSteps; ++step) {
-            // Resize image and paint over temporal canvas
-            Image scaledImage = reader.read(step).getScaledInstance(width, height, Image.SCALE_FAST);
-            tmpGraphics.drawImage(scaledImage, 0, 0, null);
-            scaledImage.flush();
+            // Extract step metadata
+            int imageLeft = 0;
+            int imageTop = 0;
+            IIOMetadata metadata = reader.getImageMetadata(step);
+            IIOMetadataNode metadataRoot = (IIOMetadataNode) metadata.getAsTree(metadata.getNativeMetadataFormatName());
+            for (int i=0; i<metadataRoot.getLength(); ++i) {
+                String nodeName = metadataRoot.item(i).getNodeName();
+                if (nodeName.equalsIgnoreCase("ImageDescriptor")) {
+                    IIOMetadataNode descriptorNode = (IIOMetadataNode) metadataRoot.item(i);
+                    imageLeft = Integer.parseInt(descriptorNode.getAttribute("imageLeftPosition"));
+                    imageTop = Integer.parseInt(descriptorNode.getAttribute("imageTopPosition"));
+                } else if (nodeName.equalsIgnoreCase("GraphicControlExtension")) {
+                    IIOMetadataNode controlExtensionNode = (IIOMetadataNode) metadataRoot.item(i);
+                }
+            }
+
+            // Paint step image over temporary canvas
+            BufferedImage image = reader.read(step);
+            tmpGraphics.drawImage(image, imageLeft, imageTop, null);
+            image.flush();
+
+            // Resize image and get pixels
+            tmpScaledGraphics.drawImage(tmpImage, 0, 0, width, height, null);
+            final int[] rgbaPixels = ((DataBufferInt) tmpScaledImage.getRaster().getDataBuffer()).getData();
 
             // Convert RGBA pixels to Minecraft color indexes
-            int[] rgbPixels = tmpImage.getRGB(
-                0, 0,
-                width, height,
-                null, 0,
-                width
-            );
             final int stepButFinal = step;
-            IntStream.range(0, rgbPixels.length).parallel().forEach(pixelIndex -> {
-                renderedImages[stepButFinal][pixelIndex] = FakeMap.pixelToIndex(rgbPixels[pixelIndex]);
+            IntStream.range(0, rgbaPixels.length).parallel().forEach(pixelIndex -> {
+                renderedImages[stepButFinal][pixelIndex] = FakeMap.pixelToIndex(rgbaPixels[pixelIndex]);
             });
         }
 
@@ -101,6 +124,8 @@ public class ImageFile {
         reader.dispose();
         tmpGraphics.dispose();
         tmpImage.flush();
+        tmpScaledGraphics.dispose();
+        tmpScaledImage.flush();
 
         return renderedImages;
     }
