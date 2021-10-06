@@ -36,6 +36,7 @@ shouldn't modify its contents.
 You can change the default path of these files by creating a `config.yml` file in the plugin configuration directory:
 ```yaml
 verbose: false         # Set to "true" to enable more verbose logging
+animate-images: true   # Set to "false" to disable GIF support
 images-path: images    # Path to images directory
 cache-path: cache      # Path to cache directory
 data-path: images.dat  # Path to placed images database file

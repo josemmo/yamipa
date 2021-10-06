@@ -24,6 +24,7 @@ public class FakeImage extends FakeEntity {
     public static final int MAX_STEPS = 500; // For animated images
     public static final UUID UNKNOWN_PLAYER_ID = new UUID(0, 0);
     private static final ScheduledExecutorService animationScheduler = Executors.newScheduledThreadPool(5);
+    private static boolean animateImages = false;
     private final String filename;
     private final Location location;
     private final BlockFace face;
@@ -40,6 +41,13 @@ public class FakeImage extends FakeEntity {
     private final Set<Player> animatingPlayers = new HashSet<>();
     private int numOfSteps = -1;  // Total number of animation steps
     private int currentStep = -1; // Current animation step
+
+    /**
+     * Enable image animation
+     */
+    public static void enableAnimation() {
+        animateImages = true;
+    }
 
     /**
      * Get image rotation from player eyesight
@@ -294,7 +302,7 @@ public class FakeImage extends FakeEntity {
                 }
 
                 // Add player to animation task
-                if (numOfSteps > 1) {
+                if (animateImages && numOfSteps > 1) {
                     animatingPlayers.add(player);
                     if (task == null) {
                         task = animationScheduler.scheduleAtFixedRate(this::nextStep, 0, 100, TimeUnit.MILLISECONDS);

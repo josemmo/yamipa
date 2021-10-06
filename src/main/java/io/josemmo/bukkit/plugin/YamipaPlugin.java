@@ -1,6 +1,7 @@
 package io.josemmo.bukkit.plugin;
 
 import io.josemmo.bukkit.plugin.commands.ImageCommandBridge;
+import io.josemmo.bukkit.plugin.renderer.FakeImage;
 import io.josemmo.bukkit.plugin.renderer.ImageRenderer;
 import io.josemmo.bukkit.plugin.storage.ImageStorage;
 import org.bstats.bukkit.Metrics;
@@ -89,6 +90,11 @@ public class YamipaPlugin extends JavaPlugin {
         }
 
         // Create image renderer
+        boolean animateImages = getConfig().getBoolean("animate-images", true);
+        if (animateImages) {
+            FakeImage.enableAnimation();
+            info("Enabled image animation support");
+        }
         renderer = new ImageRenderer(basePath.resolve(dataPath).toString());
         renderer.start();
 
