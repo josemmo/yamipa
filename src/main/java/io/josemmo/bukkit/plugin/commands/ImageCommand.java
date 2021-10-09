@@ -241,6 +241,9 @@ public class ImageCommand {
             player.sendMessage(ChatColor.GOLD + "Rotation: " + ChatColor.RESET + image.getRotation());
             player.sendMessage(ChatColor.GOLD + "Dimensions: " + ChatColor.RESET +
                 image.getWidth() + "x" + image.getHeight() + " blocks");
+            int delay = image.getDelay() * 50;
+            String delayStr = (delay > 0) ? delay + " ms per step" : ChatColor.GRAY + "Not animatable";
+            player.sendMessage(ChatColor.GOLD + "Speed: " + ChatColor.RESET + delayStr);
             player.sendMessage(ChatColor.GOLD + "Placed At: " + ChatColor.RESET + dateStr);
             player.sendMessage(ChatColor.GOLD + "Placed By: " + ChatColor.RESET + playerStr);
         });

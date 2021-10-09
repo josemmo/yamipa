@@ -22,8 +22,8 @@ import java.util.function.BiFunction;
 public class FakeImage extends FakeEntity {
     public static final int MAX_DIMENSION = 30; // In blocks
     public static final int MAX_STEPS = 500; // For animated images
-    public static final int MIN_DELAY = 50; // Minimum milliseconds between steps
-    public static final int MAX_DELAY = 5000; // Maximum milliseconds between steps
+    public static final int MIN_DELAY = 1; // Minimum step delay in 50ms intervals (50ms / 50ms)
+    public static final int MAX_DELAY = 50; // Maximum step delay in 50ms intervals (5000ms / 50ms)
     public static final UUID UNKNOWN_PLAYER_ID = new UUID(0, 0);
     private static final ScheduledExecutorService animationScheduler = Executors.newScheduledThreadPool(5);
     private static boolean animateImages = false;
@@ -41,7 +41,7 @@ public class FakeImage extends FakeEntity {
     // Animation-related attributes
     private ScheduledFuture<?> task;
     private final Set<Player> animatingPlayers = new HashSet<>();
-    private int delay = 0; // Milliseconds between steps
+    private int delay = 0; // Delay between steps in 50ms intervals
     private int numOfSteps = -1;  // Total number of animation steps
     private int currentStep = -1; // Current animation step
 
@@ -215,6 +215,14 @@ public class FakeImage extends FakeEntity {
     }
 
     /**
+     * Get image delay
+     * @return Image delay in 50ms intervals
+     */
+    public int getDelay() {
+        return delay;
+    }
+
+    /**
      * Get the world area IDs where this image is located
      * @return Array of world area IDs
      */
@@ -312,7 +320,7 @@ public class FakeImage extends FakeEntity {
                 if (animateImages && numOfSteps > 1) {
                     animatingPlayers.add(player);
                     if (task == null) {
-                        task = animationScheduler.scheduleAtFixedRate(this::nextStep, 0, delay, TimeUnit.MILLISECONDS);
+                        task = animationScheduler.scheduleAtFixedRate(this::nextStep, 0, delay*50L, TimeUnit.MILLISECONDS);
                         plugin.fine("Spawned animation task for FakeImage#(" + location + "," + face + ")");
                     }
                 }

@@ -19,7 +19,7 @@ public class FakeMapsContainer {
 
     /**
      * Get delay between steps
-     * @return Delay in milliseconds or <code>0</code> if not applicable
+     * @return Delay in 50ms intervals or <code>0</code> if not applicable
      */
     public int getDelay() {
         return delay;

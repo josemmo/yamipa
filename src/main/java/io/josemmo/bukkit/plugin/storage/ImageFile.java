@@ -128,8 +128,9 @@ public class ImageFile {
         // Get most occurring delay (mode)
         int delay = 0;
         if (numOfSteps > 1) {
-            delay = Collections.max(delays.entrySet(), Map.Entry.comparingByValue()).getKey() * 10;
-            delay = Math.min(Math.max(delay, FakeImage.MIN_DELAY), FakeImage.MAX_STEPS);
+            delay = Collections.max(delays.entrySet(), Map.Entry.comparingByValue()).getKey();
+            delay = Math.round(delay * 0.2f); // (delay * 10) / 50
+            delay = Math.min(Math.max(delay, FakeImage.MIN_DELAY), FakeImage.MAX_DELAY);
         }
 
         // Free resources
@@ -274,11 +275,11 @@ public class ImageFile {
             }
 
             // Get delay between steps
-            int delayTime = 0;
+            int delay = 0;
             if (numOfSteps > 1) {
-                delayTime = stream.read() | (stream.read() << 8);
-                if (delayTime < FakeImage.MIN_DELAY || delayTime > FakeImage.MAX_DELAY) {
-                    throw new IOException("Invalid delay between steps: " + delayTime);
+                delay = stream.read();
+                if (delay < FakeImage.MIN_DELAY || delay > FakeImage.MAX_DELAY) {
+                    throw new IOException("Invalid delay between steps: " + delay);
                 }
             }
 
@@ -294,7 +295,7 @@ public class ImageFile {
                 }
             }
 
-            return new FakeMapsContainer(maps, delayTime);
+            return new FakeMapsContainer(maps, delay);
         }
     }
 
@@ -315,9 +316,7 @@ public class ImageFile {
             stream.write(numOfSteps & 0xff);        // Number of animation steps (first byte)
             stream.write((numOfSteps >> 8) & 0xff); // Number of animation steps (second byte)
             if (numOfSteps > 1) {
-                int delay = container.getDelay();
-                stream.write(delay & 0xff);        // Delay between steps (first byte)
-                stream.write((delay >> 8) & 0xff); // Delay between steps (second byte)
+                stream.write(container.getDelay());
             }
 
             // Add pixels
