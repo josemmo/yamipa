@@ -75,6 +75,7 @@ public class ImageFile {
      */
     private Pair<byte[][], Integer> renderImages(int width, int height) throws IOException {
         ImageReader reader = getImageReader();
+        String format = reader.getFormatName();
         int numOfSteps = Math.min(reader.getNumImages(true), FakeImage.MAX_STEPS);
 
         // Create temporary canvas
@@ -94,18 +95,20 @@ public class ImageFile {
             // Extract step metadata
             int imageLeft = 0;
             int imageTop = 0;
-            IIOMetadata metadata = reader.getImageMetadata(step);
-            IIOMetadataNode metadataRoot = (IIOMetadataNode) metadata.getAsTree(metadata.getNativeMetadataFormatName());
-            for (int i=0; i<metadataRoot.getLength(); ++i) {
-                String nodeName = metadataRoot.item(i).getNodeName();
-                if (nodeName.equalsIgnoreCase("ImageDescriptor")) {
-                    IIOMetadataNode descriptorNode = (IIOMetadataNode) metadataRoot.item(i);
-                    imageLeft = Integer.parseInt(descriptorNode.getAttribute("imageLeftPosition"));
-                    imageTop = Integer.parseInt(descriptorNode.getAttribute("imageTopPosition"));
-                } else if (nodeName.equalsIgnoreCase("GraphicControlExtension")) {
-                    IIOMetadataNode controlExtensionNode = (IIOMetadataNode) metadataRoot.item(i);
-                    int delay = Integer.parseInt(controlExtensionNode.getAttribute("delayTime"));
-                    delays.compute(delay, (__, count) -> (count == null) ? 1 : count+1);
+            if (format.equalsIgnoreCase("gif")) {
+                IIOMetadata metadata = reader.getImageMetadata(step);
+                IIOMetadataNode metadataRoot = (IIOMetadataNode) metadata.getAsTree(metadata.getNativeMetadataFormatName());
+                for (int i=0; i<metadataRoot.getLength(); ++i) {
+                    String nodeName = metadataRoot.item(i).getNodeName();
+                    if (nodeName.equalsIgnoreCase("ImageDescriptor")) {
+                        IIOMetadataNode descriptorNode = (IIOMetadataNode) metadataRoot.item(i);
+                        imageLeft = Integer.parseInt(descriptorNode.getAttribute("imageLeftPosition"));
+                        imageTop = Integer.parseInt(descriptorNode.getAttribute("imageTopPosition"));
+                    } else if (nodeName.equalsIgnoreCase("GraphicControlExtension")) {
+                        IIOMetadataNode controlExtensionNode = (IIOMetadataNode) metadataRoot.item(i);
+                        int delay = Integer.parseInt(controlExtensionNode.getAttribute("delayTime"));
+                        delays.compute(delay, (__, count) -> (count == null) ? 1 : count+1);
+                    }
                 }
             }
 
