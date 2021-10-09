@@ -1,8 +1,10 @@
 package io.josemmo.bukkit.plugin.storage;
 
+import com.comphenix.protocol.wrappers.Pair;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
 import io.josemmo.bukkit.plugin.renderer.FakeImage;
 import io.josemmo.bukkit.plugin.renderer.FakeMap;
+import io.josemmo.bukkit.plugin.renderer.FakeMapsContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import javax.imageio.ImageIO;
@@ -29,7 +31,7 @@ public class ImageFile {
     public static final byte[] CACHE_SIGNATURE = new byte[] {0x59, 0x4d, 0x50}; // "YMP"
     public static final int CACHE_VERSION = 1;
     private static final YamipaPlugin plugin = YamipaPlugin.getInstance();
-    private final Map<String, FakeMap[][][]> cache = new HashMap<>();
+    private final Map<String, FakeMapsContainer> cache = new HashMap<>();
     private final Map<String, Set<FakeImage>> subscribers = new HashMap<>();
     private final String name;
     private final String path;
@@ -68,10 +70,10 @@ public class ImageFile {
      * Render images using Minecraft palette
      * @param  width  New width in pixels
      * @param  height New height in pixels
-     * @return        Bi-dimensional array of Minecraft images (step, pixel index)
+     * @return        Pair of bi-dimensional array of Minecraft images (step, pixel index) and delay between steps
      * @throws IOException if failed to render images from file
      */
-    private byte[][] renderImages(int width, int height) throws IOException {
+    private Pair<byte[][], Integer> renderImages(int width, int height) throws IOException {
         ImageReader reader = getImageReader();
         int numOfSteps = Math.min(reader.getNumImages(true), FakeImage.MAX_STEPS);
 
@@ -87,6 +89,7 @@ public class ImageFile {
 
         // Read images from file
         byte[][] renderedImages = new byte[numOfSteps][width*height];
+        Map<Integer, Integer> delays = new HashMap<>();
         for (int step=0; step<numOfSteps; ++step) {
             // Extract step metadata
             int imageLeft = 0;
@@ -101,6 +104,8 @@ public class ImageFile {
                     imageTop = Integer.parseInt(descriptorNode.getAttribute("imageTopPosition"));
                 } else if (nodeName.equalsIgnoreCase("GraphicControlExtension")) {
                     IIOMetadataNode controlExtensionNode = (IIOMetadataNode) metadataRoot.item(i);
+                    int delay = Integer.parseInt(controlExtensionNode.getAttribute("delayTime"));
+                    delays.compute(delay, (__, count) -> (count == null) ? 1 : count+1);
                 }
             }
 
@@ -120,6 +125,13 @@ public class ImageFile {
             });
         }
 
+        // Get most occurring delay (mode)
+        int delay = 0;
+        if (numOfSteps > 1) {
+            delay = Collections.max(delays.entrySet(), Map.Entry.comparingByValue()).getKey() * 10;
+            delay = Math.min(Math.max(delay, FakeImage.MIN_DELAY), FakeImage.MAX_STEPS);
+        }
+
         // Free resources
         reader.dispose();
         tmpGraphics.dispose();
@@ -127,7 +139,7 @@ public class ImageFile {
         tmpScaledGraphics.dispose();
         tmpScaledImage.flush();
 
-        return renderedImages;
+        return new Pair<>(renderedImages, delay);
     }
 
     /**
@@ -160,9 +172,9 @@ public class ImageFile {
     /**
      * Get maps and subscribe to maps cache
      * @param  subscriber Fake image instance requesting the maps
-     * @return            Tri-dimensional array of maps (column, row, step)
+     * @return            Fake maps container
      */
-    public synchronized @NotNull FakeMap[][][] getMapsAndSubscribe(@NotNull FakeImage subscriber) {
+    public synchronized @NotNull FakeMapsContainer getMapsAndSubscribe(@NotNull FakeImage subscriber) {
         int width = subscriber.getWidth();
         int height = subscriber.getHeight();
         String cacheKey = width + "-" + height;
@@ -181,9 +193,9 @@ public class ImageFile {
         File cacheFile = Paths.get(plugin.getStorage().getCachePath(), cacheFilename).toFile();
         if (cacheFile.isFile() && cacheFile.lastModified() >= getLastModified()) {
             try {
-                FakeMap[][][] maps = readMapsFromCacheFile(cacheFile, width, height);
-                cache.put(cacheKey, maps);
-                return maps;
+                FakeMapsContainer container = readMapsFromCacheFile(cacheFile, width, height);
+                cache.put(cacheKey, container);
+                return container;
             } catch (IllegalArgumentException e) {
                 plugin.info("Cache file \"" + cacheFile.getAbsolutePath() + "\" is outdated and will be overwritten");
             } catch (Exception e) {
@@ -192,18 +204,20 @@ public class ImageFile {
         }
 
         // Generate maps from original image
-        FakeMap[][][] matrix;
+        FakeMapsContainer container;
         try {
             int widthInPixels = width*FakeMap.DIMENSION;
             int heightInPixels = height*FakeMap.DIMENSION;
-            byte[][] images = renderImages(widthInPixels, heightInPixels);
+            Pair<byte[][], Integer> res = renderImages(widthInPixels, heightInPixels);
+            byte[][] images = res.getFirst();
+            int delay = res.getSecond();
 
             // Instantiate fake maps
-            FakeMap[][][] tmpMatrix = new FakeMap[width][height][images.length];
+            FakeMap[][][] matrix = new FakeMap[width][height][images.length];
             IntStream.range(0, images.length).forEach(i -> {
                 for (int col=0; col<width; col++) {
                     for (int row=0; row<height; row++) {
-                        tmpMatrix[col][row][i] = new FakeMap(
+                        matrix[col][row][i] = new FakeMap(
                             images[i],
                             widthInPixels,
                             col*FakeMap.DIMENSION,
@@ -212,22 +226,22 @@ public class ImageFile {
                     }
                 }
             });
-            matrix = tmpMatrix;
 
             // Persist in disk cache
+            container = new FakeMapsContainer(matrix, delay);
             try {
-                writeMapsToCacheFile(matrix, cacheFile);
+                writeMapsToCacheFile(container, cacheFile);
             } catch (IOException e) {
                 plugin.log(Level.SEVERE, "Failed to write to cache file \"" + cacheFile.getAbsolutePath() + "\"", e);
             }
         } catch (Exception e) {
-            matrix = FakeMap.getErrorMatrix(width, height);
+            container = FakeMap.getErrorMatrix(width, height);
             plugin.log(Level.SEVERE, "Failed to render image(s) from file \"" + path + "\"", e);
         }
 
         // Persist in memory cache and return
-        cache.put(cacheKey, matrix);
-        return matrix;
+        cache.put(cacheKey, container);
+        return container;
     }
 
     /**
@@ -235,11 +249,11 @@ public class ImageFile {
      * @param  file   Cache file
      * @param  width  Width in blocks
      * @param  height Height in blocks
-     * @return        Tri-dimensional array of maps (column, row, step)
+     * @return        Fake maps container
      * @throws IllegalArgumentException if not a valid or outdated cache file
      * @throws IOException if failed to parse cache file
      */
-    private @NotNull FakeMap[][][] readMapsFromCacheFile(@NotNull File file, int width, int height) throws Exception {
+    private @NotNull FakeMapsContainer readMapsFromCacheFile(@NotNull File file, int width, int height) throws Exception {
         try (FileInputStream stream = new FileInputStream(file)) {
             // Validate file signature
             for (byte expectedByte : CACHE_SIGNATURE) {
@@ -259,6 +273,15 @@ public class ImageFile {
                 throw new IOException("Invalid number of animation steps: " + numOfSteps);
             }
 
+            // Get delay between steps
+            int delayTime = 0;
+            if (numOfSteps > 1) {
+                delayTime = stream.read() | (stream.read() << 8);
+                if (delayTime < FakeImage.MIN_DELAY || delayTime > FakeImage.MAX_DELAY) {
+                    throw new IOException("Invalid delay between steps: " + delayTime);
+                }
+            }
+
             // Read pixels
             FakeMap[][][] maps = new FakeMap[width][height][numOfSteps];
             for (int col=0; col<width; ++col) {
@@ -270,18 +293,20 @@ public class ImageFile {
                     }
                 }
             }
-            return maps;
+
+            return new FakeMapsContainer(maps, delayTime);
         }
     }
 
     /**
      * Write maps to cache file
-     * @param maps   Tri-dimensional array of maps (column, row, step)
-     * @param file   Cache file
+     * @param container Fake maps container
+     * @param file      Cache file
      * @throws IOException if failed to write to cache file
      */
-    private void writeMapsToCacheFile(@NotNull FakeMap[][][] maps, @NotNull File file) throws IOException {
+    private void writeMapsToCacheFile(@NotNull FakeMapsContainer container, @NotNull File file) throws IOException {
         try (FileOutputStream stream = new FileOutputStream(file)) {
+            FakeMap[][][] maps = container.getFakeMaps();
             int numOfSteps = maps[0][0].length;
 
             // Add file header
@@ -289,6 +314,11 @@ public class ImageFile {
             stream.write(CACHE_VERSION);   // Format version
             stream.write(numOfSteps & 0xff);        // Number of animation steps (first byte)
             stream.write((numOfSteps >> 8) & 0xff); // Number of animation steps (second byte)
+            if (numOfSteps > 1) {
+                int delay = container.getDelay();
+                stream.write(delay & 0xff);        // Delay between steps (first byte)
+                stream.write((delay >> 8) & 0xff); // Delay between steps (second byte)
+            }
 
             // Add pixels
             for (int col=0; col<maps.length; ++col) {
