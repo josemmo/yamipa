@@ -2,13 +2,11 @@ package io.josemmo.bukkit.plugin.renderer;
 
 import io.josemmo.bukkit.plugin.storage.ImageFile;
 import io.josemmo.bukkit.plugin.utils.DirectionUtils;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Rotation;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -300,31 +298,28 @@ public class FakeImage extends FakeEntity {
      * @param player Player instance
      */
     public void spawn(@NotNull Player player) {
-        BukkitScheduler scheduler = Bukkit.getScheduler();
-        scheduler.runTaskAsynchronously(plugin, () -> {
+        tryToRunAsyncTask(() -> {
             // Load frames from disk if not already loaded
             if (frames == null) {
                 load();
             }
 
-            scheduler.runTask(plugin, () -> {
-                // Spawn frames in player's client
-                for (FakeItemFrame[] col : frames) {
-                    for (FakeItemFrame frame : col) {
-                        frame.spawn(player);
-                        frame.render(player, 0);
-                    }
+            // Spawn frames in player's client
+            for (FakeItemFrame[] col : frames) {
+                for (FakeItemFrame frame : col) {
+                    frame.spawn(player);
+                    frame.render(player, 0);
                 }
+            }
 
-                // Add player to animation task
-                if (animateImages && numOfSteps > 1) {
-                    animatingPlayers.add(player);
-                    if (task == null) {
-                        task = animationScheduler.scheduleAtFixedRate(this::nextStep, 0, delay*50L, TimeUnit.MILLISECONDS);
-                        plugin.fine("Spawned animation task for FakeImage#(" + location + "," + face + ")");
-                    }
+            // Add player to animation task
+            if (animateImages && numOfSteps > 1) {
+                animatingPlayers.add(player);
+                if (task == null) {
+                    task = animationScheduler.scheduleAtFixedRate(this::nextStep, 0, delay*50L, TimeUnit.MILLISECONDS);
+                    plugin.fine("Spawned animation task for FakeImage#(" + location + "," + face + ")");
                 }
-            });
+            }
         });
     }
 
@@ -341,11 +336,14 @@ public class FakeImage extends FakeEntity {
 
         // Send packets to destroy item frames
         if (frames != null) {
-            for (FakeItemFrame[] col : frames) {
-                for (FakeItemFrame frame : col) {
-                    frame.destroy(player);
+            FakeItemFrame[][] framesRef = frames; // In case renderer FakeImage#invalidate() gets called
+            tryToRunAsyncTask(() -> {
+                for (FakeItemFrame[] col : framesRef) {
+                    for (FakeItemFrame frame : col) {
+                        frame.destroy(player);
+                    }
                 }
-            }
+            });
         }
     }
 
