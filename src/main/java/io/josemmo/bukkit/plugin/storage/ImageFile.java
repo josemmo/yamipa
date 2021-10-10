@@ -22,6 +22,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
@@ -31,6 +34,7 @@ public class ImageFile {
     public static final byte[] CACHE_SIGNATURE = new byte[] {0x59, 0x4d, 0x50}; // "YMP"
     public static final int CACHE_VERSION = 1;
     private static final YamipaPlugin plugin = YamipaPlugin.getInstance();
+    private final ConcurrentHashMap<String, Lock> locks = new ConcurrentHashMap<>();
     private final Map<String, FakeMapsContainer> cache = new HashMap<>();
     private final Map<String, Set<FakeImage>> subscribers = new HashMap<>();
     private final String name;
@@ -73,7 +77,7 @@ public class ImageFile {
      * @return        Pair of bi-dimensional array of Minecraft images (step, pixel index) and delay between steps
      * @throws IOException if failed to render images from file
      */
-    private Pair<byte[][], Integer> renderImages(int width, int height) throws IOException {
+    private @NotNull Pair<byte[][], Integer> renderImages(int width, int height) throws IOException {
         ImageReader reader = getImageReader();
         String format = reader.getFormatName();
         int numOfSteps = Math.min(reader.getNumImages(true), FakeImage.MAX_STEPS);
@@ -178,14 +182,42 @@ public class ImageFile {
      * @param  subscriber Fake image instance requesting the maps
      * @return            Fake maps container
      */
-    public synchronized @NotNull FakeMapsContainer getMapsAndSubscribe(@NotNull FakeImage subscriber) {
+    public @NotNull FakeMapsContainer getMapsAndSubscribe(@NotNull FakeImage subscriber) {
         int width = subscriber.getWidth();
         int height = subscriber.getHeight();
         String cacheKey = width + "-" + height;
 
+        // Prevent rendering the same image/dimensions pair multiple times
+        Lock lock = locks.computeIfAbsent(cacheKey, __ -> new ReentrantLock());
+        lock.lock();
+
+        // Execute code
+        FakeMapsContainer container;
+        try {
+            container = getMapsAndSubscribe(subscriber, cacheKey, width, height);
+        } finally {
+            lock.unlock();
+        }
+
+        return container;
+    }
+
+    /**
+     * Get maps and subscribe to maps cache (internal)
+     * @param  subscriber Fake image instance requesting the maps
+     * @param  cacheKey   Maps cache key
+     * @param  width      Desired image width in pixels
+     * @param  height     Desired image height in pixels
+     * @return            Fake maps container
+     */
+    private @NotNull FakeMapsContainer getMapsAndSubscribe(
+        @NotNull FakeImage subscriber,
+        @NotNull String cacheKey,
+        int width,
+        int height
+    ) {
         // Update subscribers for given cached maps
-        subscribers.computeIfAbsent(cacheKey, __ -> new HashSet<>());
-        subscribers.get(cacheKey).add(subscriber);
+        subscribers.computeIfAbsent(cacheKey, __ -> new HashSet<>()).add(subscriber);
 
         // Try to get maps from memory cache
         if (cache.containsKey(cacheKey)) {
