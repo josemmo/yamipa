@@ -11,9 +11,10 @@ without having to install any local client mod.
 It is designed with performance and compatibility in mind, so even the most low-specs servers should be able to run it.
 
 <p align="center">
-    <a href="https://i.imgur.com/9rzeKFS.mp4"><img alt="Placing and removing image" src="screenshots/demo.gif" width="250"></a>
-    <a href="screenshots/sample-1.jpg"><img alt="Sample Screenshot" src="screenshots/sample-1.jpg" width="250"></a>
-    <a href="screenshots/sample-2.jpg"><img alt="Sample Screenshot" src="screenshots/sample-2.jpg" width="250"></a>
+    <a href="https://i.imgur.com/9rzeKFS.mp4"><img alt="Placing and removing image" src="screenshots/demo.gif" width="300"></a>
+    <a href="https://imgur.com/a/J22z9Dq.mp4"><img alt="Works with animated images too!" src="screenshots/demo-animated.gif" width="300"></a>
+    <a href="screenshots/sample-1.jpg"><img alt="Sample Screenshot" src="screenshots/sample-1.jpg" width="300"></a>
+    <a href="screenshots/sample-2.jpg"><img alt="Sample Screenshot" src="screenshots/sample-2.jpg" width="300"></a>
 </p>
 
 ## Installation
