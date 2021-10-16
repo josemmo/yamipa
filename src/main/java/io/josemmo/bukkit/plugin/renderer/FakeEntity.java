@@ -3,6 +3,7 @@ package io.josemmo.bukkit.plugin.renderer;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.PacketContainer;
+import com.comphenix.protocol.wrappers.WrappedDataWatcher;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -13,6 +14,38 @@ import java.util.logging.Level;
 public abstract class FakeEntity {
     protected static final YamipaPlugin plugin = YamipaPlugin.getInstance();
     private static final ProtocolManager connection = ProtocolLibrary.getProtocolManager();
+    private static boolean ready = false;
+
+    /**
+     * Wait for ProtocolLib to be ready
+     * <p>
+     * NOTE: Will wait synchronously, blocking the invoker thread
+     */
+    protected static synchronized void waitForProtocolLib() {
+        if (ready) {
+            // ProtocolLib is ready
+            return;
+        }
+
+        int retry = 0;
+        while (true) {
+            try {
+                WrappedDataWatcher.Registry.get(Byte.class);
+                ready = true;
+                break;
+            } catch (Exception e) {
+                if (++retry > 3) {
+                    // Exhausted max. retries
+                    throw e;
+                }
+                try {
+                    Thread.sleep(1000);
+                } catch (Exception __) {
+                    // Fail silently
+                }
+            }
+        }
+    }
 
     /**
      * Try to send packet

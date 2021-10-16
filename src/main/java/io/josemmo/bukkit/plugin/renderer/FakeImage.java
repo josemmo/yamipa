@@ -302,6 +302,7 @@ public class FakeImage extends FakeEntity {
     public void spawn(@NotNull Player player) {
         tryToRunAsyncTask(() -> {
             synchronized (this) {
+                waitForProtocolLib();
 
                 // Load frames and other generated values from disk if not already loaded
                 if (frames == null) {
