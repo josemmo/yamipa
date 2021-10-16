@@ -34,13 +34,15 @@ public class FakeImage extends FakeEntity {
     private final Date placedAt;
     private final OfflinePlayer placedBy;
     private final BiFunction<Integer, Integer, Vector> getLocationVector;
-    private FakeItemFrame[][] frames;
 
-    // Animation-related attributes
+    // Generated values
+    private FakeItemFrame[] frames = null;
+    private int delay = 0; // Delay between steps in 50ms intervals, "0" for N/A
+    private int numOfSteps = -1;  // Total number of animation steps
+
+    // Animation task attributes
     private ScheduledFuture<?> task;
     private final Set<Player> animatingPlayers = new HashSet<>();
-    private int delay = 0; // Delay between steps in 50ms intervals
-    private int numOfSteps = -1;  // Total number of animation steps
     private int currentStep = -1; // Current animation step
 
     /**
@@ -266,7 +268,7 @@ public class FakeImage extends FakeEntity {
     }
 
     /**
-     * Load item frames and maps
+     * Load generated instance attributes
      */
     private void load() {
         ImageFile file = getFile();
@@ -284,11 +286,11 @@ public class FakeImage extends FakeEntity {
         delay = container.getDelay();
 
         // Generate frames
-        frames = new FakeItemFrame[width][height];
+        frames = new FakeItemFrame[width*height];
         for (int col=0; col<width; col++) {
             for (int row=0; row<height; row++) {
                 Location frameLocation = location.clone().add(getLocationVector.apply(col, row));
-                frames[col][row] = new FakeItemFrame(frameLocation, face, rotation, maps[col][row]);
+                frames[height*col+row] = new FakeItemFrame(frameLocation, face, rotation, maps[col][row]);
             }
         }
     }
@@ -299,25 +301,26 @@ public class FakeImage extends FakeEntity {
      */
     public void spawn(@NotNull Player player) {
         tryToRunAsyncTask(() -> {
-            // Load frames from disk if not already loaded
-            if (frames == null) {
-                load();
-            }
+            synchronized (this) {
 
-            // Spawn frames in player's client
-            for (FakeItemFrame[] col : frames) {
-                for (FakeItemFrame frame : col) {
+                // Load frames and other generated values from disk if not already loaded
+                if (frames == null) {
+                    load();
+                }
+
+                // Spawn frames in player's client
+                for (FakeItemFrame frame : frames) {
                     frame.spawn(player);
                     frame.render(player, 0);
                 }
-            }
 
-            // Add player to animation task
-            if (animateImages && numOfSteps > 1) {
-                animatingPlayers.add(player);
-                if (task == null) {
-                    task = animationScheduler.scheduleAtFixedRate(this::nextStep, 0, delay*50L, TimeUnit.MILLISECONDS);
-                    plugin.fine("Spawned animation task for FakeImage#(" + location + "," + face + ")");
+                // Add player to animation task
+                if (animateImages && numOfSteps > 1) {
+                    animatingPlayers.add(player);
+                    if (task == null) {
+                        task = animationScheduler.scheduleAtFixedRate(this::nextStep, 0, delay * 50L, TimeUnit.MILLISECONDS);
+                        plugin.fine("Spawned animation task for FakeImage#(" + location + "," + face + ")");
+                    }
                 }
             }
         });
@@ -329,19 +332,19 @@ public class FakeImage extends FakeEntity {
      */
     public void destroy(@NotNull Player player) {
         // Unregister player from animation task
-        animatingPlayers.remove(player);
-        if (animatingPlayers.isEmpty()) {
-            destroyAnimationTask();
+        synchronized (this) {
+            animatingPlayers.remove(player);
+            if (animatingPlayers.isEmpty()) {
+                destroyAnimationTask();
+            }
         }
 
         // Send packets to destroy item frames
-        if (frames != null) {
-            FakeItemFrame[][] framesRef = frames; // In case renderer FakeImage#invalidate() gets called
+        FakeItemFrame[] framesRef = frames; // In case renderer FakeImage#invalidate() gets called
+        if (framesRef != null) {
             tryToRunAsyncTask(() -> {
-                for (FakeItemFrame[] col : framesRef) {
-                    for (FakeItemFrame frame : col) {
-                        frame.destroy(player);
-                    }
+                for (FakeItemFrame frame : framesRef) {
+                    frame.destroy(player);
                 }
             });
         }
@@ -352,10 +355,10 @@ public class FakeImage extends FakeEntity {
      * <p>
      * Removes all item frames associated with this image.
      */
-    public void invalidate() {
-        frames = null;
-        animatingPlayers.clear();
+    public synchronized void invalidate() {
         destroyAnimationTask();
+        animatingPlayers.clear();
+        frames = null;
 
         // Notify invalidation to source ImageFile
         ImageFile file = getFile();
@@ -372,10 +375,8 @@ public class FakeImage extends FakeEntity {
     private void nextStep() {
         currentStep = (currentStep + 1) % numOfSteps;
         for (Player player : animatingPlayers) {
-            for (FakeItemFrame[] col : frames) {
-                for (FakeItemFrame frame : col) {
-                    frame.render(player, currentStep);
-                }
+            for (FakeItemFrame frame : frames) {
+                frame.render(player, currentStep);
             }
         }
     }
