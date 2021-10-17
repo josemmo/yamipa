@@ -5,6 +5,7 @@ import io.josemmo.bukkit.plugin.renderer.FakeImage;
 import io.josemmo.bukkit.plugin.renderer.ImageRenderer;
 import io.josemmo.bukkit.plugin.storage.ImageStorage;
 import org.bstats.bukkit.Metrics;
+import org.bstats.charts.SimplePie;
 import org.bukkit.Bukkit;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -122,8 +123,8 @@ public class YamipaPlugin extends JavaPlugin {
             return "0-9";
         };
         Metrics metrics = new Metrics(this, BSTATS_PLUGIN_ID);
-        metrics.addCustomChart(new Metrics.SimplePie("number_of_image_files", () -> toStats.apply(storage.size())));
-        metrics.addCustomChart(new Metrics.SimplePie("number_of_placed_images", () -> toStats.apply(renderer.size())));
+        metrics.addCustomChart(new SimplePie("number_of_image_files", () -> toStats.apply(storage.size())));
+        metrics.addCustomChart(new SimplePie("number_of_placed_images", () -> toStats.apply(renderer.size())));
     }
 
     @Override
