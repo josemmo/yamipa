@@ -332,23 +332,23 @@ public class FakeImage extends FakeEntity {
      * @param player Player instance
      */
     public void destroy(@NotNull Player player) {
-        // Unregister player from animation task
-        synchronized (this) {
-            animatingPlayers.remove(player);
-            if (animatingPlayers.isEmpty()) {
-                destroyAnimationTask();
-            }
-        }
-
-        // Send packets to destroy item frames
-        FakeItemFrame[] framesRef = frames; // In case renderer FakeImage#invalidate() gets called
-        if (framesRef != null) {
-            tryToRunAsyncTask(() -> {
-                for (FakeItemFrame frame : framesRef) {
-                    frame.destroy(player);
+        final FakeItemFrame[] framesRef = frames; // In case renderer FakeImage#invalidate() gets called
+        tryToRunAsyncTask(() -> {
+            synchronized (this) {
+                // Unregister player from animation task
+                animatingPlayers.remove(player);
+                if (animatingPlayers.isEmpty()) {
+                    destroyAnimationTask();
                 }
-            });
-        }
+
+                // Send packets to destroy item frames
+                if (framesRef != null) {
+                    for (FakeItemFrame frame : framesRef) {
+                        frame.destroy(player);
+                    }
+                }
+            }
+        });
     }
 
     /**
@@ -356,18 +356,25 @@ public class FakeImage extends FakeEntity {
      * <p>
      * Removes all item frames associated with this image.
      */
-    public synchronized void invalidate() {
-        destroyAnimationTask();
-        animatingPlayers.clear();
-        frames = null;
+    public void invalidate() {
+        tryToRunAsyncTask(() -> {
+            synchronized (this) {
+                // Clear animation task (if exists)
+                destroyAnimationTask();
+                animatingPlayers.clear();
 
-        // Notify invalidation to source ImageFile
-        ImageFile file = getFile();
-        if (file != null) {
-            file.unsubscribe(this);
-        }
+                // Free array of fake item frames
+                frames = null;
 
-        plugin.fine("Invalidated FakeImage#(" + location + "," + face + ")");
+                // Notify invalidation to source ImageFile
+                ImageFile file = getFile();
+                if (file != null) {
+                    file.unsubscribe(this);
+                }
+
+                plugin.fine("Invalidated FakeImage#(" + location + "," + face + ")");
+            }
+        });
     }
 
     /**
