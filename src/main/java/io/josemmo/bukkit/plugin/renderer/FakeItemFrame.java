@@ -1,6 +1,5 @@
 package io.josemmo.bukkit.plugin.renderer;
 
-import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.utility.MinecraftReflection;
 import com.comphenix.protocol.wrappers.nbt.NbtCompound;
 import com.comphenix.protocol.wrappers.nbt.NbtFactory;
@@ -25,8 +24,7 @@ public class FakeItemFrame extends FakeEntity {
     private final Location location;
     private final BlockFace face;
     private final Rotation rotation;
-    private final FakeMap map;
-    private PacketContainer[] spawnPackets;
+    private final FakeMap[] maps;
 
     /**
      * Get next unused item frame ID
@@ -46,23 +44,22 @@ public class FakeItemFrame extends FakeEntity {
      * @param location Frame location
      * @param face     Block face
      * @param rotation Frame rotation
-     * @param map      Fake map to render
+     * @param maps     Fake maps to animate
      */
-    public FakeItemFrame(@NotNull Location location, @NotNull BlockFace face, @NotNull Rotation rotation, @NotNull FakeMap map) {
+    public FakeItemFrame(@NotNull Location location, @NotNull BlockFace face, @NotNull Rotation rotation, @NotNull FakeMap[] maps) {
         this.id = getNextId();
         this.location = location;
         this.face = face;
         this.rotation = rotation;
-        this.map = map;
-        plugin.fine("Created FakeItemFrame#" + this.id + " using FakeMap#" + this.map.getId());
+        this.maps = maps;
+        plugin.fine("Created FakeItemFrame#" + this.id + " using " + this.maps.length + " FakeMap(s)");
     }
 
     /**
-     * Generate spawn packets
+     * Spawn empty item frame in player's client
+     * @param player Player instance
      */
-    private void generateSpawnPackets() {
-        spawnPackets = new PacketContainer[2];
-
+    public void spawn(@NotNull Player player) {
         // Calculate frame position in relation to target block
         double x = location.getBlockX();
         double y = location.getBlockY();
@@ -102,38 +99,41 @@ public class FakeItemFrame extends FakeEntity {
 
         // Create item frame entity
         SpawnEntityPacket framePacket = new SpawnEntityPacket();
-        spawnPackets[0] = framePacket.setId(id)
+        framePacket.setId(id)
             .setEntityType(EntityType.ITEM_FRAME)
             .setPosition(x, y, z)
             .setRotation(pitch, yaw)
             .setData(orientation);
+        tryToSendPacket(player, framePacket);
 
+        // Send pixels for all linked maps
+        for (FakeMap map : maps) {
+            map.sendPixels(player);
+        }
+    }
+
+    /**
+     * Send frame of animation to player
+     * @param player Player instance
+     * @param step   Map step to send
+     */
+    public void render(@NotNull Player player, int step) {
         // Create and attach filled map
         ItemStack itemStack = MinecraftReflection.getBukkitItemStack(new ItemStack(Material.FILLED_MAP));
         NbtCompound itemStackNbt = NbtFactory.ofCompound("tag");
-        itemStackNbt.put("map", map.getId());
+        itemStackNbt.put("map", maps[step].getId());
         NbtFactory.setItemTag(itemStack, itemStackNbt);
 
+        // Build entity metadata packet
         EntityMetadataPacket mapPacket = new EntityMetadataPacket();
-        spawnPackets[1] = mapPacket.setId(id)
+        mapPacket.setId(id)
             .setInvisible(true)
             .setItem(itemStack)
             .setRotation(rotation)
             .build();
-    }
 
-    /**
-     * Spawn item frame in player's client
-     * @param player Player instance
-     */
-    public void spawn(@NotNull Player player) {
-        if (spawnPackets == null) {
-            generateSpawnPackets();
-        }
-        for (PacketContainer packet : spawnPackets) {
-            tryToSendPacket(player, packet);
-        }
-        map.sendPixels(player);
+        // Send animation status update
+        tryToSendPacket(player, mapPacket);
     }
 
     /**

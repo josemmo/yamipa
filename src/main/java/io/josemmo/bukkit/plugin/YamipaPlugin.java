@@ -1,6 +1,7 @@
 package io.josemmo.bukkit.plugin;
 
 import io.josemmo.bukkit.plugin.commands.ImageCommandBridge;
+import io.josemmo.bukkit.plugin.renderer.FakeImage;
 import io.josemmo.bukkit.plugin.renderer.ImageRenderer;
 import io.josemmo.bukkit.plugin.storage.ImageStorage;
 import org.bstats.bukkit.Metrics;
@@ -10,6 +11,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Function;
 import java.util.logging.Level;
 
@@ -19,6 +22,7 @@ public class YamipaPlugin extends JavaPlugin {
     private boolean verbose;
     private ImageStorage storage;
     private ImageRenderer renderer;
+    private ScheduledExecutorService scheduler;
 
     /**
      * Get plugin instance
@@ -42,6 +46,14 @@ public class YamipaPlugin extends JavaPlugin {
      */
     public @NotNull ImageRenderer getRenderer() {
         return renderer;
+    }
+
+    /**
+     * Get internal tasks scheduler
+     * @return Tasks scheduler
+     */
+    public @NotNull ScheduledExecutorService getScheduler() {
+        return scheduler;
     }
 
     /**
@@ -89,8 +101,16 @@ public class YamipaPlugin extends JavaPlugin {
         }
 
         // Create image renderer
+        boolean animateImages = getConfig().getBoolean("animate-images", true);
+        if (animateImages) {
+            FakeImage.enableAnimation();
+            info("Enabled image animation support");
+        }
         renderer = new ImageRenderer(basePath.resolve(dataPath).toString());
         renderer.start();
+
+        // Create thread pool
+        scheduler = Executors.newScheduledThreadPool(6);
 
         // Initialize bStats
         Function<Integer, String> toStats = number -> {
@@ -108,12 +128,19 @@ public class YamipaPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        HandlerList.unregisterAll(this);
-        Bukkit.getScheduler().cancelTasks(this);
+        // Stop plugin components
         storage.stop();
         renderer.stop();
         storage = null;
         renderer = null;
+
+        // Stop internal scheduler
+        scheduler.shutdownNow();
+        scheduler = null;
+
+        // Remove Bukkit listeners and tasks
+        HandlerList.unregisterAll(this);
+        Bukkit.getScheduler().cancelTasks(this);
     }
 
     /**

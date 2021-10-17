@@ -1,31 +1,41 @@
 package io.josemmo.bukkit.plugin.storage;
 
+import com.comphenix.protocol.wrappers.Pair;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
 import io.josemmo.bukkit.plugin.renderer.FakeImage;
 import io.josemmo.bukkit.plugin.renderer.FakeMap;
+import io.josemmo.bukkit.plugin.renderer.FakeMapsContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.metadata.IIOMetadata;
+import javax.imageio.metadata.IIOMetadataNode;
+import javax.imageio.stream.ImageInputStream;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 
 public class ImageFile {
     public static final String CACHE_EXT = "cache";
+    public static final byte[] CACHE_SIGNATURE = new byte[] {0x59, 0x4d, 0x50}; // "YMP"
+    public static final int CACHE_VERSION = 1;
     private static final YamipaPlugin plugin = YamipaPlugin.getInstance();
-    private final Map<String, FakeMap[][]> cache = new HashMap<>();
+    private final ConcurrentHashMap<String, Lock> locks = new ConcurrentHashMap<>();
+    private final Map<String, FakeMapsContainer> cache = new HashMap<>();
     private final Map<String, Set<FakeImage>> subscribers = new HashMap<>();
     private final String name;
     private final String path;
@@ -49,33 +59,95 @@ public class ImageFile {
     }
 
     /**
-     * Get buffered image
-     * @return Buffered image
-     * @throws IOException if not a valid image file
-     * @throws NullPointerException if file not found
+     * Get image reader
+     * @return Image reader instance
+     * @throws IOException if failed to get suitable image reader
      */
-    private @NotNull BufferedImage getBufferedImage() throws Exception {
-        return ImageIO.read(new File(path));
+    private @NotNull ImageReader getImageReader() throws IOException {
+        ImageInputStream inputStream = ImageIO.createImageInputStream(new File(path));
+        ImageReader reader = ImageIO.getImageReaders(inputStream).next();
+        reader.setInput(inputStream);
+        return reader;
     }
 
     /**
-     * Get resized buffered image
+     * Render images using Minecraft palette
      * @param  width  New width in pixels
      * @param  height New height in pixels
-     * @return        Resized buffered image
-     * @throws IOException if not a valid image file
-     * @throws NullPointerException if file not found
+     * @return        Pair of bi-dimensional array of Minecraft images (step, pixel index) and delay between steps
+     * @throws IOException if failed to render images from file
      */
-    private @NotNull BufferedImage getBufferedImage(int width, int height) throws Exception {
-        Image tmp = getBufferedImage().getScaledInstance(width, height, Image.SCALE_FAST);
-        BufferedImage resizedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+    private @NotNull Pair<byte[][], Integer> renderImages(int width, int height) throws IOException {
+        ImageReader reader = getImageReader();
+        String format = reader.getFormatName();
+        int numOfSteps = Math.min(reader.getNumImages(true), FakeImage.MAX_STEPS);
 
-        // Copy data from temporary to resized instance
-        Graphics2D g2d = resizedImage.createGraphics();
-        g2d.drawImage(tmp, 0, 0, null);
-        g2d.dispose();
+        // Create temporary canvas
+        int originalWidth = reader.getWidth(0);
+        int originalHeight = reader.getHeight(0);
+        BufferedImage tmpImage = new BufferedImage(originalWidth, originalHeight, BufferedImage.TYPE_4BYTE_ABGR);
+        Graphics2D tmpGraphics = tmpImage.createGraphics();
 
-        return resizedImage;
+        // Create temporary scaled canvas (for resizing)
+        BufferedImage tmpScaledImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D tmpScaledGraphics = tmpScaledImage.createGraphics();
+
+        // Read images from file
+        byte[][] renderedImages = new byte[numOfSteps][width*height];
+        Map<Integer, Integer> delays = new HashMap<>();
+        for (int step=0; step<numOfSteps; ++step) {
+            // Extract step metadata
+            int imageLeft = 0;
+            int imageTop = 0;
+            if (format.equalsIgnoreCase("gif")) {
+                IIOMetadata metadata = reader.getImageMetadata(step);
+                IIOMetadataNode metadataRoot = (IIOMetadataNode) metadata.getAsTree(metadata.getNativeMetadataFormatName());
+                for (int i=0; i<metadataRoot.getLength(); ++i) {
+                    String nodeName = metadataRoot.item(i).getNodeName();
+                    if (nodeName.equalsIgnoreCase("ImageDescriptor")) {
+                        IIOMetadataNode descriptorNode = (IIOMetadataNode) metadataRoot.item(i);
+                        imageLeft = Integer.parseInt(descriptorNode.getAttribute("imageLeftPosition"));
+                        imageTop = Integer.parseInt(descriptorNode.getAttribute("imageTopPosition"));
+                    } else if (nodeName.equalsIgnoreCase("GraphicControlExtension")) {
+                        IIOMetadataNode controlExtensionNode = (IIOMetadataNode) metadataRoot.item(i);
+                        int delay = Integer.parseInt(controlExtensionNode.getAttribute("delayTime"));
+                        delays.compute(delay, (__, count) -> (count == null) ? 1 : count+1);
+                    }
+                }
+            }
+
+            // Paint step image over temporary canvas
+            BufferedImage image = reader.read(step);
+            tmpGraphics.drawImage(image, imageLeft, imageTop, null);
+            image.flush();
+
+            // Resize image and get pixels
+            tmpScaledGraphics.drawImage(tmpImage, 0, 0, width, height, null);
+            final int[] rgbaPixels = ((DataBufferInt) tmpScaledImage.getRaster().getDataBuffer()).getData();
+
+            // Convert RGBA pixels to Minecraft color indexes
+            final int stepButFinal = step;
+            IntStream.range(0, rgbaPixels.length).parallel().forEach(pixelIndex -> {
+                renderedImages[stepButFinal][pixelIndex] = FakeMap.pixelToIndex(rgbaPixels[pixelIndex]);
+            });
+        }
+
+        // Get most occurring delay (mode)
+        int delay = 0;
+        if (numOfSteps > 1) {
+            delay = Collections.max(delays.entrySet(), Map.Entry.comparingByValue()).getKey();
+            delay = Math.round(delay * 0.2f); // (delay * 10) / 50
+            delay = Math.min(Math.max(delay, FakeImage.MIN_DELAY), FakeImage.MAX_DELAY);
+        }
+
+        // Free resources
+        reader.dispose();
+        tmpGraphics.dispose();
+        tmpImage.flush();
+        tmpScaledGraphics.dispose();
+        tmpScaledImage.flush();
+
+        return new Pair<>(renderedImages, delay);
     }
 
     /**
@@ -84,8 +156,10 @@ public class ImageFile {
      */
     public @Nullable Dimension getSize() {
         try {
-            BufferedImage image = getBufferedImage();
-            return new Dimension(image.getWidth(), image.getHeight());
+            ImageReader reader = getImageReader();
+            Dimension dimension = new Dimension(reader.getWidth(0), reader.getHeight(0));
+            reader.dispose();
+            return dimension;
         } catch (Exception e) {
             return null;
         }
@@ -106,16 +180,44 @@ public class ImageFile {
     /**
      * Get maps and subscribe to maps cache
      * @param  subscriber Fake image instance requesting the maps
-     * @return            Bi-dimensional array of maps
+     * @return            Fake maps container
      */
-    public synchronized @NotNull FakeMap[][] getMapsAndSubscribe(@NotNull FakeImage subscriber) {
+    public @NotNull FakeMapsContainer getMapsAndSubscribe(@NotNull FakeImage subscriber) {
         int width = subscriber.getWidth();
         int height = subscriber.getHeight();
         String cacheKey = width + "-" + height;
 
+        // Prevent rendering the same image/dimensions pair multiple times
+        Lock lock = locks.computeIfAbsent(cacheKey, __ -> new ReentrantLock());
+        lock.lock();
+
+        // Execute code
+        FakeMapsContainer container;
+        try {
+            container = getMapsAndSubscribe(subscriber, cacheKey, width, height);
+        } finally {
+            lock.unlock();
+        }
+
+        return container;
+    }
+
+    /**
+     * Get maps and subscribe to maps cache (internal)
+     * @param  subscriber Fake image instance requesting the maps
+     * @param  cacheKey   Maps cache key
+     * @param  width      Desired image width in pixels
+     * @param  height     Desired image height in pixels
+     * @return            Fake maps container
+     */
+    private @NotNull FakeMapsContainer getMapsAndSubscribe(
+        @NotNull FakeImage subscriber,
+        @NotNull String cacheKey,
+        int width,
+        int height
+    ) {
         // Update subscribers for given cached maps
-        subscribers.computeIfAbsent(cacheKey, __ -> new HashSet<>());
-        subscribers.get(cacheKey).add(subscriber);
+        subscribers.computeIfAbsent(cacheKey, __ -> new HashSet<>()).add(subscriber);
 
         // Try to get maps from memory cache
         if (cache.containsKey(cacheKey)) {
@@ -127,53 +229,55 @@ public class ImageFile {
         File cacheFile = Paths.get(plugin.getStorage().getCachePath(), cacheFilename).toFile();
         if (cacheFile.isFile() && cacheFile.lastModified() >= getLastModified()) {
             try {
-                FakeMap[][] maps = readMapsFromCacheFile(cacheFile, width, height);
-                cache.put(cacheKey, maps);
-                return maps;
+                FakeMapsContainer container = readMapsFromCacheFile(cacheFile, width, height);
+                cache.put(cacheKey, container);
+                return container;
+            } catch (IllegalArgumentException e) {
+                plugin.info("Cache file \"" + cacheFile.getAbsolutePath() + "\" is outdated and will be overwritten");
             } catch (Exception e) {
-                plugin.warning("Cache file \"" + cacheFile.getAbsolutePath() + "\" is corrupted");
+                plugin.log(Level.WARNING, "Cache file \"" + cacheFile.getAbsolutePath() + "\" is corrupted", e);
             }
         }
 
         // Generate maps from original image
-        FakeMap[][] matrix = new FakeMap[width][height];
+        FakeMapsContainer container;
         try {
-            BufferedImage image = getBufferedImage(width*FakeMap.DIMENSION, height*FakeMap.DIMENSION);
-            int imgWidth = image.getWidth();
-
-            // Convert RGBA pixels to Minecraft color indexes
-            int[] rgbPixels = image.getRGB(
-                0, 0,
-                imgWidth, image.getHeight(),
-                null, 0,
-                imgWidth
-            );
-            byte[] pixels = new byte[rgbPixels.length];
-            IntStream.range(0, rgbPixels.length).parallel().forEach(i -> {
-                pixels[i] = FakeMap.pixelToIndex(rgbPixels[i]);
-            });
+            int widthInPixels = width*FakeMap.DIMENSION;
+            int heightInPixels = height*FakeMap.DIMENSION;
+            Pair<byte[][], Integer> res = renderImages(widthInPixels, heightInPixels);
+            byte[][] images = res.getFirst();
+            int delay = res.getSecond();
 
             // Instantiate fake maps
-            for (int col=0; col<width; col++) {
-                for (int row=0; row<height; row++) {
-                    matrix[col][row] = new FakeMap(pixels, imgWidth, col*FakeMap.DIMENSION, row*FakeMap.DIMENSION);
+            FakeMap[][][] matrix = new FakeMap[width][height][images.length];
+            IntStream.range(0, images.length).forEach(i -> {
+                for (int col=0; col<width; col++) {
+                    for (int row=0; row<height; row++) {
+                        matrix[col][row][i] = new FakeMap(
+                            images[i],
+                            widthInPixels,
+                            col*FakeMap.DIMENSION,
+                            row*FakeMap.DIMENSION
+                        );
+                    }
                 }
-            }
+            });
 
             // Persist in disk cache
+            container = new FakeMapsContainer(matrix, delay);
             try {
-                writeMapsToCacheFile(matrix, width, height, cacheFile);
+                writeMapsToCacheFile(container, cacheFile);
             } catch (IOException e) {
                 plugin.log(Level.SEVERE, "Failed to write to cache file \"" + cacheFile.getAbsolutePath() + "\"", e);
             }
         } catch (Exception e) {
-            matrix = FakeMap.getErrorMatrix(width, height);
-            plugin.log(Level.SEVERE, "Failed to get image data from file \"" + path + "\"", e);
+            container = FakeMap.getErrorMatrix(width, height);
+            plugin.log(Level.SEVERE, "Failed to render image(s) from file \"" + path + "\"", e);
         }
 
         // Persist in memory cache and return
-        cache.put(cacheKey, matrix);
-        return matrix;
+        cache.put(cacheKey, container);
+        return container;
     }
 
     /**
@@ -181,36 +285,81 @@ public class ImageFile {
      * @param  file   Cache file
      * @param  width  Width in blocks
      * @param  height Height in blocks
-     * @return        Bi-dimensional array of maps
+     * @return        Fake maps container
+     * @throws IllegalArgumentException if not a valid or outdated cache file
      * @throws IOException if failed to parse cache file
      */
-    private @NotNull FakeMap[][] readMapsFromCacheFile(@NotNull File file, int width, int height) throws IOException {
+    private @NotNull FakeMapsContainer readMapsFromCacheFile(@NotNull File file, int width, int height) throws Exception {
         try (FileInputStream stream = new FileInputStream(file)) {
-            FakeMap[][] matrix = new FakeMap[width][height];
-            for (int col=0; col<width; col++) {
-                for (int row=0; row<height; row++) {
-                    byte[] buffer = new byte[FakeMap.DIMENSION*FakeMap.DIMENSION];
-                    stream.read(buffer);
-                    matrix[col][row] = new FakeMap(buffer);
+            // Validate file signature
+            for (byte expectedByte : CACHE_SIGNATURE) {
+                if ((byte) stream.read() != expectedByte) {
+                    throw new IllegalArgumentException("Invalid file signature");
                 }
             }
-            return matrix;
+
+            // Validate version number
+            if ((byte) stream.read() != CACHE_VERSION) {
+                throw new IllegalArgumentException("Incompatible file format version");
+            }
+
+            // Get number of animation steps
+            int numOfSteps = stream.read() | (stream.read() << 8);
+            if (numOfSteps < 1 || numOfSteps > FakeImage.MAX_STEPS) {
+                throw new IOException("Invalid number of animation steps: " + numOfSteps);
+            }
+
+            // Get delay between steps
+            int delay = 0;
+            if (numOfSteps > 1) {
+                delay = stream.read();
+                if (delay < FakeImage.MIN_DELAY || delay > FakeImage.MAX_DELAY) {
+                    throw new IOException("Invalid delay between steps: " + delay);
+                }
+            }
+
+            // Read pixels
+            FakeMap[][][] maps = new FakeMap[width][height][numOfSteps];
+            for (int col=0; col<width; ++col) {
+                for (int row=0; row<height; ++row) {
+                    for (int step=0; step<numOfSteps; ++step) {
+                        byte[] buffer = new byte[FakeMap.DIMENSION*FakeMap.DIMENSION];
+                        stream.read(buffer);
+                        maps[col][row][step] = new FakeMap(buffer);
+                    }
+                }
+            }
+
+            return new FakeMapsContainer(maps, delay);
         }
     }
 
     /**
      * Write maps to cache file
-     * @param maps   Bi-dimensional array of maps
-     * @param width  Width in blocks
-     * @param height Height in blocks
-     * @param file   Cache file
+     * @param container Fake maps container
+     * @param file      Cache file
      * @throws IOException if failed to write to cache file
      */
-    private void writeMapsToCacheFile(@NotNull FakeMap[][] maps, int width, int height, @NotNull File file) throws IOException {
+    private void writeMapsToCacheFile(@NotNull FakeMapsContainer container, @NotNull File file) throws IOException {
         try (FileOutputStream stream = new FileOutputStream(file)) {
-            for (int col=0; col<width; col++) {
-                for (int row=0; row<height; row++) {
-                    stream.write(maps[col][row].getPixels());
+            FakeMap[][][] maps = container.getFakeMaps();
+            int numOfSteps = maps[0][0].length;
+
+            // Add file header
+            stream.write(CACHE_SIGNATURE); // "YMP" signature
+            stream.write(CACHE_VERSION);   // Format version
+            stream.write(numOfSteps & 0xff);        // Number of animation steps (first byte)
+            stream.write((numOfSteps >> 8) & 0xff); // Number of animation steps (second byte)
+            if (numOfSteps > 1) {
+                stream.write(container.getDelay());
+            }
+
+            // Add pixels
+            for (int col=0; col<maps.length; ++col) {
+                for (int row=0; row<maps[0].length; ++row) {
+                    for (int step=0; step<numOfSteps; ++step) {
+                        stream.write(maps[col][row][step].getPixels());
+                    }
                 }
             }
         }
