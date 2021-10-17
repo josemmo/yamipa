@@ -5,9 +5,7 @@ import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.wrappers.WrappedDataWatcher;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.IllegalPluginAccessException;
 import org.jetbrains.annotations.NotNull;
 import java.util.logging.Level;
 
@@ -67,12 +65,6 @@ public abstract class FakeEntity {
      * @param callback Callback to execute
      */
     protected static void tryToRunAsyncTask(@NotNull Runnable callback) {
-        try {
-            Bukkit.getScheduler().runTaskAsynchronously(plugin, callback);
-        } catch (IllegalPluginAccessException e) {
-            // Server is shutting down and is not accepting more tasks, ignore
-        } catch (Exception e) {
-            plugin.log(Level.SEVERE, "Failed to run async task", e);
-        }
+        plugin.getScheduler().execute(callback);
     }
 }

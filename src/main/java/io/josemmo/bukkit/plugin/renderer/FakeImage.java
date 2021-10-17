@@ -11,8 +11,6 @@ import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
@@ -23,7 +21,6 @@ public class FakeImage extends FakeEntity {
     public static final int MIN_DELAY = 1; // Minimum step delay in 50ms intervals (50ms / 50ms)
     public static final int MAX_DELAY = 50; // Maximum step delay in 50ms intervals (5000ms / 50ms)
     public static final UUID UNKNOWN_PLAYER_ID = new UUID(0, 0);
-    private static final ScheduledExecutorService animationScheduler = Executors.newScheduledThreadPool(5);
     private static boolean animateImages = false;
     private final String filename;
     private final Location location;
@@ -319,7 +316,12 @@ public class FakeImage extends FakeEntity {
                 if (animateImages && numOfSteps > 1) {
                     animatingPlayers.add(player);
                     if (task == null) {
-                        task = animationScheduler.scheduleAtFixedRate(this::nextStep, 0, delay * 50L, TimeUnit.MILLISECONDS);
+                        task = plugin.getScheduler().scheduleAtFixedRate(
+                            this::nextStep,
+                            0,
+                            delay*50L,
+                            TimeUnit.MILLISECONDS
+                        );
                         plugin.fine("Spawned animation task for FakeImage#(" + location + "," + face + ")");
                     }
                 }
