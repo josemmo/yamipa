@@ -31,6 +31,7 @@ public class FakeImage extends FakeEntity {
     private final Date placedAt;
     private final OfflinePlayer placedBy;
     private final BiFunction<Integer, Integer, Vector> getLocationVector;
+    private Runnable onLoadedListener = null;
 
     // Generated values
     private FakeItemFrame[] frames = null;
@@ -273,6 +274,17 @@ public class FakeImage extends FakeEntity {
     }
 
     /**
+     * Set on loaded listener
+     * <p>
+     * Defines a single-use listener that gets called when the fake image finishes loading,
+     * at which point the listener is automatically unregistered.
+     * @param onLoadedListener Listener
+     */
+    public void setOnLoadedListener(@NotNull Runnable onLoadedListener) {
+        this.onLoadedListener = onLoadedListener;
+    }
+
+    /**
      * Load generated instance attributes
      */
     private void load() {
@@ -297,6 +309,12 @@ public class FakeImage extends FakeEntity {
                 Location frameLocation = location.clone().add(getLocationVector.apply(col, row));
                 frames[height*col+row] = new FakeItemFrame(frameLocation, face, rotation, maps[col][row]);
             }
+        }
+
+        // Notify listener
+        if (onLoadedListener != null) {
+            onLoadedListener.run();
+            onLoadedListener = null;
         }
     }
 

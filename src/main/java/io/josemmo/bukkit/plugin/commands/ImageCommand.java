@@ -146,9 +146,16 @@ public class ImageCommand {
                 return;
             }
 
+            // Create new fake image instance
             Rotation rotation = FakeImage.getRotationFromPlayerEyesight(face, player.getEyeLocation());
             FakeImage fakeImage = new FakeImage(image.getName(), location, face, rotation,
                 width, finalHeight, new Date(), player);
+
+            // Show loading status to player
+            ActionBar loadingActionBar = ActionBar.repeat(player, ChatColor.AQUA + "Loading image...");
+            fakeImage.setOnLoadedListener(loadingActionBar::clear);
+
+            // Add fake image to renderer
             plugin.getRenderer().addImage(fakeImage);
         });
         task.onFailure(() -> ActionBar.send(player, ChatColor.RED + "Image placing canceled"));
