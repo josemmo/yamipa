@@ -50,6 +50,14 @@ public class FakeImage extends FakeEntity {
     }
 
     /**
+     * Is animation enabled
+     * @return Is animation enabled
+     */
+    public static boolean isAnimationEnabled() {
+        return animateImages;
+    }
+
+    /**
      * Get image rotation from player eyesight
      * @param  face     Image block face
      * @param  location Player eye location
