@@ -20,7 +20,6 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
@@ -36,7 +35,7 @@ public class SelectBlockTask {
     private final Player player;
     private BiConsumer<Location, BlockFace> success;
     private Runnable failure;
-    private BukkitTask actionBarTask;
+    private ActionBar actionBar;
 
     /**
      * Class constructor
@@ -85,7 +84,7 @@ public class SelectBlockTask {
 
         // Start task
         instances.put(uuid, this);
-        actionBarTask = ActionBar.repeat(player, ChatColor.GREEN + helpMessage + ChatColor.RESET +
+        actionBar = ActionBar.repeat(player, ChatColor.GREEN + helpMessage + ChatColor.RESET +
             " - " + ChatColor.RED + "Left click to cancel");
     }
 
@@ -93,8 +92,9 @@ public class SelectBlockTask {
      * Cancel task
      */
     public void cancel() {
-        if (actionBarTask != null) {
-            actionBarTask.cancel();
+        if (actionBar != null) {
+            actionBar.clear();
+            actionBar = null;
         }
         instances.remove(player.getUniqueId());
 

@@ -146,7 +146,6 @@ public class ImageCommand {
                 return;
             }
 
-            ActionBar.send(player, "");
             Rotation rotation = FakeImage.getRotationFromPlayerEyesight(face, player.getEyeLocation());
             FakeImage fakeImage = new FakeImage(image.getName(), location, face, rotation,
                 width, finalHeight, new Date(), player);
@@ -166,7 +165,6 @@ public class ImageCommand {
             if (image == null) {
                 ActionBar.send(player, ChatColor.RED + "That is not a valid image!");
             } else {
-                ActionBar.send(player, "");
                 renderer.removeImage(image);
             }
         });
@@ -215,7 +213,6 @@ public class ImageCommand {
                 ActionBar.send(player, ChatColor.RED + "That is not a valid image!");
                 return;
             }
-            ActionBar.send(player, "");
 
             // Send placed image information to player
             String dateStr = (image.getPlacedAt() == null) ?
