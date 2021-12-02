@@ -50,7 +50,8 @@ jobs:
           elif [ $FLAVOR == "spigot" ]; then
             url="https://$GETBUKKIT_SUBDOMAIN.getbukkit.org/spigot/spigot-$VERSION.jar"
           elif [ $FLAVOR == "paper" ]; then
-            url="https://papermc.io/api/v1/paper/$VERSION/latest/download"
+            build=$(curl "https://papermc.io/api/v2/projects/paper/versions/$VERSION" | jq '.builds[-1]')
+            url="https://papermc.io/api/v2/projects/paper/versions/$VERSION/builds/$build/downloads/paper-$VERSION-$build.jar"
           elif [ $FLAVOR == "purpur" ]; then
             url="https://api.pl3x.net/v2/purpur/$VERSION/latest/download"
           fi
