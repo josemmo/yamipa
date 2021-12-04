@@ -1,7 +1,7 @@
 # Yet Another Minecraft Image Placing Addon
 [![Tests](https://github.com/josemmo/yamipa/workflows/Tests/badge.svg)](https://github.com/josemmo/yamipa/actions)
 [![Latest Version](https://img.shields.io/github/v/release/josemmo/yamipa)](https://github.com/josemmo/yamipa/releases/latest)
-![Minecraft Version](https://img.shields.io/badge/minecraft-1.16%20%7C%7C%201.17-blueviolet)
+![Minecraft Version](https://img.shields.io/badge/minecraft-%3E%3D1.16-blueviolet)
 [![bStats Servers](https://img.shields.io/bstats/servers/10243)](https://bstats.org/plugin/bukkit/Yamipa/10243)
 [![License](https://img.shields.io/github/license/josemmo/yamipa)](LICENSE)
 
@@ -24,8 +24,15 @@ Download the JAR file for the [latest release](https://github.com/josemmo/yamipa
 ### Requirements
 Before installing Yamipa make sure you meet the following requirements:
 
-- CraftBukkit, Spigot or PaperMC v1.16 or v1.17
+- CraftBukkit, Spigot or PaperMC v1.16 or higher
 - [ProtocolLib](https://www.spigotmc.org/resources/protocollib.1997/) v4.6.1 or higher
+
+Here are the Minecraft distributions where Yamipa should be able to run:
+| Minecraft version | CraftBukkit | Spigot | PaperMC |
+|------------------:|:-----------:|:------:|:-------:|
+|            1.16.x |     ✅      |   ✅    |   ✅    |
+|     1.17 & 1.17.1 |     ✅      |   ✅    |   ✅    |
+|              1.18 |     ✅      |   ✅    |   ✅    |
 
 ## Configuration
 Yamipa is ready-to-go right out of the box. By default, it creates the following files and directories under the
