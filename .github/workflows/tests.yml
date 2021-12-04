@@ -10,7 +10,8 @@ jobs:
       fail-fast: false
       matrix:
         flavor: ['bukkit', 'spigot', 'paper', 'purpur']
-        version: ['1.17.1', '1.17', '1.16.5', '1.16.4', '1.16.3', '1.16.2', '1.16.1']
+        version: ['1.18', '1.17.1', '1.17', '1.16.5', '1.16.4', '1.16.3', '1.16.2', '1.16.1']
+    continue-on-error: ${{ matrix.flavor == 'purpur' }} # TODO: Purpur is not yet compatible with 1.18
     steps:
       # Download code from repository
       - name: Checkout code
@@ -21,7 +22,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: 'temurin'
-          java-version: ${{ startsWith(matrix.version, '1.16') && '11' || '16' }}
+          java-version: ${{ startsWith(matrix.version, '1.16') && '11' || '17' }}
 
       # Setup Node.js
       - name: Setup Node.js
