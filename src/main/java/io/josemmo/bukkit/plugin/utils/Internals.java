@@ -31,7 +31,7 @@ public class Internals {
             Class<?> nmsClass = nmsInstance.getClass().getSuperclass();
 
             // Get "net.minecraft.server.CommandDispatcher" references
-            Object nmsDispatcherInstance = nmsClass.getDeclaredMethod("getCommandDispatcher").invoke(nmsInstance);
+            Object nmsDispatcherInstance = nmsClass.getDeclaredField("vanillaCommandDispatcher").get(nmsInstance);
             Class<?> nmsDispatcherClass = nmsDispatcherInstance.getClass();
 
             // Get Brigadier dispatcher instance
