@@ -3,6 +3,7 @@ package io.josemmo.bukkit.plugin;
 import io.josemmo.bukkit.plugin.commands.ImageCommandBridge;
 import io.josemmo.bukkit.plugin.renderer.FakeImage;
 import io.josemmo.bukkit.plugin.renderer.ImageRenderer;
+import io.josemmo.bukkit.plugin.renderer.ItemService;
 import io.josemmo.bukkit.plugin.storage.ImageStorage;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.SimplePie;
@@ -23,6 +24,7 @@ public class YamipaPlugin extends JavaPlugin {
     private boolean verbose;
     private ImageStorage storage;
     private ImageRenderer renderer;
+    private ItemService itemService;
     private ScheduledExecutorService scheduler;
 
     /**
@@ -110,6 +112,10 @@ public class YamipaPlugin extends JavaPlugin {
         renderer = new ImageRenderer(basePath.resolve(dataPath).toString());
         renderer.start();
 
+        // Create image item service
+        itemService = new ItemService();
+        itemService.start();
+
         // Create thread pool
         scheduler = Executors.newScheduledThreadPool(6);
 
@@ -133,8 +139,10 @@ public class YamipaPlugin extends JavaPlugin {
         // Stop plugin components
         storage.stop();
         renderer.stop();
+        itemService.stop();
         storage = null;
         renderer = null;
+        itemService = null;
 
         // Stop internal scheduler
         scheduler.shutdownNow();

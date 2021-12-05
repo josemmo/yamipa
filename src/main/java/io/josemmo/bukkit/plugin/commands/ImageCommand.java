@@ -3,6 +3,7 @@ package io.josemmo.bukkit.plugin.commands;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
 import io.josemmo.bukkit.plugin.renderer.FakeImage;
 import io.josemmo.bukkit.plugin.renderer.ImageRenderer;
+import io.josemmo.bukkit.plugin.renderer.ItemService;
 import io.josemmo.bukkit.plugin.storage.ImageFile;
 import io.josemmo.bukkit.plugin.utils.SelectBlockTask;
 import io.josemmo.bukkit.plugin.utils.ActionBar;
@@ -10,9 +11,6 @@ import org.bukkit.*;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.persistence.PersistentDataContainer;
-import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -305,8 +303,6 @@ public class ImageCommand {
         int width,
         int height
     ) {
-        YamipaPlugin plugin = YamipaPlugin.getInstance();
-
         // Get image size in blocks
         Dimension sizeInPixels = image.getSize();
         if (sizeInPixels == null) {
@@ -318,15 +314,7 @@ public class ImageCommand {
         }
 
         // Create item stack
-        ItemStack itemStack = new ItemStack(Material.PAPER, amount);
-        ItemMeta itemMeta = Objects.requireNonNull(itemStack.getItemMeta());
-        PersistentDataContainer itemData = itemMeta.getPersistentDataContainer();
-        itemMeta.setDisplayName(image.getName() + ChatColor.AQUA + " (" + width + "x" + height + ")");
-        itemMeta.setLore(Collections.singletonList("Yamipa image"));
-        itemData.set(new NamespacedKey(plugin, "filename"), PersistentDataType.STRING, image.getName());
-        itemData.set(new NamespacedKey(plugin, "width"), PersistentDataType.INTEGER, width);
-        itemData.set(new NamespacedKey(plugin, "height"), PersistentDataType.INTEGER, height);
-        itemStack.setItemMeta(itemMeta);
+        ItemStack itemStack = ItemService.getImageItem(image, amount, width, height);
 
         // Add item stack to player's inventory
         player.getInventory().addItem(itemStack);
