@@ -9,6 +9,10 @@ import io.josemmo.bukkit.plugin.utils.ActionBar;
 import org.bukkit.*;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,10 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 public class ImageCommand {
     public static final int ITEMS_PER_PAGE = 9;
@@ -41,6 +42,9 @@ public class ImageCommand {
         }
         if (s.hasPermission("yamipa.download")) {
             s.sendMessage(ChatColor.AQUA + cmd + " download <url> <filename>" + ChatColor.RESET + " - Download image");
+        }
+        if (s.hasPermission("yamipa.give")) {
+            s.sendMessage(ChatColor.AQUA + cmd + " give <p> <filename> <#> <w> [<h>]" + ChatColor.RESET + " - Give image items");
         }
         if (s.hasPermission("yamipa.list")) {
             s.sendMessage(ChatColor.AQUA + cmd + " list [<page>]" + ChatColor.RESET + " - List all images");
@@ -130,12 +134,7 @@ public class ImageCommand {
             player.sendMessage(ChatColor.RED + "The requested file is not a valid image");
             return;
         }
-        if (height == 0) {
-            float imageRatio = (float) sizeInPixels.height / sizeInPixels.width;
-            height = Math.round(width * imageRatio);
-            height = Math.min(height, FakeImage.MAX_DIMENSION);
-        }
-        final int finalHeight = height;
+        final int finalHeight = (height == 0) ? FakeImage.getProportionalHeight(sizeInPixels, width) : height;
 
         // Ask player where to place image
         SelectBlockTask task = new SelectBlockTask(player);
@@ -296,5 +295,45 @@ public class ImageCommand {
             );
             ++printedLines;
         }
+    }
+
+    public static void giveImageItems(
+        @NotNull CommandSender sender,
+        @NotNull Player player,
+        @NotNull ImageFile image,
+        int amount,
+        int width,
+        int height
+    ) {
+        YamipaPlugin plugin = YamipaPlugin.getInstance();
+
+        // Get image size in blocks
+        Dimension sizeInPixels = image.getSize();
+        if (sizeInPixels == null) {
+            sender.sendMessage(ChatColor.RED + "The requested file is not a valid image");
+            return;
+        }
+        if (height == 0) {
+            height = FakeImage.getProportionalHeight(sizeInPixels, width);
+        }
+
+        // Create item stack
+        ItemStack itemStack = new ItemStack(Material.PAPER, amount);
+        ItemMeta itemMeta = Objects.requireNonNull(itemStack.getItemMeta());
+        PersistentDataContainer itemData = itemMeta.getPersistentDataContainer();
+        itemMeta.setDisplayName(image.getName() + ChatColor.AQUA + " (" + width + "x" + height + ")");
+        itemMeta.setLore(Collections.singletonList("Yamipa image"));
+        itemData.set(new NamespacedKey(plugin, "filename"), PersistentDataType.STRING, image.getName());
+        itemData.set(new NamespacedKey(plugin, "width"), PersistentDataType.INTEGER, width);
+        itemData.set(new NamespacedKey(plugin, "height"), PersistentDataType.INTEGER, height);
+        itemStack.setItemMeta(itemMeta);
+
+        // Add item stack to player's inventory
+        player.getInventory().addItem(itemStack);
+        sender.sendMessage(
+            ChatColor.ITALIC + "Added " + amount + " " +
+            (amount == 1 ? "image item" : "image items") +
+            " to " + player.getName() + "'s inventory"
+        );
     }
 }

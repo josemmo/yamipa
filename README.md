@@ -62,6 +62,7 @@ This plugin adds the following commands:
 - `/image clear <x z world> <r> [<placed-by>]`: Remove all placed images in a radius of `r` blocks around an origin.
 - `/image describe`: Show detailed information about a placed image.
 - `/image download <url> <filename>`: Download an image from a URL and place it in the images directory.
+- `/image give <player> <filename> <amount> <width> [<height>]`: Give image items that can be placed later to a player.
 - `/image list [<page>]`: List all available files in the images directory.
 - `/image place <filename> <width> [<height>]`: Place an image of size `width`x`height` blocks.
 - `/image remove`: Remove a placed image from the world without deleting the image file.
@@ -73,6 +74,8 @@ This plugin adds the following commands:
   `/image`
 - Download an image from a URL and save it with another name\
   `/image download "https://www.example.com/a/b/c/1234.jpg" imagename.jpg`
+- Give 10 image items to "TestPlayer" for the "test.jpg" image (3x5 blocks)\
+  `/image give TestPlayer test.jpg 10 3 5`
 - Start the dialog to place an image with a width of 3 blocks and auto height\
   `/image place imagename.jpg 3`
 - Start the dialog to place a 3-blocks wide and 2-blocks high image\
@@ -94,6 +97,7 @@ Yamipa defines the following permissions, each one corresponding to the command 
 - `yamipa.clear`
 - `yamipa.describe`
 - `yamipa.download`
+- `yamipa.give`
 - `yamipa.list`
 - `yamipa.place`
 - `yamipa.remove`

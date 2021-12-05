@@ -10,6 +10,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import java.awt.*;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -82,6 +83,19 @@ public class FakeImage extends FakeEntity {
             default:
                 return Rotation.NONE;
         }
+    }
+
+    /**
+     * Get proportional height
+     * @param  sizeInPixels Image file dimension in pixels
+     * @param  width        Desired width in blocks
+     * @return              Height in blocks (capped at <code>FakeImage.MAX_DIMENSION</code>)
+     */
+    public static int getProportionalHeight(@NotNull Dimension sizeInPixels, int width) {
+        float imageRatio = (float) sizeInPixels.height / sizeInPixels.width;
+        int height = Math.round(width * imageRatio);
+        height = Math.min(height, MAX_DIMENSION);
+        return height;
     }
 
     /**

@@ -63,6 +63,7 @@ public class ImageCommandBridge {
                 sender.hasPermission("yamipa.clear") ||
                 sender.hasPermission("yamipa.describe") ||
                 sender.hasPermission("yamipa.download") ||
+                sender.hasPermission("yamipa.give") ||
                 sender.hasPermission("yamipa.list") ||
                 sender.hasPermission("yamipa.place") ||
                 sender.hasPermission("yamipa.remove") ||
@@ -108,6 +109,29 @@ public class ImageCommandBridge {
             .withArgument(new StringArgument("filename"))
             .executes((sender, args) -> {
                 ImageCommand.downloadImage(sender, (String) args[1], (String) args[2]);
+            });
+
+        // Give subcommand
+        root.addSubcommand("give")
+            .withPermission("yamipa.give")
+            .withArgument(new OnlinePlayerArgument("player"))
+            .withArgument(new ImageFileArgument("filename"))
+            .withArgument(new IntegerArgument("amount", 1, 64))
+            .withArgument(new IntegerArgument("width", 1, FakeImage.MAX_DIMENSION))
+            .withArgument(new IntegerArgument("height", 1, FakeImage.MAX_DIMENSION))
+            .executes((sender, args) -> {
+                ImageCommand.giveImageItems(sender, (Player) args[1], (ImageFile) args[2], (int) args[3],
+                    (int) args[4], (int) args[5]);
+            });
+        root.addSubcommand("give")
+            .withPermission("yamipa.give")
+            .withArgument(new OnlinePlayerArgument("player"))
+            .withArgument(new ImageFileArgument("filename"))
+            .withArgument(new IntegerArgument("amount", 1, 64))
+            .withArgument(new IntegerArgument("width", 1, FakeImage.MAX_DIMENSION))
+            .executes((sender, args) -> {
+                ImageCommand.giveImageItems(sender, (Player) args[1], (ImageFile) args[2], (int) args[3],
+                    (int) args[4], 0);
             });
 
         // List subcommand
