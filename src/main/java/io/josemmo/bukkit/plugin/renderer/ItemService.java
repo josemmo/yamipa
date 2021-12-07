@@ -1,17 +1,19 @@
 package io.josemmo.bukkit.plugin.renderer;
 
 import io.josemmo.bukkit.plugin.YamipaPlugin;
+import io.josemmo.bukkit.plugin.commands.ImageCommand;
 import io.josemmo.bukkit.plugin.storage.ImageFile;
-import org.bukkit.ChatColor;
-import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
+import org.bukkit.*;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
+import org.bukkit.event.hanging.HangingPlaceEvent;
 import org.bukkit.event.inventory.PrepareItemCraftEvent;
 import org.bukkit.inventory.CraftingInventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
@@ -79,6 +81,54 @@ public class ItemService implements Listener {
                 inventory.setResult(new ItemStack(Material.AIR));
                 break;
             }
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
+    public void onPlaceItem(@NotNull HangingPlaceEvent event) {
+        Player player = event.getPlayer();
+        ItemStack item = event.getItemStack();
+        if (player == null || item == null) return;
+
+        // Get metadata from item
+        ItemMeta itemMeta = item.getItemMeta();
+        if (itemMeta == null) return;
+        PersistentDataContainer itemData = itemMeta.getPersistentDataContainer();
+        String filename = itemData.get(NSK_FILENAME, PersistentDataType.STRING);
+        if (filename == null) return;
+        Integer width = itemData.get(NSK_WIDTH, PersistentDataType.INTEGER);
+        Integer height = itemData.get(NSK_HEIGHT, PersistentDataType.INTEGER);
+        if (width == null || height == null) {
+            plugin.warning(player + " tried to place corrupted image item (missing width/height properties)");
+            return;
+        }
+
+        // Validate filename
+        ImageFile image = YamipaPlugin.getInstance().getStorage().get(filename);
+        if (image == null) {
+            plugin.warning(player + " tried to place corrupted image item (\"" + filename + "\" no longer exists)");
+            player.sendMessage(ChatColor.RED + "Image file \"" + filename + "\" no longer exists");
+            return;
+        }
+
+        // Prevent item frame placing
+        event.setCancelled(true);
+
+        // Try to place image in world
+        Location location = event.getBlock().getLocation();
+        boolean success = ImageCommand.placeImage(player, image, width, height, location, event.getBlockFace());
+        if (!success) return;
+
+        // Decrement item from player's inventory
+        if (player.getGameMode() == GameMode.CREATIVE) return;
+        PlayerInventory inventory = player.getInventory();
+        int itemIndex = inventory.first(item);
+        int amount = item.getAmount();
+        if (amount > 1) {
+            item.setAmount(amount - 1);
+            inventory.setItem(itemIndex, item);
+        } else {
+            inventory.setItem(itemIndex, new ItemStack(Material.AIR));
         }
     }
 }

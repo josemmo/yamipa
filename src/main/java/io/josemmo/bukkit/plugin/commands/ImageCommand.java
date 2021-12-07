@@ -8,6 +8,7 @@ import io.josemmo.bukkit.plugin.storage.ImageFile;
 import io.josemmo.bukkit.plugin.utils.SelectBlockTask;
 import io.josemmo.bukkit.plugin.utils.ActionBar;
 import org.bukkit.*;
+import org.bukkit.block.BlockFace;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -124,8 +125,6 @@ public class ImageCommand {
         int width,
         int height
     ) {
-        YamipaPlugin plugin = YamipaPlugin.getInstance();
-
         // Get image size in blocks
         Dimension sizeInPixels = image.getSize();
         if (sizeInPixels == null) {
@@ -136,27 +135,40 @@ public class ImageCommand {
 
         // Ask player where to place image
         SelectBlockTask task = new SelectBlockTask(player);
-        task.onSuccess((location, face) -> {
-            FakeImage existingImage = plugin.getRenderer().getImage(location, face);
-            if (existingImage != null) {
-                ActionBar.send(player, ChatColor.RED + "There's already an image there!");
-                return;
-            }
-
-            // Create new fake image instance
-            Rotation rotation = FakeImage.getRotationFromPlayerEyesight(face, player.getEyeLocation());
-            FakeImage fakeImage = new FakeImage(image.getName(), location, face, rotation,
-                width, finalHeight, new Date(), player);
-
-            // Show loading status to player
-            ActionBar loadingActionBar = ActionBar.repeat(player, ChatColor.AQUA + "Loading image...");
-            fakeImage.setOnLoadedListener(loadingActionBar::clear);
-
-            // Add fake image to renderer
-            plugin.getRenderer().addImage(fakeImage);
-        });
+        task.onSuccess((location, face) -> placeImage(player, image, width, finalHeight, location, face));
         task.onFailure(() -> ActionBar.send(player, ChatColor.RED + "Image placing canceled"));
         task.run("Right click a block to continue");
+    }
+
+    public static boolean placeImage(
+        @NotNull Player player,
+        @NotNull ImageFile image,
+        int width,
+        int height,
+        @NotNull Location location,
+        @NotNull BlockFace face
+    ) {
+        YamipaPlugin plugin = YamipaPlugin.getInstance();
+
+        // Prevent two images occupying the same space
+        FakeImage existingImage = plugin.getRenderer().getImage(location, face);
+        if (existingImage != null) {
+            ActionBar.send(player, ChatColor.RED + "There's already an image there!");
+            return false;
+        }
+
+        // Create new fake image instance
+        Rotation rotation = FakeImage.getRotationFromPlayerEyesight(face, player.getEyeLocation());
+        FakeImage fakeImage = new FakeImage(image.getName(), location, face, rotation,
+            width, height, new Date(), player);
+
+        // Show loading status to player
+        ActionBar loadingActionBar = ActionBar.repeat(player, ChatColor.AQUA + "Loading image...");
+        fakeImage.setOnLoadedListener(loadingActionBar::clear);
+
+        // Add fake image to renderer
+        plugin.getRenderer().addImage(fakeImage);
+        return true;
     }
 
     public static void removeImage(@NotNull Player player) {
