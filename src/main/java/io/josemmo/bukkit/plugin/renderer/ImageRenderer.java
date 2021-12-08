@@ -106,7 +106,12 @@ public class ImageRenderer implements Listener {
                     UUID.fromString(row[10]) :
                     FakeImage.UNKNOWN_PLAYER_ID;
                 OfflinePlayer placedBy = Bukkit.getOfflinePlayer(placedById);
-                addImage(new FakeImage(filename, location, face, rotation, width, height, placedAt, placedBy), true);
+                int flags = (row.length > 11) ?
+                    Math.max(Integer.parseInt(row[11]), 0) :
+                    FakeImage.DEFAULT_FLAGS;
+                FakeImage fakeImage = new FakeImage(filename, location, face, rotation, width, height,
+                    placedAt, placedBy, flags);
+                addImage(fakeImage, true);
             } catch (Exception e) {
                 plugin.log(Level.SEVERE, "Invalid fake image properties: " + String.join(";", row), e);
             }
@@ -144,7 +149,8 @@ public class ImageRenderer implements Listener {
                 fakeImage.getWidth() + "",
                 fakeImage.getHeight() + "",
                 (fakeImage.getPlacedAt() == null) ? "" : (fakeImage.getPlacedAt().getTime() / 1000) + "",
-                placedById.equals(FakeImage.UNKNOWN_PLAYER_ID) ? "" : placedById.toString()
+                placedById.equals(FakeImage.UNKNOWN_PLAYER_ID) ? "" : placedById.toString(),
+                fakeImage.getFlags() + ""
             };
             config.addRow(row);
         }

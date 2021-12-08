@@ -135,7 +135,9 @@ public class ImageCommand {
 
         // Ask player where to place image
         SelectBlockTask task = new SelectBlockTask(player);
-        task.onSuccess((location, face) -> placeImage(player, image, width, finalHeight, location, face));
+        task.onSuccess((location, face) -> {
+            placeImage(player, image, width, finalHeight, location, face, FakeImage.DEFAULT_FLAGS);
+        });
         task.onFailure(() -> ActionBar.send(player, ChatColor.RED + "Image placing canceled"));
         task.run("Right click a block to continue");
     }
@@ -146,7 +148,8 @@ public class ImageCommand {
         int width,
         int height,
         @NotNull Location location,
-        @NotNull BlockFace face
+        @NotNull BlockFace face,
+        int flags
     ) {
         YamipaPlugin plugin = YamipaPlugin.getInstance();
 
@@ -160,7 +163,7 @@ public class ImageCommand {
         // Create new fake image instance
         Rotation rotation = FakeImage.getRotationFromPlayerEyesight(face, player.getEyeLocation());
         FakeImage fakeImage = new FakeImage(image.getName(), location, face, rotation,
-            width, height, new Date(), player);
+            width, height, new Date(), player, flags);
 
         // Show loading status to player
         ActionBar loadingActionBar = ActionBar.repeat(player, ChatColor.AQUA + "Loading image...");

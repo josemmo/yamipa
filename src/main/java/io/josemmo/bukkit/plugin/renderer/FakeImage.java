@@ -22,6 +22,14 @@ public class FakeImage extends FakeEntity {
     public static final int MIN_DELAY = 1; // Minimum step delay in 50ms intervals (50ms / 50ms)
     public static final int MAX_DELAY = 50; // Maximum step delay in 50ms intervals (5000ms / 50ms)
     public static final UUID UNKNOWN_PLAYER_ID = new UUID(0, 0);
+
+    // Flags
+    public static final int FLAG_ANIMATABLE = 1; // Whether image is allowed to animate multiple steps
+    public static final int FLAG_REMOVABLE = 2; // Whether image can be removed by a player using the interact button
+    public static final int FLAG_DROPPABLE = 4; // Whether image will drop an image item when removed by a player
+    public static final int DEFAULT_FLAGS = FLAG_ANIMATABLE;
+
+    // Instance properties
     private static boolean animateImages = false;
     private final String filename;
     private final Location location;
@@ -31,6 +39,7 @@ public class FakeImage extends FakeEntity {
     private final int height;
     private final Date placedAt;
     private final OfflinePlayer placedBy;
+    private final int flags;
     private final BiFunction<Integer, Integer, Vector> getLocationVector;
     private Runnable onLoadedListener = null;
 
@@ -100,14 +109,15 @@ public class FakeImage extends FakeEntity {
 
     /**
      * Class constructor
-     * @param filename Image filename
-     * @param location Top-left corner where image will be placed
-     * @param face     Block face
-     * @param rotation Image rotation
-     * @param width    Width in blocks
-     * @param height   Height in blocks
-     * @param placedAt Placed at
-     * @param placedBy Placed by
+     * @param filename  Image filename
+     * @param location  Top-left corner where image will be placed
+     * @param face      Block face
+     * @param rotation  Image rotation
+     * @param width     Width in blocks
+     * @param height    Height in blocks
+     * @param placedAt  Placed at
+     * @param placedBy  Placed by
+     * @param flags     Flags
      */
     public FakeImage(
         @NotNull String filename,
@@ -117,7 +127,8 @@ public class FakeImage extends FakeEntity {
         int width,
         int height,
         @Nullable Date placedAt,
-        @NotNull OfflinePlayer placedBy
+        @NotNull OfflinePlayer placedBy,
+        int flags
     ) {
         this.filename = filename;
         this.location = location;
@@ -127,6 +138,7 @@ public class FakeImage extends FakeEntity {
         this.height = height;
         this.placedAt = placedAt;
         this.placedBy = placedBy;
+        this.flags = flags;
 
         // Define function for retrieving item frame positional vector from <row,column> pair
         if (face == BlockFace.SOUTH) {
@@ -232,6 +244,14 @@ public class FakeImage extends FakeEntity {
      */
     public @NotNull OfflinePlayer getPlacedBy() {
         return placedBy;
+    }
+
+    /**
+     * Get flags
+     * @return Flags
+     */
+    public int getFlags() {
+        return flags;
     }
 
     /**

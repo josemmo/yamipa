@@ -116,7 +116,8 @@ public class ItemService implements Listener {
 
         // Try to place image in world
         Location location = event.getBlock().getLocation();
-        boolean success = ImageCommand.placeImage(player, image, width, height, location, event.getBlockFace());
+        int flags = FakeImage.DEFAULT_FLAGS | FakeImage.FLAG_REMOVABLE | FakeImage.FLAG_DROPPABLE;
+        boolean success = ImageCommand.placeImage(player, image, width, height, location, event.getBlockFace(), flags);
         if (!success) return;
 
         // Decrement item from player's inventory
