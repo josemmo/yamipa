@@ -233,19 +233,10 @@ public class ImageCommand {
                 return;
             }
 
-            // Send placed image information to player
-            String dateStr = (image.getPlacedAt() == null) ?
-                ChatColor.GRAY + "Some point in time" :
-                new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z").format(image.getPlacedAt());
-            String playerStr;
-            if (image.getPlacedBy().getUniqueId().equals(FakeImage.UNKNOWN_PLAYER_ID)) {
-                playerStr = ChatColor.GRAY + "Someone";
-            } else if (image.getPlacedBy().getName() == null) {
-                playerStr = ChatColor.DARK_AQUA + image.getPlacedBy().getUniqueId().toString();
-            } else {
-                playerStr = image.getPlacedBy().getName();
-            }
+            // Separate previous messages
             player.sendMessage("");
+
+            // Basic information
             player.sendMessage(ChatColor.GOLD + "Filename: " + ChatColor.RESET + image.getFilename());
             player.sendMessage(ChatColor.GOLD + "World: " + ChatColor.RESET +
                 image.getLocation().getChunk().getWorld().getName());
@@ -257,11 +248,44 @@ public class ImageCommand {
             player.sendMessage(ChatColor.GOLD + "Rotation: " + ChatColor.RESET + image.getRotation());
             player.sendMessage(ChatColor.GOLD + "Dimensions: " + ChatColor.RESET +
                 image.getWidth() + "x" + image.getHeight() + " blocks");
+
+            // Speed
             int delay = image.getDelay() * 50;
-            String delayStr = (delay > 0) ? delay + " ms per step" : ChatColor.GRAY + "Not animatable";
+            String delayStr = (delay > 0) ? delay + " ms per step" : ChatColor.GRAY + "N/A";
             player.sendMessage(ChatColor.GOLD + "Speed: " + ChatColor.RESET + delayStr);
+
+            // Placed At
+            String dateStr = (image.getPlacedAt() == null) ?
+                ChatColor.GRAY + "Some point in time" :
+                new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z").format(image.getPlacedAt());
             player.sendMessage(ChatColor.GOLD + "Placed At: " + ChatColor.RESET + dateStr);
+
+            // Placed By
+            String playerStr;
+            if (image.getPlacedBy().getUniqueId().equals(FakeImage.UNKNOWN_PLAYER_ID)) {
+                playerStr = ChatColor.GRAY + "Someone";
+            } else if (image.getPlacedBy().getName() == null) {
+                playerStr = ChatColor.DARK_AQUA + image.getPlacedBy().getUniqueId().toString();
+            } else {
+                playerStr = image.getPlacedBy().getName();
+            }
             player.sendMessage(ChatColor.GOLD + "Placed By: " + ChatColor.RESET + playerStr);
+
+            // Flags
+            String flagsStr = "";
+            if (image.hasFlag(FakeImage.FLAG_ANIMATABLE)) {
+                flagsStr += ChatColor.AQUA + "ANIM ";
+            }
+            if (image.hasFlag(FakeImage.FLAG_REMOVABLE)) {
+                flagsStr += ChatColor.RED + "REMO ";
+            }
+            if (image.hasFlag(FakeImage.FLAG_DROPPABLE)) {
+                flagsStr += ChatColor.LIGHT_PURPLE + "DROP ";
+            }
+            if (flagsStr.isEmpty()) {
+                flagsStr = ChatColor.GRAY + "N/A";
+            }
+            player.sendMessage(ChatColor.GOLD + "Flags: " + ChatColor.RESET + flagsStr);
         });
         task.onFailure(() -> ActionBar.send(player, ChatColor.RED + "Image describing canceled"));
         task.run("Right click the image to describe");

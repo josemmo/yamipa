@@ -54,7 +54,7 @@ public class FakeImage extends FakeEntity {
     private int currentStep = -1; // Current animation step
 
     /**
-     * Enable image animation
+     * Enable plugin-wide image animation support
      */
     public static void enableAnimation() {
         animateImages = true;
@@ -255,6 +255,15 @@ public class FakeImage extends FakeEntity {
     }
 
     /**
+     * Has flag
+     * @param  flag Flag to check
+     * @return      Whether instance has given flag or not
+     */
+    public boolean hasFlag(int flag) {
+        return ((flags & flag) == flag);
+    }
+
+    /**
      * Get image delay
      * @return Image delay in 50ms intervals
      */
@@ -373,7 +382,7 @@ public class FakeImage extends FakeEntity {
                 }
 
                 // Add player to animation task
-                if (animateImages && numOfSteps > 1) {
+                if (animateImages && hasFlag(FLAG_ANIMATABLE) && numOfSteps > 1) {
                     animatingPlayers.add(player);
                     if (task == null) {
                         task = plugin.getScheduler().scheduleAtFixedRate(
