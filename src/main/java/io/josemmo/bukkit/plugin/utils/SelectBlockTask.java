@@ -1,11 +1,5 @@
 package io.josemmo.bukkit.plugin.utils;
 
-import com.comphenix.protocol.PacketType;
-import com.comphenix.protocol.ProtocolLibrary;
-import com.comphenix.protocol.events.ListeningWhitelist;
-import com.comphenix.protocol.events.PacketEvent;
-import com.comphenix.protocol.events.PacketListener;
-import com.comphenix.protocol.wrappers.EnumWrappers;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -17,13 +11,13 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.player.PlayerAnimationEvent;
+import org.bukkit.event.player.PlayerAnimationType;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.BiConsumer;
@@ -31,7 +25,7 @@ import java.util.function.BiConsumer;
 public class SelectBlockTask {
     private static final YamipaPlugin plugin = YamipaPlugin.getInstance();
     private static final Map<UUID, SelectBlockTask> instances = new HashMap<>();
-    private static PlayerInteractionListener listener = null;
+    private static SelectBlockTaskListener listener = null;
     private final Player player;
     private BiConsumer<Location, BlockFace> success;
     private Runnable failure;
@@ -76,9 +70,8 @@ public class SelectBlockTask {
 
         // Create listener singleton if needed
         if (listener == null) {
-            listener = new PlayerInteractionListener();
-            plugin.getServer().getPluginManager().registerEvents(listener, plugin);
-            ProtocolLibrary.getProtocolManager().addPacketListener(listener);
+            listener = new SelectBlockTaskListener();
+            listener.register();
             plugin.fine("Created PlayerInteractionListener singleton");
         }
 
@@ -100,49 +93,61 @@ public class SelectBlockTask {
 
         // Destroy listener singleton if no more active tasks
         if (instances.isEmpty()) {
-            HandlerList.unregisterAll(listener);
-            ProtocolLibrary.getProtocolManager().removePacketListener(listener);
+            listener.unregister();
             listener = null;
-            plugin.fine("Destroyed PlayerInteractionListener singleton");
+            plugin.fine("Destroyed SelectBlockTaskListener singleton");
         }
     }
 
     /**
      * Internal listener for handling player events
      */
-    private static class PlayerInteractionListener implements Listener, PacketListener {
-        @EventHandler
-        public void onPlayerInteraction(PlayerInteractEvent event) {
+    private static class SelectBlockTaskListener extends InteractWithEntityListener implements Listener {
+        @Override
+        public void register() {
+            super.register();
+            plugin.getServer().getPluginManager().registerEvents(this, plugin);
+        }
+
+        @Override
+        public void unregister() {
+            super.unregister();
+            HandlerList.unregisterAll(this);
+        }
+
+        @EventHandler(ignoreCancelled = true, priority = EventPriority.LOW)
+        public void onBlockInteraction(@NotNull PlayerInteractEvent event) {
             Action action = event.getAction();
+            Player player = event.getPlayer();
             Block block = event.getClickedBlock();
+            if (block == null) return;
+            BlockFace face = event.getBlockFace();
 
-            // Get task responsible for handling this event
-            UUID uuid = event.getPlayer().getUniqueId();
-            SelectBlockTask task = instances.get(uuid);
-            if (task == null) return;
-
-            // Player canceled the task
+            // Handle failure event
             if (action == Action.LEFT_CLICK_AIR || action == Action.LEFT_CLICK_BLOCK) {
                 event.setCancelled(true);
-                task.cancel();
-                if (task.failure != null) {
-                    task.failure.run();
-                }
+                handle(player, null, null);
                 return;
             }
 
-            // Player selected a block
-            if (action == Action.RIGHT_CLICK_BLOCK && block != null) {
+            // Handle success event
+            if (action == Action.RIGHT_CLICK_BLOCK) {
                 event.setCancelled(true);
-                task.cancel();
-                if (task.success != null) {
-                    task.success.accept(block.getLocation(), event.getBlockFace());
-                }
+                handle(player, block, face);
             }
         }
 
+        @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
+        public void onArmSwing(@NotNull PlayerAnimationEvent event) {
+            if (event.getAnimationType() != PlayerAnimationType.ARM_SWING) {
+                // Sanity check, vanilla Minecraft does not have any other player animation type
+                return;
+            }
+            handle(event.getPlayer(), null, null);
+        }
+
         @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
-        public void onPlayerQuit(PlayerQuitEvent event) {
+        public void onPlayerQuit(@NotNull PlayerQuitEvent event) {
             UUID uuid = event.getPlayer().getUniqueId();
             SelectBlockTask task = instances.get(uuid);
             if (task != null) {
@@ -151,68 +156,38 @@ public class SelectBlockTask {
         }
 
         @Override
-        public void onPacketReceiving(PacketEvent event) {
-            Player player = event.getPlayer();
+        public boolean onAttack(@NotNull Player player, @NotNull Block block, @NotNull BlockFace face) {
+            handle(player, null, null);
+            return false;
+        }
 
+        @Override
+        public boolean onInteract(@NotNull Player player, @NotNull Block block, @NotNull BlockFace face) {
+            handle(player, block, face);
+            return false;
+        }
+
+        private void handle(@NotNull Player player, @Nullable Block block, @Nullable BlockFace face) {
             // Get task responsible for handling this event
             UUID uuid = player.getUniqueId();
             SelectBlockTask task = instances.get(uuid);
             if (task == null) return;
 
-            // Get action
-            EnumWrappers.EntityUseAction action;
-            if (Internals.MINECRAFT_VERSION < 17) {
-                action = event.getPacket().getEntityUseActions().read(0);
-            } else {
-                action = event.getPacket().getEnumEntityUseActions().read(0).getAction();
-            }
+            // Cancel task
+            task.cancel();
 
-            // Player left clicked an entity
-            if (action == EnumWrappers.EntityUseAction.ATTACK) {
-                event.setCancelled(true);
-                task.cancel();
+            // Notify failure listener
+            if (block == null || face == null) {
                 if (task.failure != null) {
                     task.failure.run();
                 }
                 return;
             }
 
-            // Player right clicked an entity
-            if (action == EnumWrappers.EntityUseAction.INTERACT_AT) {
-                int maxDistance = 5; // Server should only accept entities within a 4-block radius
-                List<Block> lastTwoTargetBlocks = player.getLastTwoTargetBlocks(null, maxDistance);
-                if (lastTwoTargetBlocks.size() != 2) return;
-                Block targetBlock = lastTwoTargetBlocks.get(1);
-                Block adjacentBlock = lastTwoTargetBlocks.get(0);
-                if (!targetBlock.getType().isOccluding()) return;
-
-                BlockFace targetBlockFace = targetBlock.getFace(adjacentBlock);
-                event.setCancelled(true);
-                task.cancel();
-                if (task.success != null) {
-                    task.success.accept(targetBlock.getLocation(), targetBlockFace);
-                }
+            // Notify success listener
+            if (task.success != null) {
+                task.success.accept(block.getLocation(), face);
             }
-        }
-
-        @Override
-        public void onPacketSending(PacketEvent event) {
-            // Intentionally left blank
-        }
-
-        @Override
-        public ListeningWhitelist getReceivingWhitelist() {
-            return ListeningWhitelist.newBuilder().types(PacketType.Play.Client.USE_ENTITY).build();
-        }
-
-        @Override
-        public ListeningWhitelist getSendingWhitelist() {
-            return ListeningWhitelist.EMPTY_WHITELIST;
-        }
-
-        @Override
-        public Plugin getPlugin() {
-            return plugin;
         }
     }
 }
