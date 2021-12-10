@@ -3,7 +3,10 @@ package io.josemmo.bukkit.plugin.renderer;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
 import io.josemmo.bukkit.plugin.commands.ImageCommand;
 import io.josemmo.bukkit.plugin.storage.ImageFile;
+import io.josemmo.bukkit.plugin.utils.InteractWithEntityListener;
 import org.bukkit.*;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -22,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.Objects;
 
-public class ItemService implements Listener {
+public class ItemService extends InteractWithEntityListener implements Listener {
     private static final YamipaPlugin plugin = YamipaPlugin.getInstance();
     private static final NamespacedKey NSK_FILENAME = new NamespacedKey(plugin, "filename");
     private static final NamespacedKey NSK_WIDTH = new NamespacedKey(plugin, "width");
@@ -56,6 +59,7 @@ public class ItemService implements Listener {
      * Start service
      */
     public void start() {
+        register();
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
@@ -63,6 +67,7 @@ public class ItemService implements Listener {
      * Stop service
      */
     public void stop() {
+        unregister();
         HandlerList.unregisterAll(this);
     }
 
@@ -131,5 +136,35 @@ public class ItemService implements Listener {
         } else {
             inventory.setItem(itemIndex, new ItemStack(Material.AIR));
         }
+    }
+
+    @Override
+    public boolean onAttack(@NotNull Player player, @NotNull Block block, @NotNull BlockFace face) {
+        ImageRenderer renderer = plugin.getRenderer();
+        Location location = block.getLocation();
+
+        // Has the player clicked a removable placed image?
+        FakeImage image = renderer.getImage(location, face);
+        if (image == null || !image.hasFlag(FakeImage.FLAG_REMOVABLE)) return true;
+
+        // Remove image from renderer
+        renderer.removeImage(image);
+
+        // Drop image item
+        if (player.getGameMode() == GameMode.SURVIVAL && image.hasFlag(FakeImage.FLAG_DROPPABLE)) {
+            ImageFile imageFile = Objects.requireNonNull(image.getFile());
+            ItemStack imageItem = getImageItem(imageFile, 1, image.getWidth(), image.getHeight());
+            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
+                block.getWorld().dropItem(location, imageItem);
+            });
+        }
+
+        return false;
+    }
+
+    @Override
+    public boolean onInteract(@NotNull Player player, @NotNull Block block, @NotNull BlockFace face) {
+        // Intentionally left blank
+        return true;
     }
 }
