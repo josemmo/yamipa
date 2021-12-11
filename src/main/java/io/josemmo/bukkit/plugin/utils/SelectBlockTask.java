@@ -1,5 +1,6 @@
 package io.josemmo.bukkit.plugin.utils;
 
+import com.comphenix.protocol.events.ListenerPriority;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -113,6 +114,11 @@ public class SelectBlockTask {
         public void unregister() {
             super.unregister();
             HandlerList.unregisterAll(this);
+        }
+
+        @Override
+        public @NotNull ListenerPriority getPriority() {
+            return ListenerPriority.LOW;
         }
 
         @EventHandler(ignoreCancelled = true, priority = EventPriority.LOW)

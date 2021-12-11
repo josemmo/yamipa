@@ -2,6 +2,7 @@ package io.josemmo.bukkit.plugin.utils;
 
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.events.ListenerPriority;
 import com.comphenix.protocol.events.ListeningWhitelist;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.events.PacketListener;
@@ -34,6 +35,14 @@ public abstract class InteractWithEntityListener implements PacketListener {
      * @return        Whether to allow original event (<code>true</code>) or not (<code>false</code>)
      */
     public abstract boolean onInteract(@NotNull Player player, @NotNull Block block, @NotNull BlockFace face);
+
+    /**
+     * Get listener priority
+     * @return Listener priority
+     */
+    public @NotNull ListenerPriority getPriority() {
+        return ListenerPriority.LOWEST;
+    }
 
     /**
      * Register listener
@@ -93,7 +102,10 @@ public abstract class InteractWithEntityListener implements PacketListener {
 
     @Override
     public final ListeningWhitelist getReceivingWhitelist() {
-        return ListeningWhitelist.newBuilder().types(PacketType.Play.Client.USE_ENTITY).build();
+        return ListeningWhitelist.newBuilder()
+            .priority(getPriority())
+            .types(PacketType.Play.Client.USE_ENTITY)
+            .build();
     }
 
     @Override
