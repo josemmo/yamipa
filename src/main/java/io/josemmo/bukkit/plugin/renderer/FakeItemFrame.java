@@ -105,6 +105,7 @@ public class FakeItemFrame extends FakeEntity {
             .setRotation(pitch, yaw)
             .setData(orientation);
         tryToSendPacket(player, framePacket);
+        plugin.fine("Spawned FakeItemFrame#" + this.id + " for Player#" + player.getName());
 
         // Send pixels for all linked maps
         for (FakeMap map : maps) {
@@ -144,5 +145,6 @@ public class FakeItemFrame extends FakeEntity {
         DestroyEntityPacket destroyPacket = new DestroyEntityPacket();
         destroyPacket.setId(id);
         tryToSendPacket(player, destroyPacket);
+        plugin.fine("Destroyed FakeItemFrame#" + this.id + " for Player#" + player.getName());
     }
 }

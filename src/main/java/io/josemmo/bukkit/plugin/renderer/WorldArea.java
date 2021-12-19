@@ -61,9 +61,6 @@ public class WorldArea {
      */
     public void addImage(@NotNull FakeImage image) {
         fakeImages.add(image);
-        for (Player player : players) {
-            image.spawn(player);
-        }
     }
 
     /**
@@ -72,9 +69,6 @@ public class WorldArea {
      */
     public void removeImage(@NotNull FakeImage image) {
         fakeImages.remove(image);
-        for (Player player : players) {
-            image.destroy(player);
-        }
     }
 
     /**
