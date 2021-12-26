@@ -154,8 +154,9 @@ public class ItemService extends InteractWithEntityListener implements Listener 
         if (player.getGameMode() == GameMode.SURVIVAL && image.hasFlag(FakeImage.FLAG_DROPPABLE)) {
             ImageFile imageFile = Objects.requireNonNull(image.getFile());
             ItemStack imageItem = getImageItem(imageFile, 1, image.getWidth(), image.getHeight());
+            Location dropLocation = location.clone().add(0.5, -0.5, 0.5).add(face.getDirection());
             Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
-                block.getWorld().dropItem(location, imageItem);
+                block.getWorld().dropItem(dropLocation, imageItem);
             });
         }
 
