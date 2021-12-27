@@ -43,13 +43,13 @@ public class ImageCommand {
             s.sendMessage(ChatColor.AQUA + cmd + " download <url> <filename>" + ChatColor.RESET + " - Download image");
         }
         if (s.hasPermission("yamipa.give")) {
-            s.sendMessage(ChatColor.AQUA + cmd + " give <p> <filename> <#> <w> [<h>]" + ChatColor.RESET + " - Give image items");
+            s.sendMessage(ChatColor.AQUA + cmd + " give <p> <filename> <#> <w> [<h>] [<f>]" + ChatColor.RESET + " - Give image items");
         }
         if (s.hasPermission("yamipa.list")) {
             s.sendMessage(ChatColor.AQUA + cmd + " list [<page>]" + ChatColor.RESET + " - List all images");
         }
         if (s.hasPermission("yamipa.place")) {
-            s.sendMessage(ChatColor.AQUA + cmd + " place <filename> <w> [<h>]" + ChatColor.RESET + " - Place image");
+            s.sendMessage(ChatColor.AQUA + cmd + " place <filename> <w> [<h>] [<f>]" + ChatColor.RESET + " - Place image");
         }
         if (s.hasPermission("yamipa.remove")) {
             s.sendMessage(ChatColor.AQUA + cmd + " remove" + ChatColor.RESET + " - Remove a single placed image");
@@ -123,7 +123,8 @@ public class ImageCommand {
         @NotNull Player player,
         @NotNull ImageFile image,
         int width,
-        int height
+        int height,
+        int flags
     ) {
         // Get image size in blocks
         Dimension sizeInPixels = image.getSize();
@@ -136,7 +137,7 @@ public class ImageCommand {
         // Ask player where to place image
         SelectBlockTask task = new SelectBlockTask(player);
         task.onSuccess((location, face) -> {
-            placeImage(player, image, width, finalHeight, location, face, FakeImage.DEFAULT_FLAGS);
+            placeImage(player, image, width, finalHeight, flags, location, face);
         });
         task.onFailure(() -> ActionBar.send(player, ChatColor.RED + "Image placing canceled"));
         task.run("Right click a block to continue");
@@ -147,9 +148,9 @@ public class ImageCommand {
         @NotNull ImageFile image,
         int width,
         int height,
+        int flags,
         @NotNull Location location,
-        @NotNull BlockFace face,
-        int flags
+        @NotNull BlockFace face
     ) {
         YamipaPlugin plugin = YamipaPlugin.getInstance();
 
@@ -282,6 +283,9 @@ public class ImageCommand {
             if (image.hasFlag(FakeImage.FLAG_DROPPABLE)) {
                 flagsStr += ChatColor.LIGHT_PURPLE + "DROP ";
             }
+            if (image.hasFlag(FakeImage.FLAG_GLOWING)) {
+                flagsStr += ChatColor.GREEN + "GLOW ";
+            }
             if (flagsStr.isEmpty()) {
                 flagsStr = ChatColor.GRAY + "N/A";
             }
@@ -340,7 +344,8 @@ public class ImageCommand {
         @NotNull ImageFile image,
         int amount,
         int width,
-        int height
+        int height,
+        int flags
     ) {
         // Get image size in blocks
         Dimension sizeInPixels = image.getSize();
@@ -353,7 +358,7 @@ public class ImageCommand {
         }
 
         // Create item stack
-        ItemStack itemStack = ItemService.getImageItem(image, amount, width, height);
+        ItemStack itemStack = ItemService.getImageItem(image, amount, width, height, flags);
 
         // Add item stack to player's inventory
         player.getInventory().addItem(itemStack);

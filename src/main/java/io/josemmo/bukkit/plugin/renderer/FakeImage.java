@@ -27,7 +27,9 @@ public class FakeImage extends FakeEntity {
     public static final int FLAG_ANIMATABLE = 1; // Whether image is allowed to animate multiple steps
     public static final int FLAG_REMOVABLE = 2; // Whether image can be removed by a player using the interact button
     public static final int FLAG_DROPPABLE = 4; // Whether image will drop an image item when removed by a player
-    public static final int DEFAULT_FLAGS = FLAG_ANIMATABLE;
+    public static final int FLAG_GLOWING = 8; // Whether image glows in the dark
+    public static final int DEFAULT_PLACE_FLAGS = FLAG_ANIMATABLE;
+    public static final int DEFAULT_GIVE_FLAGS = FLAG_ANIMATABLE | FLAG_REMOVABLE | FLAG_DROPPABLE;
 
     // Instance properties
     private static boolean animateImages = false;

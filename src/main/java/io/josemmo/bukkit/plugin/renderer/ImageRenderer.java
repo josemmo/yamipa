@@ -108,7 +108,7 @@ public class ImageRenderer implements Listener {
                 OfflinePlayer placedBy = Bukkit.getOfflinePlayer(placedById);
                 int flags = (row.length > 11) ?
                     Math.max(Integer.parseInt(row[11]), 0) :
-                    FakeImage.DEFAULT_FLAGS;
+                    FakeImage.DEFAULT_PLACE_FLAGS;
                 FakeImage fakeImage = new FakeImage(filename, location, face, rotation, width, height,
                     placedAt, placedBy, flags);
                 addImage(fakeImage, true);

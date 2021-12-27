@@ -30,6 +30,7 @@ public class ItemService extends InteractWithEntityListener implements Listener 
     private static final NamespacedKey NSK_FILENAME = new NamespacedKey(plugin, "filename");
     private static final NamespacedKey NSK_WIDTH = new NamespacedKey(plugin, "width");
     private static final NamespacedKey NSK_HEIGHT = new NamespacedKey(plugin, "height");
+    private static final NamespacedKey NSK_FLAGS = new NamespacedKey(plugin, "flags");
 
     /**
      * Get image item
@@ -37,10 +38,11 @@ public class ItemService extends InteractWithEntityListener implements Listener 
      * @param  amount Stack amount
      * @param  width  Image width in blocks
      * @param  height Image height in blocks
+     * @param  flags  Image flags
      * @return        Image item
      */
-    public static @NotNull ItemStack getImageItem(@NotNull ImageFile image, int amount, int width, int height) {
-        ItemStack itemStack = new ItemStack(Material.GLOW_ITEM_FRAME, amount);
+    public static @NotNull ItemStack getImageItem(@NotNull ImageFile image, int amount, int width, int height, int flags) {
+        ItemStack itemStack = new ItemStack(Material.ITEM_FRAME, amount);
         ItemMeta itemMeta = Objects.requireNonNull(itemStack.getItemMeta());
 
         // Set metadata
@@ -50,6 +52,7 @@ public class ItemService extends InteractWithEntityListener implements Listener 
         itemData.set(NSK_FILENAME, PersistentDataType.STRING, image.getName());
         itemData.set(NSK_WIDTH, PersistentDataType.INTEGER, width);
         itemData.set(NSK_HEIGHT, PersistentDataType.INTEGER, height);
+        itemData.set(NSK_FLAGS, PersistentDataType.INTEGER, flags);
         itemStack.setItemMeta(itemMeta);
 
         return itemStack;
@@ -103,8 +106,9 @@ public class ItemService extends InteractWithEntityListener implements Listener 
         if (filename == null) return;
         Integer width = itemData.get(NSK_WIDTH, PersistentDataType.INTEGER);
         Integer height = itemData.get(NSK_HEIGHT, PersistentDataType.INTEGER);
-        if (width == null || height == null) {
-            plugin.warning(player + " tried to place corrupted image item (missing width/height properties)");
+        Integer flags = itemData.get(NSK_FLAGS, PersistentDataType.INTEGER);
+        if (width == null || height == null || flags == null) {
+            plugin.warning(player + " tried to place corrupted image item (missing width/height/flags properties)");
             return;
         }
 
@@ -121,8 +125,7 @@ public class ItemService extends InteractWithEntityListener implements Listener 
 
         // Try to place image in world
         Location location = event.getBlock().getLocation();
-        int flags = FakeImage.DEFAULT_FLAGS | FakeImage.FLAG_REMOVABLE | FakeImage.FLAG_DROPPABLE;
-        boolean success = ImageCommand.placeImage(player, image, width, height, location, event.getBlockFace(), flags);
+        boolean success = ImageCommand.placeImage(player, image, width, height, flags, location, event.getBlockFace());
         if (!success) return;
 
         // Decrement item from player's inventory
@@ -153,7 +156,7 @@ public class ItemService extends InteractWithEntityListener implements Listener 
         // Drop image item
         if (player.getGameMode() == GameMode.SURVIVAL && image.hasFlag(FakeImage.FLAG_DROPPABLE)) {
             ImageFile imageFile = Objects.requireNonNull(image.getFile());
-            ItemStack imageItem = getImageItem(imageFile, 1, image.getWidth(), image.getHeight());
+            ItemStack imageItem = getImageItem(imageFile, 1, image.getWidth(), image.getHeight(), image.getFlags());
             Location dropLocation = location.clone().add(0.5, -0.5, 0.5).add(face.getDirection());
             Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
                 block.getWorld().dropItem(dropLocation, imageItem);

@@ -119,9 +119,21 @@ public class ImageCommandBridge {
             .withArgument(new IntegerArgument("amount", 1, 64))
             .withArgument(new IntegerArgument("width", 1, FakeImage.MAX_DIMENSION))
             .withArgument(new IntegerArgument("height", 1, FakeImage.MAX_DIMENSION))
+            .withArgument(new ImageFlagsArgument("flags", FakeImage.DEFAULT_GIVE_FLAGS))
             .executes((sender, args) -> {
                 ImageCommand.giveImageItems(sender, (Player) args[1], (ImageFile) args[2], (int) args[3],
-                    (int) args[4], (int) args[5]);
+                    (int) args[4], (int) args[5], (int) args[6]);
+            });
+        root.addSubcommand("give")
+            .withPermission("yamipa.give")
+            .withArgument(new OnlinePlayerArgument("player"))
+            .withArgument(new ImageFileArgument("filename"))
+            .withArgument(new IntegerArgument("amount", 1, 64))
+            .withArgument(new IntegerArgument("width", 1, FakeImage.MAX_DIMENSION))
+            .withArgument(new IntegerArgument("height", 1, FakeImage.MAX_DIMENSION))
+            .executes((sender, args) -> {
+                ImageCommand.giveImageItems(sender, (Player) args[1], (ImageFile) args[2], (int) args[3],
+                    (int) args[4], (int) args[5], FakeImage.DEFAULT_GIVE_FLAGS);
             });
         root.addSubcommand("give")
             .withPermission("yamipa.give")
@@ -131,7 +143,7 @@ public class ImageCommandBridge {
             .withArgument(new IntegerArgument("width", 1, FakeImage.MAX_DIMENSION))
             .executes((sender, args) -> {
                 ImageCommand.giveImageItems(sender, (Player) args[1], (ImageFile) args[2], (int) args[3],
-                    (int) args[4], 0);
+                    (int) args[4], 0, FakeImage.DEFAULT_GIVE_FLAGS);
             });
 
         // List subcommand
@@ -154,15 +166,26 @@ public class ImageCommandBridge {
             .withArgument(new ImageFileArgument("filename"))
             .withArgument(new IntegerArgument("width", 1, FakeImage.MAX_DIMENSION))
             .withArgument(new IntegerArgument("height", 1, FakeImage.MAX_DIMENSION))
+            .withArgument(new ImageFlagsArgument("flags", FakeImage.DEFAULT_PLACE_FLAGS))
             .executesPlayer((player, args) -> {
-                ImageCommand.placeImage(player, (ImageFile) args[1], (int) args[2], (int) args[3]);
+                ImageCommand.placeImage(player, (ImageFile) args[1], (int) args[2], (int) args[3], (int) args[4]);
+            });
+        root.addSubcommand("place")
+            .withPermission("yamipa.place")
+            .withArgument(new ImageFileArgument("filename"))
+            .withArgument(new IntegerArgument("width", 1, FakeImage.MAX_DIMENSION))
+            .withArgument(new IntegerArgument("height", 1, FakeImage.MAX_DIMENSION))
+            .executesPlayer((player, args) -> {
+                ImageCommand.placeImage(player, (ImageFile) args[1], (int) args[2], (int) args[3],
+                    FakeImage.DEFAULT_PLACE_FLAGS);
             });
         root.addSubcommand("place")
             .withPermission("yamipa.place")
             .withArgument(new ImageFileArgument("filename"))
             .withArgument(new IntegerArgument("width", 1, FakeImage.MAX_DIMENSION))
             .executesPlayer((player, args) -> {
-                ImageCommand.placeImage(player, (ImageFile) args[1], (int) args[2], 0);
+                ImageCommand.placeImage(player, (ImageFile) args[1], (int) args[2], 0,
+                    FakeImage.DEFAULT_PLACE_FLAGS);
             });
 
         // Remove subcommand
