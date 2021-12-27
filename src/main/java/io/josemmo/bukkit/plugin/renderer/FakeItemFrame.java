@@ -6,6 +6,7 @@ import com.comphenix.protocol.wrappers.nbt.NbtFactory;
 import io.josemmo.bukkit.plugin.packets.DestroyEntityPacket;
 import io.josemmo.bukkit.plugin.packets.EntityMetadataPacket;
 import io.josemmo.bukkit.plugin.packets.SpawnEntityPacket;
+import io.josemmo.bukkit.plugin.utils.Internals;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Rotation;
@@ -19,11 +20,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class FakeItemFrame extends FakeEntity {
     public static final int MIN_FRAME_ID = Integer.MAX_VALUE / 4;
     public static final int MAX_FRAME_ID = Integer.MAX_VALUE;
+    private static final boolean SUPPORTS_GLOWING = Internals.MINECRAFT_VERSION >= 17;
     private static final AtomicInteger lastFrameId = new AtomicInteger(MAX_FRAME_ID);
     private final int id;
     private final Location location;
     private final BlockFace face;
     private final Rotation rotation;
+    private final boolean glowing;
     private final FakeMap[] maps;
 
     /**
@@ -44,13 +47,21 @@ public class FakeItemFrame extends FakeEntity {
      * @param location Frame location
      * @param face     Block face
      * @param rotation Frame rotation
+     * @param glowing  Whether is glowing or regular frame
      * @param maps     Fake maps to animate
      */
-    public FakeItemFrame(@NotNull Location location, @NotNull BlockFace face, @NotNull Rotation rotation, @NotNull FakeMap[] maps) {
+    public FakeItemFrame(
+        @NotNull Location location,
+        @NotNull BlockFace face,
+        @NotNull Rotation rotation,
+        boolean glowing,
+        @NotNull FakeMap[] maps
+    ) {
         this.id = getNextId();
         this.location = location;
         this.face = face;
         this.rotation = rotation;
+        this.glowing = glowing;
         this.maps = maps;
         plugin.fine("Created FakeItemFrame#" + this.id + " using " + this.maps.length + " FakeMap(s)");
     }
@@ -100,7 +111,7 @@ public class FakeItemFrame extends FakeEntity {
         // Create item frame entity
         SpawnEntityPacket framePacket = new SpawnEntityPacket();
         framePacket.setId(id)
-            .setEntityType(EntityType.ITEM_FRAME)
+            .setEntityType((glowing && SUPPORTS_GLOWING) ? EntityType.GLOW_ITEM_FRAME : EntityType.ITEM_FRAME)
             .setPosition(x, y, z)
             .setRotation(pitch, yaw)
             .setData(orientation);

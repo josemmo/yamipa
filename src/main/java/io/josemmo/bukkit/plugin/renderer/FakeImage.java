@@ -349,10 +349,11 @@ public class FakeImage extends FakeEntity {
 
         // Generate frames
         frames = new FakeItemFrame[width*height];
+        boolean glowing = hasFlag(FLAG_GLOWING);
         for (int col=0; col<width; col++) {
             for (int row=0; row<height; row++) {
                 Location frameLocation = location.clone().add(getLocationVector.apply(col, row));
-                frames[height*col+row] = new FakeItemFrame(frameLocation, face, rotation, maps[col][row]);
+                frames[height*col+row] = new FakeItemFrame(frameLocation, face, rotation, glowing, maps[col][row]);
             }
         }
 
