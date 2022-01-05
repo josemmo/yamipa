@@ -3,12 +3,15 @@ package io.josemmo.bukkit.plugin.commands;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
 import io.josemmo.bukkit.plugin.renderer.FakeImage;
 import io.josemmo.bukkit.plugin.renderer.ImageRenderer;
+import io.josemmo.bukkit.plugin.renderer.ItemService;
 import io.josemmo.bukkit.plugin.storage.ImageFile;
 import io.josemmo.bukkit.plugin.utils.SelectBlockTask;
 import io.josemmo.bukkit.plugin.utils.ActionBar;
 import org.bukkit.*;
+import org.bukkit.block.BlockFace;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,10 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 public class ImageCommand {
     public static final int ITEMS_PER_PAGE = 9;
@@ -42,11 +42,14 @@ public class ImageCommand {
         if (s.hasPermission("yamipa.download")) {
             s.sendMessage(ChatColor.AQUA + cmd + " download <url> <filename>" + ChatColor.RESET + " - Download image");
         }
+        if (s.hasPermission("yamipa.give")) {
+            s.sendMessage(ChatColor.AQUA + cmd + " give <p> <filename> <#> <w> [<h>] [<f>]" + ChatColor.RESET + " - Give image items");
+        }
         if (s.hasPermission("yamipa.list")) {
             s.sendMessage(ChatColor.AQUA + cmd + " list [<page>]" + ChatColor.RESET + " - List all images");
         }
         if (s.hasPermission("yamipa.place")) {
-            s.sendMessage(ChatColor.AQUA + cmd + " place <filename> <w> [<h>]" + ChatColor.RESET + " - Place image");
+            s.sendMessage(ChatColor.AQUA + cmd + " place <filename> <w> [<h>] [<f>]" + ChatColor.RESET + " - Place image");
         }
         if (s.hasPermission("yamipa.remove")) {
             s.sendMessage(ChatColor.AQUA + cmd + " remove" + ChatColor.RESET + " - Remove a single placed image");
@@ -120,46 +123,56 @@ public class ImageCommand {
         @NotNull Player player,
         @NotNull ImageFile image,
         int width,
-        int height
+        int height,
+        int flags
     ) {
-        YamipaPlugin plugin = YamipaPlugin.getInstance();
-
         // Get image size in blocks
         Dimension sizeInPixels = image.getSize();
         if (sizeInPixels == null) {
             player.sendMessage(ChatColor.RED + "The requested file is not a valid image");
             return;
         }
-        if (height == 0) {
-            float imageRatio = (float) sizeInPixels.height / sizeInPixels.width;
-            height = Math.round(width * imageRatio);
-            height = Math.min(height, FakeImage.MAX_DIMENSION);
-        }
-        final int finalHeight = height;
+        final int finalHeight = (height == 0) ? FakeImage.getProportionalHeight(sizeInPixels, width) : height;
 
         // Ask player where to place image
         SelectBlockTask task = new SelectBlockTask(player);
         task.onSuccess((location, face) -> {
-            FakeImage existingImage = plugin.getRenderer().getImage(location, face);
-            if (existingImage != null) {
-                ActionBar.send(player, ChatColor.RED + "There's already an image there!");
-                return;
-            }
-
-            // Create new fake image instance
-            Rotation rotation = FakeImage.getRotationFromPlayerEyesight(face, player.getEyeLocation());
-            FakeImage fakeImage = new FakeImage(image.getName(), location, face, rotation,
-                width, finalHeight, new Date(), player);
-
-            // Show loading status to player
-            ActionBar loadingActionBar = ActionBar.repeat(player, ChatColor.AQUA + "Loading image...");
-            fakeImage.setOnLoadedListener(loadingActionBar::clear);
-
-            // Add fake image to renderer
-            plugin.getRenderer().addImage(fakeImage);
+            placeImage(player, image, width, finalHeight, flags, location, face);
         });
         task.onFailure(() -> ActionBar.send(player, ChatColor.RED + "Image placing canceled"));
         task.run("Right click a block to continue");
+    }
+
+    public static boolean placeImage(
+        @NotNull Player player,
+        @NotNull ImageFile image,
+        int width,
+        int height,
+        int flags,
+        @NotNull Location location,
+        @NotNull BlockFace face
+    ) {
+        YamipaPlugin plugin = YamipaPlugin.getInstance();
+
+        // Prevent two images occupying the same space
+        FakeImage existingImage = plugin.getRenderer().getImage(location, face);
+        if (existingImage != null) {
+            ActionBar.send(player, ChatColor.RED + "There's already an image there!");
+            return false;
+        }
+
+        // Create new fake image instance
+        Rotation rotation = FakeImage.getRotationFromPlayerEyesight(face, player.getEyeLocation());
+        FakeImage fakeImage = new FakeImage(image.getName(), location, face, rotation,
+            width, height, new Date(), player, flags);
+
+        // Show loading status to player
+        ActionBar loadingActionBar = ActionBar.repeat(player, ChatColor.AQUA + "Loading image...");
+        fakeImage.setOnLoadedListener(loadingActionBar::clear);
+
+        // Add fake image to renderer
+        plugin.getRenderer().addImage(fakeImage);
+        return true;
     }
 
     public static void removeImage(@NotNull Player player) {
@@ -221,19 +234,10 @@ public class ImageCommand {
                 return;
             }
 
-            // Send placed image information to player
-            String dateStr = (image.getPlacedAt() == null) ?
-                ChatColor.GRAY + "Some point in time" :
-                new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z").format(image.getPlacedAt());
-            String playerStr;
-            if (image.getPlacedBy().getUniqueId().equals(FakeImage.UNKNOWN_PLAYER_ID)) {
-                playerStr = ChatColor.GRAY + "Someone";
-            } else if (image.getPlacedBy().getName() == null) {
-                playerStr = ChatColor.DARK_AQUA + image.getPlacedBy().getUniqueId().toString();
-            } else {
-                playerStr = image.getPlacedBy().getName();
-            }
+            // Separate previous messages
             player.sendMessage("");
+
+            // Basic information
             player.sendMessage(ChatColor.GOLD + "Filename: " + ChatColor.RESET + image.getFilename());
             player.sendMessage(ChatColor.GOLD + "World: " + ChatColor.RESET +
                 image.getLocation().getChunk().getWorld().getName());
@@ -245,11 +249,47 @@ public class ImageCommand {
             player.sendMessage(ChatColor.GOLD + "Rotation: " + ChatColor.RESET + image.getRotation());
             player.sendMessage(ChatColor.GOLD + "Dimensions: " + ChatColor.RESET +
                 image.getWidth() + "x" + image.getHeight() + " blocks");
+
+            // Speed
             int delay = image.getDelay() * 50;
-            String delayStr = (delay > 0) ? delay + " ms per step" : ChatColor.GRAY + "Not animatable";
+            String delayStr = (delay > 0) ? delay + " ms per step" : ChatColor.GRAY + "N/A";
             player.sendMessage(ChatColor.GOLD + "Speed: " + ChatColor.RESET + delayStr);
+
+            // Placed At
+            String dateStr = (image.getPlacedAt() == null) ?
+                ChatColor.GRAY + "Some point in time" :
+                new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z").format(image.getPlacedAt());
             player.sendMessage(ChatColor.GOLD + "Placed At: " + ChatColor.RESET + dateStr);
+
+            // Placed By
+            String playerStr;
+            if (image.getPlacedBy().getUniqueId().equals(FakeImage.UNKNOWN_PLAYER_ID)) {
+                playerStr = ChatColor.GRAY + "Someone";
+            } else if (image.getPlacedBy().getName() == null) {
+                playerStr = ChatColor.DARK_AQUA + image.getPlacedBy().getUniqueId().toString();
+            } else {
+                playerStr = image.getPlacedBy().getName();
+            }
             player.sendMessage(ChatColor.GOLD + "Placed By: " + ChatColor.RESET + playerStr);
+
+            // Flags
+            String flagsStr = "";
+            if (image.hasFlag(FakeImage.FLAG_ANIMATABLE)) {
+                flagsStr += ChatColor.AQUA + "ANIM ";
+            }
+            if (image.hasFlag(FakeImage.FLAG_REMOVABLE)) {
+                flagsStr += ChatColor.RED + "REMO ";
+            }
+            if (image.hasFlag(FakeImage.FLAG_DROPPABLE)) {
+                flagsStr += ChatColor.LIGHT_PURPLE + "DROP ";
+            }
+            if (image.hasFlag(FakeImage.FLAG_GLOWING)) {
+                flagsStr += ChatColor.GREEN + "GLOW ";
+            }
+            if (flagsStr.isEmpty()) {
+                flagsStr = ChatColor.GRAY + "N/A";
+            }
+            player.sendMessage(ChatColor.GOLD + "Flags: " + ChatColor.RESET + flagsStr);
         });
         task.onFailure(() -> ActionBar.send(player, ChatColor.RED + "Image describing canceled"));
         task.run("Right click the image to describe");
@@ -296,5 +336,36 @@ public class ImageCommand {
             );
             ++printedLines;
         }
+    }
+
+    public static void giveImageItems(
+        @NotNull CommandSender sender,
+        @NotNull Player player,
+        @NotNull ImageFile image,
+        int amount,
+        int width,
+        int height,
+        int flags
+    ) {
+        // Get image size in blocks
+        Dimension sizeInPixels = image.getSize();
+        if (sizeInPixels == null) {
+            sender.sendMessage(ChatColor.RED + "The requested file is not a valid image");
+            return;
+        }
+        if (height == 0) {
+            height = FakeImage.getProportionalHeight(sizeInPixels, width);
+        }
+
+        // Create item stack
+        ItemStack itemStack = ItemService.getImageItem(image, amount, width, height, flags);
+
+        // Add item stack to player's inventory
+        player.getInventory().addItem(itemStack);
+        sender.sendMessage(
+            ChatColor.ITALIC + "Added " + amount + " " +
+            (amount == 1 ? "image item" : "image items") +
+            " to " + player.getName() + "'s inventory"
+        );
     }
 }

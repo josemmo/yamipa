@@ -3,7 +3,7 @@ version: ${project.version}
 main: io.josemmo.bukkit.plugin.YamipaPlugin
 api-version: 1.13
 depend: [ProtocolLib]
-softdepend: [Multiverse-Core]
+softdepend: [Multiverse-Core, Hyperverse]
 
 permissions:
   yamipa.*:
@@ -12,6 +12,7 @@ permissions:
       yamipa.clear: true
       yamipa.describe: true
       yamipa.download: true
+      yamipa.give: true
       yamipa.list: true
       yamipa.place: true
       yamipa.remove: true
@@ -21,6 +22,8 @@ permissions:
   yamipa.describe:
     default: op
   yamipa.download:
+    default: op
+  yamipa.give:
     default: op
   yamipa.list:
     default: op

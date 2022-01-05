@@ -106,7 +106,12 @@ public class ImageRenderer implements Listener {
                     UUID.fromString(row[10]) :
                     FakeImage.UNKNOWN_PLAYER_ID;
                 OfflinePlayer placedBy = Bukkit.getOfflinePlayer(placedById);
-                addImage(new FakeImage(filename, location, face, rotation, width, height, placedAt, placedBy), true);
+                int flags = (row.length > 11) ?
+                    Math.max(Integer.parseInt(row[11]), 0) :
+                    FakeImage.DEFAULT_PLACE_FLAGS;
+                FakeImage fakeImage = new FakeImage(filename, location, face, rotation, width, height,
+                    placedAt, placedBy, flags);
+                addImage(fakeImage, true);
             } catch (Exception e) {
                 plugin.log(Level.SEVERE, "Invalid fake image properties: " + String.join(";", row), e);
             }
@@ -144,7 +149,8 @@ public class ImageRenderer implements Listener {
                 fakeImage.getWidth() + "",
                 fakeImage.getHeight() + "",
                 (fakeImage.getPlacedAt() == null) ? "" : (fakeImage.getPlacedAt().getTime() / 1000) + "",
-                placedById.equals(FakeImage.UNKNOWN_PLAYER_ID) ? "" : placedById.toString()
+                placedById.equals(FakeImage.UNKNOWN_PLAYER_ID) ? "" : placedById.toString(),
+                fakeImage.getFlags() + ""
             };
             config.addRow(row);
         }
@@ -164,7 +170,10 @@ public class ImageRenderer implements Listener {
      * @param isInit TRUE if called during renderer startup, FALSE otherwise
      */
     public void addImage(@NotNull FakeImage image, boolean isInit) {
-        for (WorldAreaId worldAreaId : image.getWorldAreaIds()) {
+        WorldAreaId[] imageWorldAreaIds = image.getWorldAreaIds();
+
+        // Add image to world area(s)
+        for (WorldAreaId worldAreaId : imageWorldAreaIds) {
             WorldArea worldArea = worldAreas.computeIfAbsent(worldAreaId, __ -> {
                 plugin.fine("Created WorldArea#(" + worldAreaId + ")");
                 return new WorldArea(worldAreaId);
@@ -180,6 +189,11 @@ public class ImageRenderer implements Listener {
         // Increment count of placed images by player
         UUID placedById = image.getPlacedBy().getUniqueId();
         imagesCountByPlayer.compute(placedById, (__, prev) -> (prev == null) ? 1 : prev+1);
+
+        // Spawn image in players nearby
+        for (Player player : getPlayersInNeighborhood(imageWorldAreaIds)) {
+            image.spawn(player);
+        }
     }
 
     /**
@@ -242,7 +256,16 @@ public class ImageRenderer implements Listener {
      * @param image Fake image instance
      */
     public void removeImage(@NotNull FakeImage image) {
-        for (WorldAreaId worldAreaId : image.getWorldAreaIds()) {
+        WorldAreaId[] imageWorldAreaIds = image.getWorldAreaIds();
+
+        // Destroy image from players nearby
+        for (Player player : getPlayersInNeighborhood(imageWorldAreaIds)) {
+            image.destroy(player);
+        }
+        image.invalidate();
+
+        // Remove image from world area(s)
+        for (WorldAreaId worldAreaId : imageWorldAreaIds) {
             WorldArea worldArea = worldAreas.get(worldAreaId);
             worldArea.removeImage(image);
             if (!worldArea.hasImages()) {
@@ -250,7 +273,6 @@ public class ImageRenderer implements Listener {
                 worldAreas.remove(worldAreaId);
             }
         }
-        image.invalidate();
 
         // Set configuration changed flag
         hasConfigChanged.set(true);
@@ -306,6 +328,28 @@ public class ImageRenderer implements Listener {
             instances.add(worldAreas.get(id));
         }
         return instances;
+    }
+
+    /**
+     * Get players in neighborhood
+     * @param  ids World area IDs to compute neighborhood from
+     * @return     Players inside those world areas
+     */
+    private @NotNull Set<Player> getPlayersInNeighborhood(@NotNull WorldAreaId[] ids) {
+        Set<WorldAreaId> neighborhood = new HashSet<>();
+        for (WorldAreaId worldAreaId : ids) {
+            Collections.addAll(neighborhood, worldAreaId.getNeighborhood());
+        }
+
+        Set<Player> players = new HashSet<>();
+        for (Map.Entry<UUID, WorldAreaId> entry : playersLocation.entrySet()) {
+            if (neighborhood.contains(entry.getValue())) {
+                Player player = Bukkit.getPlayer(entry.getKey());
+                players.add(player);
+            }
+        }
+
+        return players;
     }
 
     /**
