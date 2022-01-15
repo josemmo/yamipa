@@ -344,7 +344,12 @@ public class ImageRenderer implements Listener {
         Set<Player> players = new HashSet<>();
         for (Map.Entry<UUID, WorldAreaId> entry : playersLocation.entrySet()) {
             if (neighborhood.contains(entry.getValue())) {
-                Player player = Bukkit.getPlayer(entry.getKey());
+                UUID uuid = entry.getKey();
+                Player player = Bukkit.getPlayer(uuid);
+                if (player == null) {
+                    plugin.warning("Failed to get online player with UUID " + uuid);
+                    continue;
+                }
                 players.add(player);
             }
         }
