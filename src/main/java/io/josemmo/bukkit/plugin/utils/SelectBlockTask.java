@@ -129,17 +129,17 @@ public class SelectBlockTask {
             if (block == null) return;
             BlockFace face = event.getBlockFace();
 
-            // Handle failure event
+            // Handle event
+            boolean allowEvent = true;
             if (action == Action.LEFT_CLICK_AIR || action == Action.LEFT_CLICK_BLOCK) {
-                event.setCancelled(true);
-                handle(player, null, null);
-                return;
+                allowEvent = handle(player, null, null);
+            } else if (action == Action.RIGHT_CLICK_BLOCK) {
+                allowEvent = handle(player, block, face);
             }
 
-            // Handle success event
-            if (action == Action.RIGHT_CLICK_BLOCK) {
+            // Cancel event (if needed)
+            if (!allowEvent) {
                 event.setCancelled(true);
-                handle(player, block, face);
             }
         }
 
@@ -149,7 +149,10 @@ public class SelectBlockTask {
                 // Sanity check, vanilla Minecraft does not have any other player animation type
                 return;
             }
-            handle(event.getPlayer(), null, null);
+            boolean allowEvent = handle(event.getPlayer(), null, null);
+            if (!allowEvent) {
+                event.setCancelled(true);
+            }
         }
 
         @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
@@ -163,21 +166,19 @@ public class SelectBlockTask {
 
         @Override
         public boolean onAttack(@NotNull Player player, @NotNull Block block, @NotNull BlockFace face) {
-            handle(player, null, null);
-            return false;
+            return handle(player, null, null);
         }
 
         @Override
         public boolean onInteract(@NotNull Player player, @NotNull Block block, @NotNull BlockFace face) {
-            handle(player, block, face);
-            return false;
+            return handle(player, block, face);
         }
 
-        private void handle(@NotNull Player player, @Nullable Block block, @Nullable BlockFace face) {
+        private boolean handle(@NotNull Player player, @Nullable Block block, @Nullable BlockFace face) {
             // Get task responsible for handling this event
             UUID uuid = player.getUniqueId();
             SelectBlockTask task = instances.get(uuid);
-            if (task == null) return;
+            if (task == null) return true;
 
             // Cancel task
             task.cancel();
@@ -187,13 +188,14 @@ public class SelectBlockTask {
                 if (task.failure != null) {
                     task.failure.run();
                 }
-                return;
+                return false;
             }
 
             // Notify success listener
             if (task.success != null) {
                 task.success.accept(block.getLocation(), face);
             }
+            return false;
         }
     }
 }

@@ -115,6 +115,7 @@ public class ImageCommand {
                 sender.sendMessage(ChatColor.RED + "The remote URL is not valid");
             } catch (IOException e) {
                 sender.sendMessage(ChatColor.RED + "An error occurred trying to download the remote file");
+                plugin.warning("Failed to download file from \"" + url + "\": " + e.getClass().getName());
             }
         });
     }

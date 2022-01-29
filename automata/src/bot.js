@@ -13,6 +13,9 @@ export function startBot() {
     })
 }
 
+/**
+ * @param {mineflayer.Bot} bot Bot instance
+ */
 export function placeBlockOnTheFloor(bot) {
     bot._client.write('block_place', {
         location: bot.entity.position.offset(0, -1, 0),

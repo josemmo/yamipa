@@ -66,7 +66,7 @@ public abstract class InteractWithEntityListener implements PacketListener {
         List<Block> lastTwoTargetBlocks = player.getLastTwoTargetBlocks(null, MAX_BLOCK_DISTANCE);
         if (lastTwoTargetBlocks.size() != 2) return;
         Block targetBlock = lastTwoTargetBlocks.get(1);
-        if (!targetBlock.getType().isOccluding()) return;
+        if (!targetBlock.getType().isSolid()) return;
 
         // Get target block face
         Block adjacentBlock = lastTwoTargetBlocks.get(0);
