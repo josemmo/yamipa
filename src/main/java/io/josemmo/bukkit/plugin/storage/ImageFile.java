@@ -87,10 +87,12 @@ public class ImageFile {
         int originalHeight = reader.getHeight(0);
         BufferedImage tmpImage = new BufferedImage(originalWidth, originalHeight, BufferedImage.TYPE_4BYTE_ABGR);
         Graphics2D tmpGraphics = tmpImage.createGraphics();
+        tmpGraphics.setBackground(new Color(0, 0, 0, 0));
 
         // Create temporary scaled canvas (for resizing)
         BufferedImage tmpScaledImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D tmpScaledGraphics = tmpScaledImage.createGraphics();
+        tmpScaledGraphics.setBackground(new Color(0, 0, 0, 0));
 
         // Read images from file
         byte[][] renderedImages = new byte[numOfSteps][width*height];
@@ -99,6 +101,7 @@ public class ImageFile {
             // Extract step metadata
             int imageLeft = 0;
             int imageTop = 0;
+            boolean disposePrevious = false;
             if (format.equalsIgnoreCase("gif")) {
                 IIOMetadata metadata = reader.getImageMetadata(step);
                 IIOMetadataNode metadataRoot = (IIOMetadataNode) metadata.getAsTree(metadata.getNativeMetadataFormatName());
@@ -112,8 +115,15 @@ public class ImageFile {
                         IIOMetadataNode controlExtensionNode = (IIOMetadataNode) metadataRoot.item(i);
                         int delay = Integer.parseInt(controlExtensionNode.getAttribute("delayTime"));
                         delays.compute(delay, (__, count) -> (count == null) ? 1 : count+1);
+                        disposePrevious = controlExtensionNode.getAttribute("disposalMethod").startsWith("restore");
                     }
                 }
+            }
+
+            // Clear temporary canvases (if needed)
+            if (disposePrevious) {
+                tmpGraphics.clearRect(0, 0, originalWidth, originalHeight);
+                tmpScaledGraphics.clearRect(0, 0, width, height);
             }
 
             // Paint step image over temporary canvas
