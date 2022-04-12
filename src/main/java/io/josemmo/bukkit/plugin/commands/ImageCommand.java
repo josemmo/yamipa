@@ -109,6 +109,14 @@ public class ImageCommand {
         try {
             url = new URL(rawUrl);
 
+            // Giphy.com
+            if (url.getHost().equals("giphy.com")) {
+                String path = url.getPath();
+                String id = path.substring(path.lastIndexOf('-')+1);
+                url = new URL("https://media.giphy.com/media/" + id + "/giphy.gif");
+                referrer = "https://giphy.com/";
+            }
+
             // Imgur.com
             if (url.getHost().equals("imgur.com")) {
                 String[] parts = url.getPath().replaceAll("^/|/$", "").split("/");
@@ -132,6 +140,7 @@ public class ImageCommand {
             try {
                 URLConnection conn = finalUrl.openConnection();
                 PluginDescriptionFile desc = plugin.getDescription();
+                conn.setRequestProperty("Accept", "*/*");
                 conn.setRequestProperty("User-Agent", desc.getName() + "/" + desc.getVersion());
                 if (finalReferrer != null) {
                     conn.setRequestProperty("Referer", finalReferrer);
