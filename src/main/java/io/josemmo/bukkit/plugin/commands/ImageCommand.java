@@ -15,8 +15,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import javax.imageio.ImageIO;
 import java.awt.Dimension;
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -115,27 +115,28 @@ public class ImageCommand {
         // Download and validate remote file
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
-                sender.sendMessage("Downloading file...");
                 URLConnection conn = url.openConnection();
                 PluginDescriptionFile desc = plugin.getDescription();
                 conn.setRequestProperty("User-Agent", desc.getName() + "/" + desc.getVersion());
-                BufferedInputStream inputStream = new BufferedInputStream(conn.getInputStream());
 
-                // Validate content type
-                String contentType = URLConnection.guessContentTypeFromStream(inputStream);
-                if (contentType == null || !contentType.startsWith("image/")) {
-                    inputStream.close();
+                // Download file
+                sender.sendMessage("Downloading file...");
+                Files.copy(conn.getInputStream(), destPath);
+
+                // Validate downloaded file
+                if (ImageIO.read(destPath.toFile()) == null) {
                     throw new IllegalArgumentException("The downloaded file is not a valid image");
                 }
 
-                // Write file to disk
-                Files.copy(inputStream, destPath);
-                inputStream.close();
+                // Notify sender
                 sender.sendMessage(ChatColor.GREEN + "Done!");
             } catch (IOException e) {
                 sender.sendMessage(ChatColor.RED + "An error occurred trying to download the remote file");
                 plugin.warning("Failed to download file from \"" + url + "\": " + e.getClass().getName());
             } catch (IllegalArgumentException e) {
+                if (Files.exists(destPath) && !destPath.toFile().delete()) {
+                    plugin.warning("Failed to delete corrupted file \"" + destPath + "\"");
+                }
                 sender.sendMessage(ChatColor.RED + e.getMessage());
             }
         });
