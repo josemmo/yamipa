@@ -103,21 +103,39 @@ public class ImageCommand {
             return;
         }
 
-        // Validate remote URL
+        // Validate and fix remote URL
         URL url;
+        String referrer = null;
         try {
             url = new URL(rawUrl);
+
+            // Imgur.com
+            if (url.getHost().equals("imgur.com")) {
+                String[] parts = url.getPath().replaceAll("^/|/$", "").split("/");
+                if (parts.length == 2 && (parts[0].equals("a") || parts[0].equals("gallery"))) {
+                    url = new URL("https://imgur.com/a/" + parts[1] + "/zip");
+                    referrer = "https://imgur.com/a/" + parts[1];
+                } else {
+                    url = new URL("https://imgur.com/download/" + parts[parts.length-1] + "/");
+                    referrer = "https://imgur.com/" + parts[parts.length-1];
+                }
+            }
         } catch (MalformedURLException e) {
             sender.sendMessage(ChatColor.RED + "The remote URL is not valid");
             return;
         }
 
         // Download and validate remote file
+        final URL finalUrl = url;
+        final String finalReferrer = referrer;
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
-                URLConnection conn = url.openConnection();
+                URLConnection conn = finalUrl.openConnection();
                 PluginDescriptionFile desc = plugin.getDescription();
                 conn.setRequestProperty("User-Agent", desc.getName() + "/" + desc.getVersion());
+                if (finalReferrer != null) {
+                    conn.setRequestProperty("Referer", finalReferrer);
+                }
 
                 // Download file
                 sender.sendMessage("Downloading file...");
@@ -132,7 +150,7 @@ public class ImageCommand {
                 sender.sendMessage(ChatColor.GREEN + "Done!");
             } catch (IOException e) {
                 sender.sendMessage(ChatColor.RED + "An error occurred trying to download the remote file");
-                plugin.warning("Failed to download file from \"" + url + "\": " + e.getClass().getName());
+                plugin.warning("Failed to download file from \"" + finalUrl + "\": " + e.getClass().getName());
             } catch (IllegalArgumentException e) {
                 if (Files.exists(destPath) && !destPath.toFile().delete()) {
                     plugin.warning("Failed to delete corrupted file \"" + destPath + "\"");
