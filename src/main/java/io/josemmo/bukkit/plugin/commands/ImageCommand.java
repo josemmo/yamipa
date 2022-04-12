@@ -16,6 +16,7 @@ import org.bukkit.plugin.PluginDescriptionFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import java.awt.Dimension;
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -87,7 +88,7 @@ public class ImageCommand {
         }
     }
 
-    public static void downloadImage(@NotNull CommandSender sender, @NotNull String url, @NotNull String filename) {
+    public static void downloadImage(@NotNull CommandSender sender, @NotNull String rawUrl, @NotNull String filename) {
         YamipaPlugin plugin = YamipaPlugin.getInstance();
 
         // Validate destination file
@@ -102,20 +103,40 @@ public class ImageCommand {
             return;
         }
 
-        // Download remote URL
+        // Validate remote URL
+        URL url;
+        try {
+            url = new URL(rawUrl);
+        } catch (MalformedURLException e) {
+            sender.sendMessage(ChatColor.RED + "The remote URL is not valid");
+            return;
+        }
+
+        // Download and validate remote file
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
-                URLConnection conn = new URL(url).openConnection();
+                sender.sendMessage("Downloading file...");
+                URLConnection conn = url.openConnection();
                 PluginDescriptionFile desc = plugin.getDescription();
                 conn.setRequestProperty("User-Agent", desc.getName() + "/" + desc.getVersion());
-                sender.sendMessage("Downloading file...");
-                Files.copy(conn.getInputStream(), destPath);
+                BufferedInputStream inputStream = new BufferedInputStream(conn.getInputStream());
+
+                // Validate content type
+                String contentType = URLConnection.guessContentTypeFromStream(inputStream);
+                if (contentType == null || !contentType.startsWith("image/")) {
+                    inputStream.close();
+                    throw new IllegalArgumentException("The downloaded file is not a valid image");
+                }
+
+                // Write file to disk
+                Files.copy(inputStream, destPath);
+                inputStream.close();
                 sender.sendMessage(ChatColor.GREEN + "Done!");
-            } catch (MalformedURLException e) {
-                sender.sendMessage(ChatColor.RED + "The remote URL is not valid");
             } catch (IOException e) {
                 sender.sendMessage(ChatColor.RED + "An error occurred trying to download the remote file");
                 plugin.warning("Failed to download file from \"" + url + "\": " + e.getClass().getName());
+            } catch (IllegalArgumentException e) {
+                sender.sendMessage(ChatColor.RED + e.getMessage());
             }
         });
     }
