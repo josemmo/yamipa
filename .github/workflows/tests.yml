@@ -71,7 +71,11 @@ jobs:
       # Install dependencies
       - name: Install plugin dependencies
         run: |
-          url="https://ci.dmulloy2.net/job/ProtocolLib/lastStableBuild/artifact/target/ProtocolLib.jar"
+          if [ $VERSION == "1.19" ]; then
+            url="https://ci.dmulloy2.net/job/ProtocolLib/lastStableBuild/artifact/target/ProtocolLib.jar"
+          else
+            url="https://github.com/dmulloy2/ProtocolLib/releases/download/4.8.0/ProtocolLib.jar"
+          fi
           mkdir -p ./server/plugins
           wget -q "$url" -O ./server/plugins/ProtocolLib.jar
 
