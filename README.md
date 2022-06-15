@@ -32,7 +32,8 @@ Here are the Minecraft distributions where Yamipa should be able to run:
 |------------------:|:-----------:|:------:|:-------:|
 |            1.16.x |     ✅      |   ✅    |   ✅    |
 |     1.17 & 1.17.1 |     ✅      |   ✅    |   ✅    |
-|     1.18 & 1.18.1 |     ✅      |   ✅    |   ✅    |
+|     1.18 & 1.18.x |     ✅      |   ✅    |   ✅    |
+|              1.19 |     ✅      |   ✅    |   ✅    |
 
 ## Configuration
 Yamipa is ready-to-go right out of the box. By default, it creates the following files and directories under the
@@ -123,7 +124,7 @@ Images from this plugin have a set of boolean attributes called "flags" that mod
 By default, images placed with the "/image place" command only have the `ANIM` flag.
 Similarly, image items issued with the "/image give" command have `ANIM`, `REMO` and `DROP` flags.
 
-Default flags can be modified through the "<flag>" argument.
+Default flags can be modified through the "flags" argument.
 To add a flag to the default ones use "+{FLAG_NAME}" (e.g. `+GLOW`), and to remove it use "-{FLAG_NAME}" (e.g. `-ANIM`).
 You can modify multiple flags separating them with commas (e.g. `+GLOW,-ANIM`).
 

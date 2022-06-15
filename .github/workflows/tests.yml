@@ -6,26 +6,27 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 8
+    continue-on-error: ${{ matrix.version == '1.19' }}
     strategy:
       fail-fast: false
       matrix:
         flavor: ['bukkit', 'spigot', 'paper', 'purpur']
-        version: ['1.18.1', '1.18', '1.17.1', '1.17', '1.16.5', '1.16.4', '1.16.3', '1.16.2', '1.16.1']
+        version: ['1.19', '1.18.2', '1.17.1', '1.16.5']
     steps:
       # Download code from repository
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       # Setup Java
       - name: Setup JDK
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: ${{ startsWith(matrix.version, '1.16') && '11' || (startsWith(matrix.version, '1.17') && '16' || '17') }}
 
       # Setup Node.js
       - name: Setup Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: '16'
 
@@ -53,7 +54,7 @@ jobs:
             build=$(curl "https://papermc.io/api/v2/projects/paper/versions/$VERSION" | jq '.builds[-1]')
             url="https://papermc.io/api/v2/projects/paper/versions/$VERSION/builds/$build/downloads/paper-$VERSION-$build.jar"
           elif [ $FLAVOR == "purpur" ]; then
-            url="https://api.pl3x.net/v2/purpur/$VERSION/latest/download"
+            url="https://api.purpurmc.org/v2/purpur/$VERSION/latest/download"
           fi
           mkdir ./server && cd ./server
           wget -nv "$url" -O server.jar
@@ -70,7 +71,11 @@ jobs:
       # Install dependencies
       - name: Install plugin dependencies
         run: |
-          url="https://ci.dmulloy2.net/job/ProtocolLib/lastSuccessfulBuild/artifact/target/ProtocolLib.jar"
+          if [ $VERSION == "1.19" ]; then
+            url="https://ci.dmulloy2.net/job/ProtocolLib/lastStableBuild/artifact/target/ProtocolLib.jar"
+          else
+            url="https://github.com/dmulloy2/ProtocolLib/releases/download/4.8.0/ProtocolLib.jar"
+          fi
           mkdir -p ./server/plugins
           wget -q "$url" -O ./server/plugins/ProtocolLib.jar
 

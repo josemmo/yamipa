@@ -15,6 +15,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import javax.imageio.ImageIO;
 import java.awt.Dimension;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -43,7 +44,7 @@ public class ImageCommand {
             s.sendMessage(ChatColor.AQUA + cmd + " download <url> <filename>" + ChatColor.RESET + " - Download image");
         }
         if (s.hasPermission("yamipa.give")) {
-            s.sendMessage(ChatColor.AQUA + cmd + " give <p> <filename> <#> <w> [<h>] [<f>]" + ChatColor.RESET + " - Give image items");
+            s.sendMessage(ChatColor.AQUA + cmd + " give <p> <filename> <#> <w> [<h>] [<f>]" + ChatColor.RESET + " - Give items");
         }
         if (s.hasPermission("yamipa.list")) {
             s.sendMessage(ChatColor.AQUA + cmd + " list [<page>]" + ChatColor.RESET + " - List all images");
@@ -87,7 +88,7 @@ public class ImageCommand {
         }
     }
 
-    public static void downloadImage(@NotNull CommandSender sender, @NotNull String url, @NotNull String filename) {
+    public static void downloadImage(@NotNull CommandSender sender, @NotNull String rawUrl, @NotNull String filename) {
         YamipaPlugin plugin = YamipaPlugin.getInstance();
 
         // Validate destination file
@@ -102,20 +103,68 @@ public class ImageCommand {
             return;
         }
 
-        // Download remote URL
+        // Validate and fix remote URL
+        URL url;
+        String referrer = null;
+        try {
+            url = new URL(rawUrl);
+
+            // Giphy.com
+            if (url.getHost().equals("giphy.com")) {
+                String path = url.getPath();
+                String id = path.substring(path.lastIndexOf('-')+1);
+                url = new URL("https://media.giphy.com/media/" + id + "/giphy.gif");
+                referrer = "https://giphy.com/";
+            }
+
+            // Imgur.com
+            if (url.getHost().equals("imgur.com")) {
+                String[] parts = url.getPath().replaceAll("^/|/$", "").split("/");
+                if (parts.length == 2 && (parts[0].equals("a") || parts[0].equals("gallery"))) {
+                    url = new URL("https://imgur.com/a/" + parts[1] + "/zip");
+                    referrer = "https://imgur.com/a/" + parts[1];
+                } else {
+                    url = new URL("https://imgur.com/download/" + parts[parts.length-1] + "/");
+                    referrer = "https://imgur.com/" + parts[parts.length-1];
+                }
+            }
+        } catch (MalformedURLException e) {
+            sender.sendMessage(ChatColor.RED + "The remote URL is not valid");
+            return;
+        }
+
+        // Download and validate remote file
+        final URL finalUrl = url;
+        final String finalReferrer = referrer;
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
-                URLConnection conn = new URL(url).openConnection();
+                URLConnection conn = finalUrl.openConnection();
                 PluginDescriptionFile desc = plugin.getDescription();
+                conn.setRequestProperty("Accept", "*/*");
                 conn.setRequestProperty("User-Agent", desc.getName() + "/" + desc.getVersion());
+                if (finalReferrer != null) {
+                    conn.setRequestProperty("Referer", finalReferrer);
+                }
+
+                // Download file
                 sender.sendMessage("Downloading file...");
                 Files.copy(conn.getInputStream(), destPath);
+
+                // Validate downloaded file
+                if (ImageIO.read(destPath.toFile()) == null) {
+                    throw new IllegalArgumentException("The downloaded file is not a valid image");
+                }
+
+                // Notify sender
                 sender.sendMessage(ChatColor.GREEN + "Done!");
-            } catch (MalformedURLException e) {
-                sender.sendMessage(ChatColor.RED + "The remote URL is not valid");
             } catch (IOException e) {
                 sender.sendMessage(ChatColor.RED + "An error occurred trying to download the remote file");
-                plugin.warning("Failed to download file from \"" + url + "\": " + e.getClass().getName());
+                plugin.warning("Failed to download file from \"" + finalUrl + "\": " + e.getClass().getName());
+            } catch (IllegalArgumentException e) {
+                if (Files.exists(destPath) && !destPath.toFile().delete()) {
+                    plugin.warning("Failed to delete corrupted file \"" + destPath + "\"");
+                }
+                sender.sendMessage(ChatColor.RED + e.getMessage());
             }
         });
     }

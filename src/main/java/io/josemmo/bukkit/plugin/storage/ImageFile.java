@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -79,8 +80,7 @@ public class ImageFile {
      */
     private @NotNull Pair<byte[][], Integer> renderImages(int width, int height) throws IOException {
         ImageReader reader = getImageReader();
-        String format = reader.getFormatName();
-        int numOfSteps = Math.min(reader.getNumImages(true), FakeImage.MAX_STEPS);
+        String format = reader.getFormatName().toLowerCase();
 
         // Create temporary canvas
         int originalWidth = reader.getWidth(0);
@@ -95,56 +95,62 @@ public class ImageFile {
         tmpScaledGraphics.setBackground(new Color(0, 0, 0, 0));
 
         // Read images from file
-        byte[][] renderedImages = new byte[numOfSteps][width*height];
+        List<byte[]> renderedImages = new ArrayList<>();
         Map<Integer, Integer> delays = new HashMap<>();
-        for (int step=0; step<numOfSteps; ++step) {
-            // Extract step metadata
-            int imageLeft = 0;
-            int imageTop = 0;
-            boolean disposePrevious = false;
-            if (format.equalsIgnoreCase("gif")) {
-                IIOMetadata metadata = reader.getImageMetadata(step);
-                IIOMetadataNode metadataRoot = (IIOMetadataNode) metadata.getAsTree(metadata.getNativeMetadataFormatName());
-                for (int i=0; i<metadataRoot.getLength(); ++i) {
-                    String nodeName = metadataRoot.item(i).getNodeName();
-                    if (nodeName.equalsIgnoreCase("ImageDescriptor")) {
-                        IIOMetadataNode descriptorNode = (IIOMetadataNode) metadataRoot.item(i);
-                        imageLeft = Integer.parseInt(descriptorNode.getAttribute("imageLeftPosition"));
-                        imageTop = Integer.parseInt(descriptorNode.getAttribute("imageTopPosition"));
-                    } else if (nodeName.equalsIgnoreCase("GraphicControlExtension")) {
-                        IIOMetadataNode controlExtensionNode = (IIOMetadataNode) metadataRoot.item(i);
-                        int delay = Integer.parseInt(controlExtensionNode.getAttribute("delayTime"));
-                        delays.compute(delay, (__, count) -> (count == null) ? 1 : count+1);
-                        disposePrevious = controlExtensionNode.getAttribute("disposalMethod").startsWith("restore");
+        for (int step=0; step<FakeImage.MAX_STEPS; ++step) {
+            try {
+                // Extract step metadata
+                int imageLeft = 0;
+                int imageTop = 0;
+                boolean disposePrevious = false;
+                if (format.equals("gif")) {
+                    IIOMetadata metadata = reader.getImageMetadata(step);
+                    IIOMetadataNode metadataRoot = (IIOMetadataNode) metadata.getAsTree(metadata.getNativeMetadataFormatName());
+                    for (int i=0; i<metadataRoot.getLength(); ++i) {
+                        String nodeName = metadataRoot.item(i).getNodeName();
+                        if (nodeName.equalsIgnoreCase("ImageDescriptor")) {
+                            IIOMetadataNode descriptorNode = (IIOMetadataNode) metadataRoot.item(i);
+                            imageLeft = Integer.parseInt(descriptorNode.getAttribute("imageLeftPosition"));
+                            imageTop = Integer.parseInt(descriptorNode.getAttribute("imageTopPosition"));
+                        } else if (nodeName.equalsIgnoreCase("GraphicControlExtension")) {
+                            IIOMetadataNode controlExtensionNode = (IIOMetadataNode) metadataRoot.item(i);
+                            int delay = Integer.parseInt(controlExtensionNode.getAttribute("delayTime"));
+                            delays.compute(delay, (__, count) -> (count == null) ? 1 : count + 1);
+                            disposePrevious = controlExtensionNode.getAttribute("disposalMethod").startsWith("restore");
+                        }
                     }
                 }
+
+                // Clear temporary canvases (if needed)
+                if (disposePrevious) {
+                    tmpGraphics.clearRect(0, 0, originalWidth, originalHeight);
+                    tmpScaledGraphics.clearRect(0, 0, width, height);
+                }
+
+                // Paint step image over temporary canvas
+                BufferedImage image = reader.read(step);
+                tmpGraphics.drawImage(image, imageLeft, imageTop, null);
+                image.flush();
+
+                // Resize image and get pixels
+                tmpScaledGraphics.drawImage(tmpImage, 0, 0, width, height, null);
+                int[] rgbaPixels = ((DataBufferInt) tmpScaledImage.getRaster().getDataBuffer()).getData();
+
+                // Convert RGBA pixels to Minecraft color indexes
+                byte[] renderedImage = new byte[width*height];
+                IntStream.range(0, rgbaPixels.length).parallel().forEach(pixelIndex -> {
+                    renderedImage[pixelIndex] = FakeMap.pixelToIndex(rgbaPixels[pixelIndex]);
+                });
+                renderedImages.add(renderedImage);
+            } catch (IndexOutOfBoundsException __) {
+                // No more steps to read
+                break;
             }
-
-            // Clear temporary canvases (if needed)
-            if (disposePrevious) {
-                tmpGraphics.clearRect(0, 0, originalWidth, originalHeight);
-                tmpScaledGraphics.clearRect(0, 0, width, height);
-            }
-
-            // Paint step image over temporary canvas
-            BufferedImage image = reader.read(step);
-            tmpGraphics.drawImage(image, imageLeft, imageTop, null);
-            image.flush();
-
-            // Resize image and get pixels
-            tmpScaledGraphics.drawImage(tmpImage, 0, 0, width, height, null);
-            final int[] rgbaPixels = ((DataBufferInt) tmpScaledImage.getRaster().getDataBuffer()).getData();
-
-            // Convert RGBA pixels to Minecraft color indexes
-            final int stepButFinal = step;
-            IntStream.range(0, rgbaPixels.length).parallel().forEach(pixelIndex -> {
-                renderedImages[stepButFinal][pixelIndex] = FakeMap.pixelToIndex(rgbaPixels[pixelIndex]);
-            });
         }
 
         // Get most occurring delay (mode)
         int delay = 0;
-        if (numOfSteps > 1) {
+        if (renderedImages.size() > 1) {
             delay = Collections.max(delays.entrySet(), Map.Entry.comparingByValue()).getKey();
             delay = Math.round(delay * 0.2f); // (delay * 10) / 50
             delay = Math.min(Math.max(delay, FakeImage.MIN_DELAY), FakeImage.MAX_DELAY);
@@ -157,7 +163,7 @@ public class ImageFile {
         tmpScaledGraphics.dispose();
         tmpScaledImage.flush();
 
-        return new Pair<>(renderedImages, delay);
+        return new Pair<>(renderedImages.toArray(new byte[0][0]), delay);
     }
 
     /**
