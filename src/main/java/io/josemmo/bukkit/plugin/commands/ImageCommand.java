@@ -202,26 +202,27 @@ public class ImageCommand {
         @NotNull Location location,
         @NotNull BlockFace face
     ) {
-        YamipaPlugin plugin = YamipaPlugin.getInstance();
-
-        // Prevent two images occupying the same space
-        FakeImage existingImage = plugin.getRenderer().getImage(location, face);
-        if (existingImage != null) {
-            ActionBar.send(player, ChatColor.RED + "There's already an image there!");
-            return false;
-        }
+        ImageRenderer renderer = YamipaPlugin.getInstance().getRenderer();
 
         // Create new fake image instance
         Rotation rotation = FakeImage.getRotationFromPlayerEyesight(face, player.getEyeLocation());
         FakeImage fakeImage = new FakeImage(image.getName(), location, face, rotation,
             width, height, new Date(), player, flags);
 
+        // Make sure image can be placed
+        for (Location loc : fakeImage.getAllLocations()) {
+            if (renderer.getImage(loc, face) != null) {
+                ActionBar.send(player, ChatColor.RED + "There's already an image there!");
+                return false;
+            }
+        }
+
         // Show loading status to player
         ActionBar loadingActionBar = ActionBar.repeat(player, ChatColor.AQUA + "Loading image...");
         fakeImage.setOnLoadedListener(loadingActionBar::clear);
 
         // Add fake image to renderer
-        plugin.getRenderer().addImage(fakeImage);
+        renderer.addImage(fakeImage);
         return true;
     }
 

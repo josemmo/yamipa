@@ -193,7 +193,7 @@ public class FakeImage extends FakeEntity {
     }
 
     /**
-     * Get location instance
+     * Get top-left corner of image
      * @return Location instance
      */
     public @NotNull Location getLocation() {
@@ -271,6 +271,20 @@ public class FakeImage extends FakeEntity {
      */
     public int getDelay() {
         return delay;
+    }
+
+    /**
+     * Get all block locations covered by the image
+     * @return Array of location instances
+     */
+    public @NotNull Location[] getAllLocations() {
+        Location[] locations = new Location[width*height];
+        for (int row=0; row<height; row++) {
+            for (int col=0; col<width; col++) {
+                locations[row*width + col] = location.clone().add(getLocationVector.apply(col, row));
+            }
+        }
+        return locations;
     }
 
     /**
