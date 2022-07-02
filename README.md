@@ -113,6 +113,17 @@ such as [LuckPerms](https://luckperms.net/) or [GroupManager](https://elgarl.git
 
 Both these plugins have been tested to work with Yamipa, although any similar one should work just fine.
 
+## Protecting areas
+In large servers, letting your players place and remove images wherever they want might not be the most sensible idea.
+For those cases, Yamipa is compatible with other Bukkit plugins that allow creating and managing world areas.
+If you have one or more of such plugins, Yamipa will automatically apply permissions accordingly and only let players
+place or remove images where they can place or remove blocks, no additional configuration required.
+
+The supported plugins are:
+
+- [WorldGuard](https://enginehub.org/worldguard/)
+- [GriefPrevention](https://www.spigotmc.org/resources/griefprevention.1884/)
+
 ## Flags
 Images from this plugin have a set of boolean attributes called "flags" that modify its behavior. Possible values are:
 
