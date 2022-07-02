@@ -73,7 +73,7 @@ public class SelectBlockTask {
         if (listener == null) {
             listener = new SelectBlockTaskListener();
             listener.register();
-            plugin.fine("Created PlayerInteractionListener singleton");
+            plugin.fine("Created SelectBlockTaskListener singleton");
         }
 
         // Start task
