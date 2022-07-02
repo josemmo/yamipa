@@ -14,7 +14,6 @@ import { getRconClient, waitForServer } from './src/rcon.js'
     const conn = await getRconClient()
     await conn.send('op test')
     await conn.send('gamemode creative test')
-    await conn.end()
     await wait(2000)
 
     console.log('[AUTOMATA] Preparing test account...')
@@ -37,5 +36,10 @@ import { getRconClient, waitForServer } from './src/rcon.js'
 
     console.log('[AUTOMATA] Logging off...')
     bot.end()
+
+    console.log('[AUTOMATA] Stopping server...')
+    await conn.send('stop')
+    await conn.end()
+
     console.log('[AUTOMATA] Done!')
 })()

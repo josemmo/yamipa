@@ -39,7 +39,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16'
+          node-version: '17'
 
       # Setup automata
       - name: Setup automata
@@ -77,6 +77,8 @@ jobs:
 
       # Install dependencies
       - name: Install plugin dependencies
+        env:
+          VERSION: ${{ matrix.version }}
         run: |
           if [ $VERSION == "1.19" ]; then
             url="https://ci.dmulloy2.net/job/ProtocolLib/lastStableBuild/artifact/target/ProtocolLib.jar"

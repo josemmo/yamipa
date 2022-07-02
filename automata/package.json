@@ -6,7 +6,7 @@
         "start": "node index.js"
     },
     "dependencies": {
-        "mineflayer": "^4.1.0",
+        "mineflayer": "^4.3.0",
         "rcon-client": "^4.2.3"
     }
 }
