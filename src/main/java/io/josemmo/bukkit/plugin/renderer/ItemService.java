@@ -95,18 +95,41 @@ public class ItemService extends InteractWithEntityListener implements Listener 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onPlaceItem(@NotNull HangingPlaceEvent event) {
         Player player = event.getPlayer();
-        ItemStack item = event.getItemStack();
-        if (player == null || item == null) return;
+        if (player == null) return;
+        PlayerInventory inventory = player.getInventory();
 
-        // Get metadata from item
-        ItemMeta itemMeta = item.getItemMeta();
-        if (itemMeta == null) return;
-        PersistentDataContainer itemData = itemMeta.getPersistentDataContainer();
-        String filename = itemData.get(NSK_FILENAME, PersistentDataType.STRING);
-        if (filename == null) return;
-        Integer width = itemData.get(NSK_WIDTH, PersistentDataType.INTEGER);
-        Integer height = itemData.get(NSK_HEIGHT, PersistentDataType.INTEGER);
-        Integer flags = itemData.get(NSK_FLAGS, PersistentDataType.INTEGER);
+        // Prepare variables to hold item metadata
+        boolean isOffHand = false;
+        ItemStack item = null;
+        String filename = null;
+        Integer width = null;
+        Integer height = null;
+        Integer flags = null;
+
+        // Find placed item stack in player's inventory
+        // NOTE: we cannot use `event.getItemStack()` as it's only supported since 1.17.1
+        for (int i=0; i<2; i++) {
+            isOffHand = (i == 1);
+            item = isOffHand ? inventory.getItemInOffHand() : inventory.getItemInMainHand();
+
+            // Get item metadata
+            ItemMeta itemMeta = item.getItemMeta();
+            if (itemMeta == null) continue;
+            PersistentDataContainer itemData = itemMeta.getPersistentDataContainer();
+            filename = itemData.get(NSK_FILENAME, PersistentDataType.STRING);
+            if (filename == null) continue;
+
+            // Found item, parse metadata
+            width = itemData.get(NSK_WIDTH, PersistentDataType.INTEGER);
+            height = itemData.get(NSK_HEIGHT, PersistentDataType.INTEGER);
+            flags = itemData.get(NSK_FLAGS, PersistentDataType.INTEGER);
+            break;
+        }
+
+        // Validate item and metadata
+        if (filename == null) {
+            return;
+        }
         if (width == null || height == null || flags == null) {
             plugin.warning(player + " tried to place corrupted image item (missing width/height/flags properties)");
             return;
@@ -129,15 +152,18 @@ public class ItemService extends InteractWithEntityListener implements Listener 
         if (!success) return;
 
         // Decrement item from player's inventory
-        if (player.getGameMode() == GameMode.CREATIVE) return;
-        PlayerInventory inventory = player.getInventory();
-        int itemIndex = inventory.first(item);
-        int amount = item.getAmount();
-        if (amount > 1) {
-            item.setAmount(amount - 1);
-            inventory.setItem(itemIndex, item);
-        } else {
-            inventory.setItem(itemIndex, new ItemStack(Material.AIR));
+        if (player.getGameMode() != GameMode.CREATIVE) {
+            int amount = item.getAmount();
+            if (amount > 1) {
+                item.setAmount(amount - 1);
+            } else {
+                item = new ItemStack(Material.AIR);
+            }
+            if (isOffHand) {
+                inventory.setItemInOffHand(item);
+            } else {
+                inventory.setItemInMainHand(item);
+            }
         }
     }
 
