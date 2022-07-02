@@ -4,6 +4,7 @@ main: io.josemmo.bukkit.plugin.YamipaPlugin
 api-version: 1.16
 depend: [ProtocolLib]
 softdepend:
+  - GriefPrevention
   - Hyperverse
   - Multiverse-Core
   - My_Worlds
