@@ -17,8 +17,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Setup Java
-      - name: Setup JDK
+      # Setup Java (for building)
+      - name: Setup JDK (for building)
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # Build plugin
+      - name: Build with Maven
+        run: mvn --batch-mode --update-snapshots verify
+
+      # Setup Java (for testing)
+      - name: Setup JDK (for testing)
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
@@ -34,10 +45,6 @@ jobs:
       - name: Setup automata
         working-directory: ./automata
         run: npm install
-
-      # Build plugin
-      - name: Build with Maven
-        run: mvn --batch-mode --update-snapshots verify
 
       # Setup server
       - name: Setup server
@@ -94,7 +101,7 @@ jobs:
         working-directory: ./server
         run: |
           (cd ../automata && npm run start) &
-          timeout -s SIGINT 90s java -DIReallyKnowWhatIAmDoingISwear -jar server.jar nogui | tee server.log || true
+          timeout -s SIGINT -k 110s 90s java -DIReallyKnowWhatIAmDoingISwear -jar server.jar nogui | tee server.log || true
           if ! grep -Fq '[YamipaPlugin] Loading YamipaPlugin' server.log; then
             echo "Plugin did not load"
             exit 1
