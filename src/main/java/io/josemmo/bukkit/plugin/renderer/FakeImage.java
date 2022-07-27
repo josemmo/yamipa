@@ -32,7 +32,6 @@ public class FakeImage extends FakeEntity {
     public static final int DEFAULT_GIVE_FLAGS = FLAG_ANIMATABLE | FLAG_REMOVABLE | FLAG_DROPPABLE;
 
     // Instance properties
-    private static boolean animateImages = false;
     private final String filename;
     private final Location location;
     private final BlockFace face;
@@ -43,6 +42,7 @@ public class FakeImage extends FakeEntity {
     private final OfflinePlayer placedBy;
     private final int flags;
     private final BiFunction<Integer, Integer, Vector> getLocationVector;
+    private final Set<Player> observingPlayers = new HashSet<>();
     private Runnable onLoadedListener = null;
 
     // Generated values
@@ -51,8 +51,8 @@ public class FakeImage extends FakeEntity {
     private int numOfSteps = -1;  // Total number of animation steps
 
     // Animation task attributes
+    private static boolean animateImages = false;
     private ScheduledFuture<?> task;
-    private final Set<Player> animatingPlayers = new HashSet<>();
     private int currentStep = -1; // Current animation step
 
     /**
@@ -292,14 +292,12 @@ public class FakeImage extends FakeEntity {
      * @return Array of world area IDs
      */
     public @NotNull WorldAreaId[] getWorldAreaIds() {
-        WorldAreaId topLeft = WorldAreaId.fromLocation(location);
-        WorldAreaId bottomRight = WorldAreaId.fromLocation(
-            location.clone().add(getLocationVector.apply(width-1, height-1))
-        );
-        if (topLeft.equals(bottomRight)) {
-            return new WorldAreaId[]{topLeft};
-        }
-        return new WorldAreaId[]{topLeft, bottomRight};
+        Set<WorldAreaId> corners = new HashSet<>();
+        corners.add(WorldAreaId.fromLocation(location));
+        corners.add(WorldAreaId.fromLocation(location.clone().add(getLocationVector.apply(width-1, 0))));
+        corners.add(WorldAreaId.fromLocation(location.clone().add(getLocationVector.apply(0, height-1))));
+        corners.add(WorldAreaId.fromLocation(location.clone().add(getLocationVector.apply(width-1, height-1))));
+        return corners.toArray(new WorldAreaId[0]);
     }
 
     /**
@@ -393,76 +391,102 @@ public class FakeImage extends FakeEntity {
                 }
 
                 // Spawn frames in player's client
+                observingPlayers.add(player);
                 for (FakeItemFrame frame : frames) {
                     frame.spawn(player);
                     frame.render(player, 0);
                 }
 
-                // Add player to animation task
-                if (animateImages && hasFlag(FLAG_ANIMATABLE) && numOfSteps > 1) {
-                    animatingPlayers.add(player);
-                    if (task == null) {
-                        task = plugin.getScheduler().scheduleAtFixedRate(
-                            this::nextStep,
-                            0,
-                            delay*50L,
-                            TimeUnit.MILLISECONDS
-                        );
-                        plugin.fine("Spawned animation task for FakeImage#(" + location + "," + face + ")");
-                    }
+                // Start animation task (if needed)
+                if (animateImages && task == null && hasFlag(FLAG_ANIMATABLE) && numOfSteps > 1) {
+                    task = plugin.getScheduler().scheduleAtFixedRate(
+                        this::nextStep,
+                        0,
+                        delay*50L,
+                        TimeUnit.MILLISECONDS
+                    );
+                    plugin.fine("Spawned animation task for FakeImage#(" + location + "," + face + ")");
                 }
             }
         });
     }
 
     /**
-     * Destroy image for a player
-     * @param player Player instance
+     * Destroy image for all players
      */
-    public void destroy(@NotNull Player player) {
-        final FakeItemFrame[] framesRef = frames; // In case renderer FakeImage#invalidate() gets called
+    public void destroy() {
+        if (frames != null) {
+            destroy(null);
+        }
+    }
+
+    /**
+     * Destroy image a player
+     * @param player Player instance or NULL for all observing players
+     */
+    public void destroy(@Nullable Player player) {
+        final FakeItemFrame[] framesRef = frames; // In case renderer instance gets invalidated
         tryToRunAsyncTask(() -> {
             synchronized (this) {
-                // Unregister player from animation task
-                animatingPlayers.remove(player);
-                if (animatingPlayers.isEmpty()) {
-                    destroyAnimationTask();
-                }
-
                 // Send packets to destroy item frames
                 if (framesRef != null) {
-                    for (FakeItemFrame frame : framesRef) {
-                        frame.destroy(player);
+                    Set<Player> targets = (player == null) ? observingPlayers : Collections.singleton(player);
+                    for (Player target : targets) {
+                        for (FakeItemFrame frame : framesRef) {
+                            frame.destroy(target);
+                        }
                     }
+                }
+
+                // Remove player from observing players
+                if (player == null) {
+                    observingPlayers.clear();
+                } else {
+                    observingPlayers.remove(player);
+                }
+
+                // Invalidate instance (if no more players)
+                if (observingPlayers.isEmpty()) {
+                    invalidate();
                 }
             }
         });
     }
 
     /**
-     * Invalidate cache
-     * <p>
-     * Removes all item frames associated with this image.
+     * Notify player quit from server
+     * @param player Player instance
      */
-    public void invalidate() {
-        tryToRunAsyncTask(() -> {
-            synchronized (this) {
-                // Clear animation task (if exists)
-                destroyAnimationTask();
-                animatingPlayers.clear();
+    public synchronized void notifyPlayerQuit(@NotNull Player player) {
+        observingPlayers.remove(player);
+        if (observingPlayers.isEmpty()) {
+            invalidate();
+        }
+    }
 
-                // Free array of fake item frames
-                frames = null;
+    /**
+     * Invalidate instance
+     * <p>
+     * Removes all item frames associated with this image, among other things.
+     */
+    private void invalidate() {
+        // Destroy animation task
+        if (task != null) {
+            task.cancel(true);
+            task = null;
+            currentStep = -1;
+            plugin.fine("Destroyed animation task for FakeImage#(" + location + "," + face + ")");
+        }
 
-                // Notify invalidation to source ImageFile
-                ImageFile file = getFile();
-                if (file != null) {
-                    file.unsubscribe(this);
-                }
+        // Free array of fake item frames
+        frames = null;
+        plugin.fine("Invalidated FakeImage#(" + location + "," + face + ")");
 
-                plugin.fine("Invalidated FakeImage#(" + location + "," + face + ")");
-            }
-        });
+        // Notify invalidation to source ImageFile
+        ImageFile file = getFile();
+        if (file != null) {
+            file.unsubscribe(this);
+        }
     }
 
     /**
@@ -470,24 +494,10 @@ public class FakeImage extends FakeEntity {
      */
     private void nextStep() {
         currentStep = (currentStep + 1) % numOfSteps;
-        for (Player player : animatingPlayers) {
+        for (Player player : observingPlayers) {
             for (FakeItemFrame frame : frames) {
                 frame.render(player, currentStep);
             }
         }
-    }
-
-    /**
-     * Destroy animation task
-     */
-    private void destroyAnimationTask() {
-        if (task == null) {
-            // No active animation task
-            return;
-        }
-        task.cancel(true);
-        task = null;
-        currentStep = -1;
-        plugin.fine("Destroyed animation task for FakeImage#(" + location + "," + face + ")");
     }
 }

@@ -7,6 +7,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
+/**
+ * World Area IDs represent groups of 16 chunks arranged in a 4x4 square.
+ */
 public class WorldAreaId {
     private final World world;
     private final int x;
@@ -43,7 +46,7 @@ public class WorldAreaId {
     }
 
     /**
-     * Get colliding world area IDs plus this one
+     * Get nearby world area IDs in view distance (plus this one)
      * @return List of neighbors
      */
     public @NotNull WorldAreaId[] getNeighborhood() {
