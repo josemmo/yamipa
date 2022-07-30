@@ -19,7 +19,7 @@ public abstract class FakeEntity {
      * <p>
      * NOTE: Will wait synchronously, blocking the invoker thread
      */
-    protected static synchronized void waitForProtocolLib() {
+    public static synchronized void waitForProtocolLib() {
         if (ready) {
             // ProtocolLib is ready
             return;
@@ -32,16 +32,26 @@ public abstract class FakeEntity {
                 ready = true;
                 break;
             } catch (Exception e) {
-                if (++retry > 3) {
+                if (++retry > 20) {
                     // Exhausted max. retries
                     throw e;
                 }
-                try {
-                    Thread.sleep(1000);
-                } catch (Exception __) {
-                    // Fail silently
-                }
+                tryToSleep(200);
             }
+        }
+    }
+
+    /**
+     * Try to sleep
+     * <p>
+     * NOTE: Will wait synchronously, blocking the invoker thread
+     * @param ms Delay in milliseconds
+     */
+    protected static void tryToSleep(long ms) {
+        try {
+            Thread.sleep(ms);
+        } catch (Exception __) {
+            // Fail silently
         }
     }
 

@@ -1,6 +1,7 @@
 package io.josemmo.bukkit.plugin;
 
 import io.josemmo.bukkit.plugin.commands.ImageCommandBridge;
+import io.josemmo.bukkit.plugin.renderer.FakeEntity;
 import io.josemmo.bukkit.plugin.renderer.FakeImage;
 import io.josemmo.bukkit.plugin.renderer.ImageRenderer;
 import io.josemmo.bukkit.plugin.renderer.ItemService;
@@ -118,6 +119,13 @@ public class YamipaPlugin extends JavaPlugin {
 
         // Create thread pool
         scheduler = Executors.newScheduledThreadPool(6);
+
+        // Warm-up ProtocolLib
+        fine("Waiting for ProtocolLib to be ready...");
+        scheduler.execute(() -> {
+            FakeEntity.waitForProtocolLib();
+            fine("ProtocolLib is now ready");
+        });
 
         // Initialize bStats
         Function<Integer, String> toStats = number -> {

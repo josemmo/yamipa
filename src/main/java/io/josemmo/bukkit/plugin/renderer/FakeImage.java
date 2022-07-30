@@ -46,6 +46,7 @@ public class FakeImage extends FakeEntity {
     private Runnable onLoadedListener = null;
 
     // Generated values
+    private boolean loading = false;
     private FakeItemFrame[] frames = null;
     private int delay = 0; // Delay between steps in 50ms intervals, "0" for N/A
     private int numOfSteps = -1;  // Total number of animation steps
@@ -360,13 +361,25 @@ public class FakeImage extends FakeEntity {
         delay = container.getDelay();
 
         // Generate frames
-        frames = new FakeItemFrame[width*height];
+        FakeItemFrame[] newFrames = new FakeItemFrame[width*height];
         boolean glowing = hasFlag(FLAG_GLOWING);
         for (int col=0; col<width; col++) {
             for (int row=0; row<height; row++) {
                 Location frameLocation = location.clone().add(getLocationVector.apply(col, row));
-                frames[height*col+row] = new FakeItemFrame(frameLocation, face, rotation, glowing, maps[col][row]);
+                newFrames[height*col+row] = new FakeItemFrame(frameLocation, face, rotation, glowing, maps[col][row]);
             }
+        }
+        frames = newFrames;
+
+        // Start animation task (if needed)
+        if (animateImages && task == null && hasFlag(FLAG_ANIMATABLE) && numOfSteps > 1) {
+            task = plugin.getScheduler().scheduleAtFixedRate(
+                this::nextStep,
+                0,
+                delay*50L,
+                TimeUnit.MILLISECONDS
+            );
+            plugin.fine("Spawned animation task for FakeImage#(" + location + "," + face + ")");
         }
 
         // Notify listener
@@ -381,34 +394,43 @@ public class FakeImage extends FakeEntity {
      * @param player Player instance
      */
     public void spawn(@NotNull Player player) {
+        // Send pixels if instance is already loaded
+        if (frames != null) {
+            spawnOnceLoaded(player);
+            return;
+        }
+
+        // Wait for instance to load if loading
+        if (loading) {
+            tryToRunAsyncTask(() -> {
+                while (loading) {
+                    tryToSleep(5);
+                }
+                spawnOnceLoaded(player);
+            });
+            return;
+        }
+
+        // Instance needs to be loaded
+        loading = true;
         tryToRunAsyncTask(() -> {
-            synchronized (this) {
-                waitForProtocolLib();
-
-                // Load frames and other generated values from disk if not already loaded
-                if (frames == null) {
-                    load();
-                }
-
-                // Spawn frames in player's client
-                observingPlayers.add(player);
-                for (FakeItemFrame frame : frames) {
-                    frame.spawn(player);
-                    frame.render(player, 0);
-                }
-
-                // Start animation task (if needed)
-                if (animateImages && task == null && hasFlag(FLAG_ANIMATABLE) && numOfSteps > 1) {
-                    task = plugin.getScheduler().scheduleAtFixedRate(
-                        this::nextStep,
-                        0,
-                        delay*50L,
-                        TimeUnit.MILLISECONDS
-                    );
-                    plugin.fine("Spawned animation task for FakeImage#(" + location + "," + face + ")");
-                }
-            }
+            waitForProtocolLib();
+            load();
+            loading = false;
+            spawnOnceLoaded(player);
         });
+    }
+
+    /**
+     * Spawn image for a player (once instance has been loaded)
+     * @param player Player instance
+     */
+    private void spawnOnceLoaded(@NotNull Player player) {
+        observingPlayers.add(player);
+        for (FakeItemFrame frame : frames) {
+            frame.spawn(player);
+            frame.render(player, 0);
+        }
     }
 
     /**
@@ -425,39 +447,34 @@ public class FakeImage extends FakeEntity {
      * @param player Player instance or NULL for all observing players
      */
     public void destroy(@Nullable Player player) {
-        final FakeItemFrame[] framesRef = frames; // In case renderer instance gets invalidated
-        tryToRunAsyncTask(() -> {
-            synchronized (this) {
-                // Send packets to destroy item frames
-                if (framesRef != null) {
-                    Set<Player> targets = (player == null) ? observingPlayers : Collections.singleton(player);
-                    for (Player target : targets) {
-                        for (FakeItemFrame frame : framesRef) {
-                            frame.destroy(target);
-                        }
-                    }
-                }
-
-                // Remove player from observing players
-                if (player == null) {
-                    observingPlayers.clear();
-                } else {
-                    observingPlayers.remove(player);
-                }
-
-                // Invalidate instance (if no more players)
-                if (observingPlayers.isEmpty()) {
-                    invalidate();
+        // Send packets to destroy item frames
+        if (frames != null) {
+            Set<Player> targets = (player == null) ? observingPlayers : Collections.singleton(player);
+            for (Player target : targets) {
+                for (FakeItemFrame frame : frames) {
+                    frame.destroy(target);
                 }
             }
-        });
+        }
+
+        // Remove player from observing players
+        if (player == null) {
+            observingPlayers.clear();
+        } else {
+            observingPlayers.remove(player);
+        }
+
+        // Invalidate instance (if no more players)
+        if (observingPlayers.isEmpty()) {
+            invalidate();
+        }
     }
 
     /**
      * Notify player quit from server
      * @param player Player instance
      */
-    public synchronized void notifyPlayerQuit(@NotNull Player player) {
+    public void notifyPlayerQuit(@NotNull Player player) {
         observingPlayers.remove(player);
         if (observingPlayers.isEmpty()) {
             invalidate();
