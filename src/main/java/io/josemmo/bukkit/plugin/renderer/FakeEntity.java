@@ -19,9 +19,16 @@ public abstract class FakeEntity {
 
     static {
         try {
-            Field playerInjectionHandlerField = connection.getClass().getDeclaredField("playerInjectionHandler");
-            playerInjectionHandlerField.setAccessible(true);
-            playerInjectionHandler = (PlayerInjectionHandler) playerInjectionHandlerField.get(connection);
+            for (Field field : connection.getClass().getDeclaredFields()) {
+                if (field.getType().equals(PlayerInjectionHandler.class)) {
+                    field.setAccessible(true);
+                    playerInjectionHandler = (PlayerInjectionHandler) field.get(connection);
+                    break;
+                }
+            }
+            if (playerInjectionHandler == null) {
+                throw new RuntimeException("No valid candidate field found in ProtocolManager");
+            }
         } catch (Exception e) {
             plugin.log(Level.SEVERE, "Failed to get PlayerInjectionHandler from ProtocolLib", e);
         }
