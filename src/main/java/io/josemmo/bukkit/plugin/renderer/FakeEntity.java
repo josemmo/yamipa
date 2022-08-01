@@ -3,16 +3,29 @@ package io.josemmo.bukkit.plugin.renderer;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.PacketContainer;
+import com.comphenix.protocol.injector.player.PlayerInjectionHandler;
 import com.comphenix.protocol.wrappers.WrappedDataWatcher;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import java.lang.reflect.Field;
 import java.util.logging.Level;
 
 public abstract class FakeEntity {
     protected static final YamipaPlugin plugin = YamipaPlugin.getInstance();
     private static final ProtocolManager connection = ProtocolLibrary.getProtocolManager();
+    private static PlayerInjectionHandler playerInjectionHandler = null;
     private static boolean ready = false;
+
+    static {
+        try {
+            Field playerInjectionHandlerField = connection.getClass().getDeclaredField("playerInjectionHandler");
+            playerInjectionHandlerField.setAccessible(true);
+            playerInjectionHandler = (PlayerInjectionHandler) playerInjectionHandlerField.get(connection);
+        } catch (Exception e) {
+            plugin.log(Level.SEVERE, "Failed to get PlayerInjectionHandler from ProtocolLib", e);
+        }
+    }
 
     /**
      * Wait for ProtocolLib to be ready
@@ -62,7 +75,11 @@ public abstract class FakeEntity {
      */
     protected static void tryToSendPacket(@NotNull Player player, @NotNull PacketContainer packet) {
         try {
-            connection.sendServerPacket(player, packet);
+            if (playerInjectionHandler == null) { // Use single-threaded packet sending if reflection failed
+                connection.sendServerPacket(player, packet);
+            } else { // Use non-blocking packet sending if available (faster, the expected case)
+                playerInjectionHandler.sendServerPacket(player, packet, null, false);
+            }
         } catch (IllegalStateException e) {
             // Server is shutting down and cannot send the packet, ignore
         } catch (Exception e) {
