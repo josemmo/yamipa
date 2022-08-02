@@ -6,7 +6,7 @@
 
     <groupId>io.josemmo.bukkit.plugin</groupId>
     <artifactId>YamipaPlugin</artifactId>
-    <version>1.2.4-SNAPSHOT</version>
+    <version>1.2.4-SNAPSHOT-b2</version>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
