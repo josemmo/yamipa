@@ -1,5 +1,6 @@
 package io.josemmo.bukkit.plugin.renderer;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -11,10 +12,19 @@ import java.util.Objects;
  * World Area IDs represent groups of 16 chunks arranged in a 4x4 square.
  */
 public class WorldAreaId {
+    private static boolean USE_WORLD_VIEW_DISTANCE = true;
     private final World world;
     private final int x;
     private final int z;
     private WorldAreaId[] neighborhood = null;
+
+    static {
+        try {
+            World.class.getMethod("getViewDistance");
+        } catch (Exception e) {
+            USE_WORLD_VIEW_DISTANCE = false;
+        }
+    }
 
     /**
      * Get ID from location
@@ -57,7 +67,7 @@ public class WorldAreaId {
         }
 
         // Calculate neighborhood size from world's view distance
-        int size = world.getViewDistance() / 4;
+        int size = (USE_WORLD_VIEW_DISTANCE ? world.getViewDistance() : Bukkit.getServer().getViewDistance()) / 4;
 
         // Size 3 (16-chunks radius)
         // ···XXX···
