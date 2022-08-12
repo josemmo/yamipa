@@ -1,9 +1,14 @@
 name: ${project.name}
 version: ${project.version}
 main: io.josemmo.bukkit.plugin.YamipaPlugin
-api-version: 1.13
+api-version: 1.16
 depend: [ProtocolLib]
-softdepend: [Multiverse-Core, Hyperverse, My_Worlds]
+softdepend:
+  - GriefPrevention
+  - Hyperverse
+  - Multiverse-Core
+  - My_Worlds
+  - WorldGuard
 
 permissions:
   yamipa.*:

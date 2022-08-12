@@ -16,7 +16,7 @@ public class FakeMap extends FakeEntity {
     public static final int DIMENSION = 128;
     public static final int MIN_MAP_ID = Integer.MAX_VALUE / 4;
     public static final int MAX_MAP_ID = Integer.MAX_VALUE;
-    public static final int RESEND_THRESHOLD = 5; // Seconds after sending pixels when resending should be avoided
+    public static final int RESEND_THRESHOLD = 60*5; // Seconds after sending pixels when resending should be avoided
     private static final AtomicInteger lastMapId = new AtomicInteger(-1);
     private static FakeMap errorInstance;
     private final int id;
@@ -126,7 +126,10 @@ public class FakeMap extends FakeEntity {
     public void sendPixels(@NotNull Player player) {
         UUID uuid = player.getUniqueId();
         long now = Instant.now().getEpochSecond();
-        if (now-lastPlayerSendTime.getOrDefault(uuid, 0L) <= RESEND_THRESHOLD) {
+
+        // Avoid re-sending pixels too frequently
+        long last = lastPlayerSendTime.getOrDefault(uuid, 0L);
+        if ((now-last) <= RESEND_THRESHOLD && (player.getLastPlayed()/1000) < last) {
             return;
         }
 

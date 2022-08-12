@@ -3,23 +3,43 @@ package io.josemmo.bukkit.plugin.renderer;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.PacketContainer;
+import com.comphenix.protocol.injector.player.PlayerInjectionHandler;
 import com.comphenix.protocol.wrappers.WrappedDataWatcher;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import java.lang.reflect.Field;
 import java.util.logging.Level;
 
 public abstract class FakeEntity {
     protected static final YamipaPlugin plugin = YamipaPlugin.getInstance();
     private static final ProtocolManager connection = ProtocolLibrary.getProtocolManager();
+    private static PlayerInjectionHandler playerInjectionHandler = null;
     private static boolean ready = false;
+
+    static {
+        try {
+            for (Field field : connection.getClass().getDeclaredFields()) {
+                if (field.getType().equals(PlayerInjectionHandler.class)) {
+                    field.setAccessible(true);
+                    playerInjectionHandler = (PlayerInjectionHandler) field.get(connection);
+                    break;
+                }
+            }
+            if (playerInjectionHandler == null) {
+                throw new RuntimeException("No valid candidate field found in ProtocolManager");
+            }
+        } catch (Exception e) {
+            plugin.log(Level.SEVERE, "Failed to get PlayerInjectionHandler from ProtocolLib", e);
+        }
+    }
 
     /**
      * Wait for ProtocolLib to be ready
      * <p>
      * NOTE: Will wait synchronously, blocking the invoker thread
      */
-    protected static synchronized void waitForProtocolLib() {
+    public static synchronized void waitForProtocolLib() {
         if (ready) {
             // ProtocolLib is ready
             return;
@@ -32,16 +52,26 @@ public abstract class FakeEntity {
                 ready = true;
                 break;
             } catch (Exception e) {
-                if (++retry > 3) {
+                if (++retry > 20) {
                     // Exhausted max. retries
                     throw e;
                 }
-                try {
-                    Thread.sleep(1000);
-                } catch (Exception __) {
-                    // Fail silently
-                }
+                tryToSleep(200);
             }
+        }
+    }
+
+    /**
+     * Try to sleep
+     * <p>
+     * NOTE: Will wait synchronously, blocking the invoker thread
+     * @param ms Delay in milliseconds
+     */
+    protected static void tryToSleep(long ms) {
+        try {
+            Thread.sleep(ms);
+        } catch (Exception __) {
+            // Fail silently
         }
     }
 
@@ -52,7 +82,11 @@ public abstract class FakeEntity {
      */
     protected static void tryToSendPacket(@NotNull Player player, @NotNull PacketContainer packet) {
         try {
-            connection.sendServerPacket(player, packet);
+            if (playerInjectionHandler == null) { // Use single-threaded packet sending if reflection failed
+                connection.sendServerPacket(player, packet);
+            } else { // Use non-blocking packet sending if available (faster, the expected case)
+                playerInjectionHandler.sendServerPacket(player, packet, null, false);
+            }
         } catch (IllegalStateException e) {
             // Server is shutting down and cannot send the packet, ignore
         } catch (Exception e) {

@@ -8,12 +8,14 @@ import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.events.PacketListener;
 import com.comphenix.protocol.wrappers.EnumWrappers;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
+import org.bukkit.Bukkit;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 import java.util.List;
+import java.util.logging.Level;
 
 public abstract class InteractWithEntityListener implements PacketListener {
     public static final int MAX_BLOCK_DISTANCE = 5; // Server should only accept entities within a 4-block radius
@@ -81,12 +83,20 @@ public abstract class InteractWithEntityListener implements PacketListener {
             action = event.getPacket().getEnumEntityUseActions().read(0).getAction();
         }
 
-        // Notify handler
+        // Notify handler synchronously
         boolean allowEvent = true;
-        if (action == EnumWrappers.EntityUseAction.ATTACK) {
-            allowEvent = onAttack(player, targetBlock, targetBlockFace);
-        } else if (action == EnumWrappers.EntityUseAction.INTERACT_AT) {
-            allowEvent = onInteract(player, targetBlock, targetBlockFace);
+        try {
+            if (action == EnumWrappers.EntityUseAction.ATTACK) {
+                allowEvent = Bukkit.getScheduler()
+                    .callSyncMethod(getPlugin(), () -> onAttack(player, targetBlock, targetBlockFace))
+                    .get();
+            } else if (action == EnumWrappers.EntityUseAction.INTERACT_AT) {
+                allowEvent = Bukkit.getScheduler()
+                    .callSyncMethod(getPlugin(), () -> onInteract(player, targetBlock, targetBlockFace))
+                    .get();
+            }
+        } catch (Exception e) {
+            YamipaPlugin.getInstance().log(Level.SEVERE, "Failed to notify entity listener handler", e);
         }
 
         // Cancel event (if needed)

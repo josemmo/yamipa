@@ -33,7 +33,7 @@ Here are the Minecraft distributions where Yamipa should be able to run:
 |            1.16.x |     ✅      |   ✅    |   ✅    |
 |     1.17 & 1.17.1 |     ✅      |   ✅    |   ✅    |
 |     1.18 & 1.18.x |     ✅      |   ✅    |   ✅    |
-|              1.19 |     ✅      |   ✅    |   ✅    |
+|     1.19 & 1.19.x |     ✅      |   ✅    |   ✅    |
 
 ## Configuration
 Yamipa is ready-to-go right out of the box. By default, it creates the following files and directories under the
@@ -112,6 +112,17 @@ By default, only server OPs have all permissions granted. You can change this by
 such as [LuckPerms](https://luckperms.net/) or [GroupManager](https://elgarl.github.io/GroupManager/).
 
 Both these plugins have been tested to work with Yamipa, although any similar one should work just fine.
+
+## Protecting areas
+In large servers, letting your players place and remove images wherever they want might not be the most sensible idea.
+For those cases, Yamipa is compatible with other Bukkit plugins that allow creating and managing world areas.
+If you have one or more of such plugins, Yamipa will automatically apply permissions accordingly and only let players
+place or remove images where they can place or remove blocks, no additional configuration required.
+
+The supported plugins are:
+
+- [WorldGuard](https://enginehub.org/worldguard/)
+- [GriefPrevention](https://www.spigotmc.org/resources/griefprevention.1884/)
 
 ## Flags
 Images from this plugin have a set of boolean attributes called "flags" that modify its behavior. Possible values are:

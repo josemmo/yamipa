@@ -5,6 +5,7 @@ import io.josemmo.bukkit.plugin.renderer.FakeImage;
 import io.josemmo.bukkit.plugin.renderer.ImageRenderer;
 import io.josemmo.bukkit.plugin.renderer.ItemService;
 import io.josemmo.bukkit.plugin.storage.ImageFile;
+import io.josemmo.bukkit.plugin.utils.Permissions;
 import io.josemmo.bukkit.plugin.utils.SelectBlockTask;
 import io.josemmo.bukkit.plugin.utils.ActionBar;
 import org.bukkit.*;
@@ -202,26 +203,31 @@ public class ImageCommand {
         @NotNull Location location,
         @NotNull BlockFace face
     ) {
-        YamipaPlugin plugin = YamipaPlugin.getInstance();
-
-        // Prevent two images occupying the same space
-        FakeImage existingImage = plugin.getRenderer().getImage(location, face);
-        if (existingImage != null) {
-            ActionBar.send(player, ChatColor.RED + "There's already an image there!");
-            return false;
-        }
+        ImageRenderer renderer = YamipaPlugin.getInstance().getRenderer();
 
         // Create new fake image instance
         Rotation rotation = FakeImage.getRotationFromPlayerEyesight(face, player.getEyeLocation());
         FakeImage fakeImage = new FakeImage(image.getName(), location, face, rotation,
             width, height, new Date(), player, flags);
 
+        // Make sure image can be placed
+        for (Location loc : fakeImage.getAllLocations()) {
+            if (!Permissions.canEditBlock(player, loc)) {
+                ActionBar.send(player, ChatColor.RED + "You're not allowed to place an image here!");
+                return false;
+            }
+            if (renderer.getImage(loc, face) != null) {
+                ActionBar.send(player, ChatColor.RED + "There's already an image there!");
+                return false;
+            }
+        }
+
         // Show loading status to player
         ActionBar loadingActionBar = ActionBar.repeat(player, ChatColor.AQUA + "Loading image...");
         fakeImage.setOnLoadedListener(loadingActionBar::clear);
 
         // Add fake image to renderer
-        plugin.getRenderer().addImage(fakeImage);
+        renderer.addImage(fakeImage);
         return true;
     }
 
@@ -234,9 +240,19 @@ public class ImageCommand {
             FakeImage image = renderer.getImage(location, face);
             if (image == null) {
                 ActionBar.send(player, ChatColor.RED + "That is not a valid image!");
-            } else {
-                renderer.removeImage(image);
+                return;
             }
+
+            // Check player permissions
+            for (Location loc : image.getAllLocations()) {
+                if (!Permissions.canEditBlock(player, loc)) {
+                    ActionBar.send(player, ChatColor.RED + "You're not allowed to remove this image!");
+                    return;
+                }
+            }
+
+            // Trigger image removal
+            renderer.removeImage(image);
         });
         task.onFailure(() -> ActionBar.send(player, ChatColor.RED + "Image removing canceled"));
         task.run("Right click an image to continue");
@@ -263,6 +279,19 @@ public class ImageCommand {
         if (placedBy != null) {
             UUID target = placedBy.getUniqueId();
             images.removeIf(image -> !target.equals(image.getPlacedBy().getUniqueId()));
+        }
+
+        // Filter out images outside the permission scope of the sender
+        if (sender instanceof Player) {
+            Player senderAsPlayer = (Player) sender;
+            images.removeIf(image -> {
+                for (Location loc : image.getAllLocations()) {
+                    if (!Permissions.canEditBlock(senderAsPlayer, loc)) {
+                        return true;
+                    }
+                }
+                return false;
+            });
         }
 
         // Remove found images

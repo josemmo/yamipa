@@ -117,11 +117,6 @@ public class FakeItemFrame extends FakeEntity {
             .setData(orientation);
         tryToSendPacket(player, framePacket);
         plugin.fine("Spawned FakeItemFrame#" + this.id + " for Player#" + player.getName());
-
-        // Send pixels for all linked maps
-        for (FakeMap map : maps) {
-            map.sendPixels(player);
-        }
     }
 
     /**
@@ -130,6 +125,9 @@ public class FakeItemFrame extends FakeEntity {
      * @param step   Map step to send
      */
     public void render(@NotNull Player player, int step) {
+        // Send map pixels
+        maps[step].sendPixels(player);
+
         // Create and attach filled map
         ItemStack itemStack = MinecraftReflection.getBukkitItemStack(new ItemStack(Material.FILLED_MAP));
         NbtCompound itemStackNbt = NbtFactory.ofCompound("tag");
