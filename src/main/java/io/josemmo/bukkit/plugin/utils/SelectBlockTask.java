@@ -12,8 +12,6 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
-import org.bukkit.event.player.PlayerAnimationEvent;
-import org.bukkit.event.player.PlayerAnimationType;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.jetbrains.annotations.NotNull;
@@ -138,18 +136,6 @@ public class SelectBlockTask {
             }
 
             // Cancel event (if needed)
-            if (!allowEvent) {
-                event.setCancelled(true);
-            }
-        }
-
-        @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
-        public void onArmSwing(@NotNull PlayerAnimationEvent event) {
-            if (event.getAnimationType() != PlayerAnimationType.ARM_SWING) {
-                // Sanity check, vanilla Minecraft does not have any other player animation type
-                return;
-            }
-            boolean allowEvent = handle(event.getPlayer(), null, null);
             if (!allowEvent) {
                 event.setCancelled(true);
             }
