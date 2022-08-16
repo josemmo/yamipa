@@ -8,7 +8,6 @@ import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.events.PacketListener;
 import com.comphenix.protocol.wrappers.EnumWrappers;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
-import org.bukkit.Bukkit;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
@@ -87,13 +86,9 @@ public abstract class InteractWithEntityListener implements PacketListener {
         boolean allowEvent = true;
         try {
             if (action == EnumWrappers.EntityUseAction.ATTACK) {
-                allowEvent = Bukkit.getScheduler()
-                    .callSyncMethod(getPlugin(), () -> onAttack(player, targetBlock, targetBlockFace))
-                    .get();
+                allowEvent = onAttack(player, targetBlock, targetBlockFace);
             } else if (action == EnumWrappers.EntityUseAction.INTERACT_AT) {
-                allowEvent = Bukkit.getScheduler()
-                    .callSyncMethod(getPlugin(), () -> onInteract(player, targetBlock, targetBlockFace))
-                    .get();
+                allowEvent = onInteract(player, targetBlock, targetBlockFace);
             }
         } catch (Exception e) {
             YamipaPlugin.getInstance().log(Level.SEVERE, "Failed to notify entity listener handler", e);
