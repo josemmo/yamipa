@@ -232,30 +232,35 @@ public class ImageCommand {
     }
 
     public static void removeImage(@NotNull Player player) {
-        ImageRenderer renderer = YamipaPlugin.getInstance().getRenderer();
-
-        // Ask user to select fake image
         SelectBlockTask task = new SelectBlockTask(player);
         task.onSuccess((location, face) -> {
-            FakeImage image = renderer.getImage(location, face);
+            FakeImage image = YamipaPlugin.getInstance().getRenderer().getImage(location, face);
             if (image == null) {
                 ActionBar.send(player, ChatColor.RED + "That is not a valid image!");
                 return;
             }
 
-            // Check player permissions
-            for (Location loc : image.getAllLocations()) {
-                if (!Permissions.canEditBlock(player, loc)) {
-                    ActionBar.send(player, ChatColor.RED + "You're not allowed to remove this image!");
-                    return;
-                }
             }
 
-            // Trigger image removal
-            renderer.removeImage(image);
+            // Attempt to remove image
+            removeImage(player, image);
         });
         task.onFailure(() -> ActionBar.send(player, ChatColor.RED + "Image removing canceled"));
         task.run("Right click an image to continue");
+    }
+
+    public static boolean removeImage(@NotNull Player player, @NotNull FakeImage image) {
+        // Check block permissions
+        for (Location loc : image.getAllLocations()) {
+            if (!Permissions.canEditBlock(player, loc)) {
+                ActionBar.send(player, ChatColor.RED + "You're not allowed to remove this image!");
+                return false;
+            }
+        }
+
+        // Trigger image removal
+        YamipaPlugin.getInstance().getRenderer().removeImage(image);
+        return true;
     }
 
     public static void clearImages(

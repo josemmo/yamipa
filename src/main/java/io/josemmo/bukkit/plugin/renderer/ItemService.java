@@ -3,6 +3,7 @@ package io.josemmo.bukkit.plugin.renderer;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
 import io.josemmo.bukkit.plugin.commands.ImageCommand;
 import io.josemmo.bukkit.plugin.storage.ImageFile;
+import io.josemmo.bukkit.plugin.utils.ActionBar;
 import io.josemmo.bukkit.plugin.utils.InteractWithEntityListener;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -139,7 +140,7 @@ public class ItemService extends InteractWithEntityListener implements Listener 
         ImageFile image = YamipaPlugin.getInstance().getStorage().get(filename);
         if (image == null) {
             plugin.warning(player + " tried to place corrupted image item (\"" + filename + "\" no longer exists)");
-            player.sendMessage(ChatColor.RED + "Image file \"" + filename + "\" no longer exists");
+            ActionBar.send(player, ChatColor.RED + "Image file \"" + filename + "\" no longer exists");
             return;
         }
 
@@ -176,8 +177,11 @@ public class ItemService extends InteractWithEntityListener implements Listener 
         FakeImage image = renderer.getImage(location, face);
         if (image == null || !image.hasFlag(FakeImage.FLAG_REMOVABLE)) return true;
 
-        // Remove image from renderer
-        renderer.removeImage(image);
+        // Attempt to remove image
+        boolean success = ImageCommand.removeImage(player, image);
+        if (!success) {
+            return true;
+        }
 
         // Drop image item
         if (player.getGameMode() == GameMode.SURVIVAL && image.hasFlag(FakeImage.FLAG_DROPPABLE)) {
