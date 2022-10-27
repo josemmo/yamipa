@@ -394,6 +394,8 @@ public class FakeImage extends FakeEntity {
      * @param player Player instance
      */
     public void spawn(@NotNull Player player) {
+        plugin.fine("Received request to spawn FakeImage#(" + location + "," + face + ") for Player#" + player.getName());
+
         // Send pixels if instance is already loaded
         if (frames != null) {
             spawnOnceLoaded(player);
@@ -447,6 +449,11 @@ public class FakeImage extends FakeEntity {
      * @param player Player instance or NULL for all observing players
      */
     public void destroy(@Nullable Player player) {
+        plugin.fine(
+            "Received request to destroy FakeImage#(" + location + "," + face + ") for " +
+            (player == null ? "all players" : "Player#" + player.getName())
+        );
+
         // Send packets to destroy item frames
         if (frames != null) {
             Set<Player> targets = (player == null) ? observingPlayers : Collections.singleton(player);
