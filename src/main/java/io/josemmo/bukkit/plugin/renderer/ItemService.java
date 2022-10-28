@@ -147,6 +147,12 @@ public class ItemService extends InteractWithEntityListener implements Listener 
         // Prevent item frame placing
         event.setCancelled(true);
 
+        // Validate player permissions
+        if (!player.hasPermission("yamipa.item.place")) {
+            ActionBar.send(player, ChatColor.RED + "You're not allowed to place image items!");
+            return;
+        }
+
         // Try to place image in world
         Location location = event.getBlock().getLocation();
         boolean success = ImageCommand.placeImage(player, image, width, height, flags, location, event.getBlockFace());
@@ -176,6 +182,19 @@ public class ItemService extends InteractWithEntityListener implements Listener 
         // Has the player clicked a removable placed image?
         FakeImage image = renderer.getImage(location, face);
         if (image == null || !image.hasFlag(FakeImage.FLAG_REMOVABLE)) return true;
+
+        // Validate player permissions
+        if (!player.hasPermission("yamipa.item.remove.own")) {
+            ActionBar.send(player, ChatColor.RED + "You're not allowed to remove image items!");
+            return true;
+        }
+        if (
+            !player.getUniqueId().equals(image.getPlacedBy().getUniqueId()) &&
+            !player.hasPermission("yamipa.item.remove")
+        ) {
+            ActionBar.send(player, ChatColor.RED + "You cannot remove image items from other players!");
+            return true;
+        }
 
         // Attempt to remove image
         boolean success = ImageCommand.removeImage(player, image);

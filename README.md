@@ -97,20 +97,29 @@ This plugin adds the following commands:
 ## Permissions
 If you want more granular control over the players who can use a particular set of commands, permissions are the way to go!
 
-Yamipa defines the following permissions, each one corresponding to the command with the same name:
+Yamipa defines the following permissions:
 
-- `yamipa.clear`
-- `yamipa.describe`
-- `yamipa.download`
-- `yamipa.give`
-- `yamipa.list`
-- `yamipa.place`
-- `yamipa.remove`
-- `yamipa.top`
+| Command                     |   Default   | Description                                                     |
+|:----------------------------|:-----------:|:----------------------------------------------------------------|
+| `yamipa.command.clear`      |     OPs     | To use the `/image clear` command                               |
+| `yamipa.command.describe`   |     OPs     | To use the `/image describe` command                            |
+| `yamipa.command.download`   |     OPs     | To use the `/image download` command                            |
+| `yamipa.command.give`       |     OPs     | To use the `/image give` download                               |
+| `yamipa.command.list`       |     OPs     | To use the `/image list` command                                |
+| `yamipa.command.place`      |     OPs     | To use the `/image place` command                               |
+| `yamipa.command.remove`     |     OPs     | To use the `/image remove` command                              |
+| `yamipa.command.remove.own` |     OPs     | Same as previous, but only for images placed by the same player |
+| `yamipa.command.top`        |     OPs     | To use the `/image top` command                                 |
+| `yamipa.item.place`         | All players | To place image items                                            |
+| `yamipa.item.remove`        | All players | To remove image items (that have the `REMO` flag)               |
+| `yamipa.item.remove.own`    | All players | Same as previous, but only for images placed by the same player |
 
-By default, only server OPs have all permissions granted. You can change this by using a permission plugin,
+Note that permissions work **as a tree**. This means that if you grant a permission, by default its children will also
+be granted. For instance, you can grant access to all commands with `yamipa.command.*`.
+Similarly, if you grant the `yamipa.command.remove`, the permission `yamipa.command.remove.own` will also be granted.
+
+You can change which roles or players are granted these commands by using a permission plugin,
 such as [LuckPerms](https://luckperms.net/) or [GroupManager](https://elgarl.github.io/GroupManager/).
-
 Both these plugins have been tested to work with Yamipa, although any similar one should work just fine.
 
 ## Protecting areas

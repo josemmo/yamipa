@@ -35,28 +35,28 @@ public class ImageCommand {
         String cmd = "/" + commandName;
         s.sendMessage(ChatColor.BOLD + "=== Yamipa Plugin Help ===");
         s.sendMessage(ChatColor.AQUA + cmd + ChatColor.RESET + " - Show this help");
-        if (s.hasPermission("yamipa.clear")) {
+        if (s.hasPermission("yamipa.command.clear") || s.hasPermission("yamipa.clear")) {
             s.sendMessage(ChatColor.AQUA + cmd + " clear <x z w> <r> [<player>]" + ChatColor.RESET + " - Remove placed images");
         }
-        if (s.hasPermission("yamipa.describe")) {
+        if (s.hasPermission("yamipa.command.describe") || s.hasPermission("yamipa.describe")) {
             s.sendMessage(ChatColor.AQUA + cmd + " describe" + ChatColor.RESET + " - Describe placed image");
         }
-        if (s.hasPermission("yamipa.download")) {
+        if (s.hasPermission("yamipa.command.download") || s.hasPermission("yamipa.download")) {
             s.sendMessage(ChatColor.AQUA + cmd + " download <url> <filename>" + ChatColor.RESET + " - Download image");
         }
-        if (s.hasPermission("yamipa.give")) {
+        if (s.hasPermission("yamipa.command.give") || s.hasPermission("yamipa.give")) {
             s.sendMessage(ChatColor.AQUA + cmd + " give <p> <filename> <#> <w> [<h>] [<f>]" + ChatColor.RESET + " - Give items");
         }
-        if (s.hasPermission("yamipa.list")) {
+        if (s.hasPermission("yamipa.command.list") || s.hasPermission("yamipa.list")) {
             s.sendMessage(ChatColor.AQUA + cmd + " list [<page>]" + ChatColor.RESET + " - List all images");
         }
-        if (s.hasPermission("yamipa.place")) {
+        if (s.hasPermission("yamipa.command.place") || s.hasPermission("yamipa.place")) {
             s.sendMessage(ChatColor.AQUA + cmd + " place <filename> <w> [<h>] [<f>]" + ChatColor.RESET + " - Place image");
         }
-        if (s.hasPermission("yamipa.remove")) {
+        if (s.hasPermission("yamipa.command.remove.own") || s.hasPermission("yamipa.remove")) {
             s.sendMessage(ChatColor.AQUA + cmd + " remove" + ChatColor.RESET + " - Remove a single placed image");
         }
-        if (s.hasPermission("yamipa.top")) {
+        if (s.hasPermission("yamipa.command.top") || s.hasPermission("yamipa.top")) {
             s.sendMessage(ChatColor.AQUA + cmd + " top" + ChatColor.RESET + " - List players with the most images");
         }
     }
@@ -240,6 +240,14 @@ public class ImageCommand {
                 return;
             }
 
+            // Check player's command permissions
+            if (
+                !player.getUniqueId().equals(image.getPlacedBy().getUniqueId()) &&
+                !player.hasPermission("yamipa.command.remove") &&
+                !player.hasPermission("yamipa.remove")
+            ) {
+                ActionBar.send(player, ChatColor.RED + "You cannot remove images from other players!");
+                return;
             }
 
             // Attempt to remove image

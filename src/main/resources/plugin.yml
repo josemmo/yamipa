@@ -11,9 +11,13 @@ softdepend:
   - WorldGuard
 
 permissions:
+  # All plugin permissions
   yamipa.*:
     default: op
     children:
+      yamipa.command.*: true
+      yamipa.item.*: true
+      # Legacy children
       yamipa.clear: true
       yamipa.describe: true
       yamipa.download: true
@@ -22,6 +26,60 @@ permissions:
       yamipa.place: true
       yamipa.remove: true
       yamipa.top: true
+
+  # All command permissions
+  yamipa.command.*:
+    default: op
+    children:
+      yamipa.command.clear: true
+      yamipa.command.describe: true
+      yamipa.command.download: true
+      yamipa.command.give: true
+      yamipa.command.list: true
+      yamipa.command.place: true
+      yamipa.command.remove: true
+      yamipa.command.top: true
+
+  # Command permissions
+  yamipa.command.clear:
+    default: op
+  yamipa.command.describe:
+    default: op
+  yamipa.command.download:
+    default: op
+  yamipa.command.give:
+    default: op
+  yamipa.command.list:
+    default: op
+  yamipa.command.place:
+    default: op
+  yamipa.command.remove:
+    default: op
+    children:
+      yamipa.command.remove.own: true
+  yamipa.command.remove.own:
+    default: op
+  yamipa.command.top:
+    default: op
+
+  # All item permissions
+  yamipa.item.*:
+    default: true
+    children:
+      yamipa.item.place: true
+      yamipa.item.remove: true
+
+  # Item permissions
+  yamipa.item.place:
+    default: true
+  yamipa.item.remove:
+    default: true
+    children:
+      yamipa.item.remove.own: true
+  yamipa.item.remove.own:
+    default: true
+
+  # Legacy permissions
   yamipa.clear:
     default: op
   yamipa.describe:

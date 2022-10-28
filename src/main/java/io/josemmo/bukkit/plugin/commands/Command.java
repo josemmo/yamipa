@@ -53,11 +53,18 @@ public class Command {
 
     /**
      * Add permission requirement to this command
-     * @param  permission Permission name
-     * @return            This instance
+     * @param  permissions Permission names (match as least one)
+     * @return             This instance
      */
-    public @NotNull Command withPermission(@NotNull String permission) {
-        return withRequirement(sender -> sender.hasPermission(permission));
+    public @NotNull Command withPermission(@NotNull String ...permissions) {
+        return withRequirement(sender -> {
+            for (String permission : permissions) {
+                if (sender.hasPermission(permission)) {
+                    return true;
+                }
+            }
+            return false;
+        });
     }
 
     /**
