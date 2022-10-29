@@ -1,11 +1,14 @@
 package io.josemmo.bukkit.plugin;
 
+import com.google.common.io.ByteStreams;
 import io.josemmo.bukkit.plugin.commands.ImageCommandBridge;
 import io.josemmo.bukkit.plugin.renderer.FakeEntity;
 import io.josemmo.bukkit.plugin.renderer.FakeImage;
 import io.josemmo.bukkit.plugin.renderer.ImageRenderer;
 import io.josemmo.bukkit.plugin.renderer.ItemService;
+import io.josemmo.bukkit.plugin.storage.ImageFile;
 import io.josemmo.bukkit.plugin.storage.ImageStorage;
+import io.josemmo.bukkit.plugin.web.JettyServer;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.SimplePie;
 import org.bukkit.Bukkit;
@@ -13,6 +16,14 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -22,11 +33,19 @@ import java.util.logging.Level;
 public class YamipaPlugin extends JavaPlugin {
     public static final int BSTATS_PLUGIN_ID = 10243;
     private static YamipaPlugin instance;
+
     private boolean verbose;
     private ImageStorage storage;
     private ImageRenderer renderer;
     private ItemService itemService;
     private ScheduledExecutorService scheduler;
+
+    private boolean uploadEnabled = false;
+    private String uploadHostname = "localhost";
+    private int uploadPort = 8877;
+    private String uploadFormHtml;
+
+    public static String uploadUrl = "http://localhost:8877/upload";
 
     /**
      * Get plugin instance
@@ -78,6 +97,9 @@ public class YamipaPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
+
+        readConfig();
+
         // Initialize logger
         verbose = getConfig().getBoolean("verbose");
         if (verbose) {
@@ -127,6 +149,18 @@ public class YamipaPlugin extends JavaPlugin {
             fine("ProtocolLib is now ready");
         });
 
+
+        if(uploadEnabled) {
+            // Start an embedded webserver on the configured port
+            try {
+                JettyServer jettyServer = new JettyServer();
+                jettyServer.start();
+            } catch(Exception e) {
+                warning("Failed to start image upload webserver: " + e + ", upload disabled!");
+                uploadEnabled = false;
+            }
+        }
+
         // Initialize bStats
         Function<Integer, String> toStats = number -> {
             if (number >= 1000) return "1000+";
@@ -140,6 +174,36 @@ public class YamipaPlugin extends JavaPlugin {
         metrics.addCustomChart(new SimplePie("animate_images", () -> FakeImage.isAnimationEnabled() ? "true" : "false"));
         metrics.addCustomChart(new SimplePie("number_of_image_files", () -> toStats.apply(storage.size())));
         metrics.addCustomChart(new SimplePie("number_of_placed_images", () -> toStats.apply(renderer.size())));
+    }
+
+    public class ImageServlet extends HttpServlet {
+
+        protected void doGet(
+            HttpServletRequest request,
+            HttpServletResponse response)
+            throws ServletException, IOException {
+            response.setContentType("application/json");
+            response.setStatus(HttpServletResponse.SC_OK);
+            response.getWriter().println(uploadFormHtml);
+        }
+
+        protected void doPost(
+            HttpServletRequest request,
+            HttpServletResponse response) {
+
+        }
+    }
+
+    private void processUploadedFile(File uploadedFile) {
+        log(Level.INFO, "Image file uploaded: " + uploadedFile);
+        String lowName = uploadedFile.getName().toLowerCase();
+        if(!lowName.endsWith(".png") && !lowName.endsWith(".gif") && !lowName.endsWith(".jpg") && !lowName.endsWith(".jpeg")) {
+            warning("Unsupported image file format, image not supported: " + lowName);
+            uploadedFile.delete();
+        } else {
+            // copy uploaded file into images folder
+            storage.add(uploadedFile.getName(), new ImageFile(uploadedFile.getName(), uploadedFile.getAbsolutePath()));
+        }
     }
 
     @Override
@@ -213,5 +277,22 @@ public class YamipaPlugin extends JavaPlugin {
      */
     public void fine(@NotNull String message) {
         log(Level.FINE, message);
+    }
+
+    private void readConfig() {
+        saveDefaultConfig();
+        uploadEnabled = getConfig().getBoolean("uploadEnabled", false);
+        if(uploadEnabled) {
+            uploadHostname = getConfig().getString("uploadHostname", "localhost");
+            uploadPort = getConfig().getInt("uploadPort", 8877);
+            uploadUrl = "http://" + uploadHostname + ":" + uploadPort + "/upload";
+            try {
+                InputStream htmlFormIn = getResource("uploadForm.html");
+                uploadFormHtml = new String(ByteStreams.toByteArray(htmlFormIn));
+            } catch(IOException e) {
+                warning("Failed to load upload HTML template: " + e + ", upload is disabled!");
+                uploadEnabled = false;
+            }
+        }
     }
 }

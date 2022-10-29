@@ -5,6 +5,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
@@ -157,5 +158,15 @@ public class ImageStorage {
      */
     public synchronized @Nullable ImageFile get(@NotNull String filename) {
         return cachedImages.get(filename);
+    }
+
+    /**
+     * Adds an (uploaded) image to the cache.
+     *
+     * @param filename The filename (key)
+     * @param image The image object (value)
+     */
+    public synchronized void add(@NotNull String filename, @NotNull ImageFile image) {
+        cachedImages.put(filename, image);
     }
 }

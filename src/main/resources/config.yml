@@ -1,0 +1,19 @@
+# This is the Yamiga configuration
+
+# Set to "true" to enable the command "/image upload"
+uploadEnabled: true
+
+# Set to "true" to enable more verbose logging
+verbose: false
+
+# Set to "false" to disable GIF support
+animate-images: true
+
+# Path to images directory
+images-path: images
+
+# Path to cache directory
+cache-path: cache
+
+# Path to placed images database file
+data-path: images.dat

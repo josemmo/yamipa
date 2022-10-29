@@ -7,6 +7,10 @@ import io.josemmo.bukkit.plugin.commands.arguments.*;
 import io.josemmo.bukkit.plugin.renderer.FakeImage;
 import io.josemmo.bukkit.plugin.storage.ImageFile;
 import io.josemmo.bukkit.plugin.utils.Internals;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
@@ -16,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ImageCommandBridge {
     public static final String COMMAND_NAME = "yamipa";
-    public static final String[] COMMAND_ALIASES = new String[] {"image", "images"};
+    public static final String[] COMMAND_ALIASES = new String[] {"image", "images", "upload"};
 
     /**
      * Register command
@@ -66,7 +70,8 @@ public class ImageCommandBridge {
                 "yamipa.command.list", "yamipa.list",
                 "yamipa.command.place", "yamipa.place",
                 "yamipa.command.remove.own", "yamipa.remove",
-                "yamipa.command.top", "yamipa.top"
+                "yamipa.command.top", "yamipa.top",
+                "yamipa.command.upload", "yamipa.upload"
             )
             .executes((sender, args) -> {
                 ImageCommand.showHelp(sender, (String) args[0]);
@@ -109,6 +114,18 @@ public class ImageCommandBridge {
             .withArgument(new StringArgument("filename"))
             .executes((sender, args) -> {
                 ImageCommand.downloadImage(sender, (String) args[1], (String) args[2]);
+            });
+
+        // Upload command
+        root.addSubcommand("upload")
+            .withPermission("yamipa.command.upload", "yamipa.upload")
+            .executesPlayer((player, __) -> {
+                String message = YamipaPlugin.uploadUrl;
+                TextComponent pre = new TextComponent("Upload link: ");
+                TextComponent text = new TextComponent(message);
+                text.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder().append(pre).append(text).create()));
+                text.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, YamipaPlugin.uploadUrl));
+                player.spigot().sendMessage(text);
             });
 
         // Give subcommand

@@ -7,6 +7,7 @@ import io.josemmo.bukkit.plugin.renderer.FakeMap;
 import io.josemmo.bukkit.plugin.renderer.FakeMapsContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.metadata.IIOMetadata;
@@ -21,8 +22,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -46,7 +47,7 @@ public class ImageFile {
      * @param name Image file name
      * @param path Path to image file
      */
-    protected ImageFile(@NotNull String name, @NotNull String path) {
+    public ImageFile(@NotNull String name, @NotNull String path) {
         this.name = name;
         this.path = path;
     }
