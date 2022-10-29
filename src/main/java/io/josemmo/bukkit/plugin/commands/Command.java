@@ -119,6 +119,12 @@ public class Command {
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     private @NotNull ArgumentBuilder buildElement(@NotNull ArgumentBuilder parent, int argIndex) {
+        // Attach requirement handler to each command element
+        parent.requires(source -> {
+            CommandSender sender = Internals.getBukkitSender(source);
+            return requirementHandler.test(sender);
+        });
+
         // Chain command elements from the bottom-up
         if (argIndex < arguments.size()) {
             parent.then(buildElement(arguments.get(argIndex).build(), argIndex+1)).executes(ctx -> {
@@ -128,12 +134,6 @@ public class Command {
             });
             return parent;
         }
-
-        // Attach requirement handler to last command element
-        parent.requires(source -> {
-            CommandSender sender = Internals.getBukkitSender(source);
-            return requirementHandler.test(sender);
-        });
 
         // Attach execution handler to last command element
         if (executesPlayerHandler != null) {
