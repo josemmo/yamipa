@@ -9,7 +9,7 @@
     <version>1.2.7-upload-SNAPSHOT</version>
 
     <properties>
-        <undertow.version>2.1.0.Final</undertow.version>
+        <jetty.version>11.0.5</jetty.version>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -80,11 +80,24 @@
             <version>23.0.0</version>
             <scope>provided</scope>
         </dependency>
-        <!-- File upload stuff -->
+        <!-- Embedded webserver for uploads -->
+        <!-- Jakarta Servlets API -->
         <dependency>
-            <groupId>commons-fileupload</groupId>
-            <artifactId>commons-fileupload</artifactId>
-            <version>1.4</version>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
+            <version>5.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <!-- Jetty for file upload -->
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-server</artifactId>
+            <version>${jetty.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-annotations</artifactId>
+            <version>${jetty.version}</version>
         </dependency>
     </dependencies>
 

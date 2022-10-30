@@ -7,6 +7,7 @@ import io.josemmo.bukkit.plugin.commands.arguments.*;
 import io.josemmo.bukkit.plugin.renderer.FakeImage;
 import io.josemmo.bukkit.plugin.storage.ImageFile;
 import io.josemmo.bukkit.plugin.utils.Internals;
+import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
@@ -122,7 +123,11 @@ public class ImageCommandBridge {
             .executesPlayer((player, __) -> {
                 String message = YamipaPlugin.uploadUrl;
                 TextComponent pre = new TextComponent("Upload link: ");
+                pre.setColor(ChatColor.WHITE);
                 TextComponent text = new TextComponent(message);
+                text.setBold(true);
+                text.setUnderlined(true);
+                text.setColor(ChatColor.GREEN);
                 text.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder().append(pre).append(text).create()));
                 text.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, YamipaPlugin.uploadUrl));
                 player.spigot().sendMessage(text);

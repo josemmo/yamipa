@@ -1,9 +1,13 @@
 <html>
 <head><title>Yamipa Plugin Image Upload</title></head>
 <body>
-<form action="/upload" enctype="multipart/form-data">
-    <input type="file" id="imageFile" name="filename">
-    <input type="submit">
+<h3>Yamipa Image Upload</h3>
+<p></p>
+Upload a PNG, JPG or GIF image file here.
+<p></p>
+<form action="/upload" method="POST" enctype="multipart/form-data">
+    <input type="file" id="imageFile" name="imageFile">
+    <input type="submit" value="Upload image">
 </form>
 <p></p>
 <span><!-- MSG --></span>

@@ -6,9 +6,8 @@ import io.josemmo.bukkit.plugin.renderer.FakeEntity;
 import io.josemmo.bukkit.plugin.renderer.FakeImage;
 import io.josemmo.bukkit.plugin.renderer.ImageRenderer;
 import io.josemmo.bukkit.plugin.renderer.ItemService;
-import io.josemmo.bukkit.plugin.storage.ImageFile;
 import io.josemmo.bukkit.plugin.storage.ImageStorage;
-import io.josemmo.bukkit.plugin.web.WebServer;
+import io.josemmo.bukkit.plugin.web.JettyServer;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.SimplePie;
 import org.bukkit.Bukkit;
@@ -17,7 +16,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
@@ -145,15 +143,14 @@ public class YamipaPlugin extends JavaPlugin {
             fine("ProtocolLib is now ready");
         });
 
-        info("***************************************** UPLOAD ENABLED: " + uploadEnabled);
         if(uploadEnabled) {
             // Start an embedded webserver on the configured port
             try {
-                WebServer webServer = new WebServer(uploadFormHtml, uploadHostname, uploadPort, getLogger(), storage);
-                webServer.start();
+                JettyServer jettyServer = new JettyServer(uploadFormHtml, uploadHostname, uploadPort, getLogger(), storage);
+                jettyServer.start();
             } catch(Exception e) {
-                e.printStackTrace();
                 warning("Failed to start image upload webserver: " + e + ", upload disabled!");
+                e.printStackTrace();
                 uploadEnabled = false;
             }
         }
@@ -171,18 +168,6 @@ public class YamipaPlugin extends JavaPlugin {
         metrics.addCustomChart(new SimplePie("animate_images", () -> FakeImage.isAnimationEnabled() ? "true" : "false"));
         metrics.addCustomChart(new SimplePie("number_of_image_files", () -> toStats.apply(storage.size())));
         metrics.addCustomChart(new SimplePie("number_of_placed_images", () -> toStats.apply(renderer.size())));
-    }
-
-    private void processUploadedFile(File uploadedFile) {
-        log(Level.INFO, "Image file uploaded: " + uploadedFile);
-        String lowName = uploadedFile.getName().toLowerCase();
-        if(!lowName.endsWith(".png") && !lowName.endsWith(".gif") && !lowName.endsWith(".jpg") && !lowName.endsWith(".jpeg")) {
-            warning("Unsupported image file format, image not supported: " + lowName);
-            uploadedFile.delete();
-        } else {
-            // copy uploaded file into images folder
-            storage.add(uploadedFile.getName(), new ImageFile(uploadedFile.getName(), uploadedFile.getAbsolutePath()));
-        }
     }
 
     @Override
