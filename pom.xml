@@ -80,16 +80,11 @@
             <version>23.0.0</version>
             <scope>provided</scope>
         </dependency>
-        <!-- Embedded webserver for uploads -->
+        <!-- File upload stuff -->
         <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-server</artifactId>
-            <version>9.4.3.v20170317</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-servlet</artifactId>
-            <version>9.4.3.v20170317</version>
+            <groupId>commons-fileupload</groupId>
+            <artifactId>commons-fileupload</artifactId>
+            <version>1.4</version>
         </dependency>
     </dependencies>
 

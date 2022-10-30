@@ -8,7 +8,7 @@ import io.josemmo.bukkit.plugin.renderer.ImageRenderer;
 import io.josemmo.bukkit.plugin.renderer.ItemService;
 import io.josemmo.bukkit.plugin.storage.ImageFile;
 import io.josemmo.bukkit.plugin.storage.ImageStorage;
-import io.josemmo.bukkit.plugin.web.JettyServer;
+import io.josemmo.bukkit.plugin.web.WebServer;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.SimplePie;
 import org.bukkit.Bukkit;
@@ -17,10 +17,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -149,13 +145,14 @@ public class YamipaPlugin extends JavaPlugin {
             fine("ProtocolLib is now ready");
         });
 
-
+        info("***************************************** UPLOAD ENABLED: " + uploadEnabled);
         if(uploadEnabled) {
             // Start an embedded webserver on the configured port
             try {
-                JettyServer jettyServer = new JettyServer();
-                jettyServer.start();
+                WebServer webServer = new WebServer(uploadFormHtml, uploadHostname, uploadPort, getLogger(), storage);
+                webServer.start();
             } catch(Exception e) {
+                e.printStackTrace();
                 warning("Failed to start image upload webserver: " + e + ", upload disabled!");
                 uploadEnabled = false;
             }
@@ -174,24 +171,6 @@ public class YamipaPlugin extends JavaPlugin {
         metrics.addCustomChart(new SimplePie("animate_images", () -> FakeImage.isAnimationEnabled() ? "true" : "false"));
         metrics.addCustomChart(new SimplePie("number_of_image_files", () -> toStats.apply(storage.size())));
         metrics.addCustomChart(new SimplePie("number_of_placed_images", () -> toStats.apply(renderer.size())));
-    }
-
-    public class ImageServlet extends HttpServlet {
-
-        protected void doGet(
-            HttpServletRequest request,
-            HttpServletResponse response)
-            throws ServletException, IOException {
-            response.setContentType("application/json");
-            response.setStatus(HttpServletResponse.SC_OK);
-            response.getWriter().println(uploadFormHtml);
-        }
-
-        protected void doPost(
-            HttpServletRequest request,
-            HttpServletResponse response) {
-
-        }
     }
 
     private void processUploadedFile(File uploadedFile) {
