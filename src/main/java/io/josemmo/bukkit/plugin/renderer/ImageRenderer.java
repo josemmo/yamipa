@@ -362,6 +362,12 @@ public class ImageRenderer implements Listener {
      * @param location New player location
      */
     private void onPlayerLocationChange(@NotNull Player player, @NotNull Location location) {
+        // Ignore NPC events from other plugins
+        if (player.hasMetadata("NPC")) {
+            plugin.fine("Ignored NPC event from Player#" + player.getName());
+            return;
+        }
+
         // Has player moved to another world area?
         WorldAreaId worldAreaId = WorldAreaId.fromLocation(location);
         WorldAreaId prevWorldAreaId = playersLocation.get(player);
