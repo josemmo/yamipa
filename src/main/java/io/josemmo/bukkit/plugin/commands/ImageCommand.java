@@ -98,7 +98,7 @@ public class ImageCommand {
         // temp end
         if (sender instanceof Player) {
             Player player = (Player) sender;
-            if (!(payEnable && EconomyManager.deductMoney(player, pay))) {
+            if (payEnable && EconomyManager.deductMoney(player, pay)) {
                 sender.sendMessage(ChatColor.RED + "You don't have enough money to do this");
                 return;
             }
