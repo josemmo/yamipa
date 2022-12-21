@@ -9,6 +9,7 @@ softdepend:
   - Multiverse-Core
   - My_Worlds
   - WorldGuard
+  - Vault
 
 permissions:
   # All plugin permissions
