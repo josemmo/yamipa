@@ -5,6 +5,7 @@ import io.josemmo.bukkit.plugin.renderer.FakeImage;
 import io.josemmo.bukkit.plugin.renderer.ImageRenderer;
 import io.josemmo.bukkit.plugin.renderer.ItemService;
 import io.josemmo.bukkit.plugin.storage.ImageFile;
+import io.josemmo.bukkit.plugin.utils.EconomyManager;
 import io.josemmo.bukkit.plugin.utils.Permissions;
 import io.josemmo.bukkit.plugin.utils.SelectBlockTask;
 import io.josemmo.bukkit.plugin.utils.ActionBar;
@@ -90,6 +91,18 @@ public class ImageCommand {
     }
 
     public static void downloadImage(@NotNull CommandSender sender, @NotNull String rawUrl, @NotNull String filename) {
+        // Because there is no config.yml, I can only write this now
+        // temp start
+        double pay = -1;
+        boolean payEnable = (pay == -1) ? false : true;
+        // temp end
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            if (!(payEnable && EconomyManager.deductMoney(player, pay))) {
+                sender.sendMessage(ChatColor.RED + "You don't have enough money to do this");
+                return;
+            }
+        }
         YamipaPlugin plugin = YamipaPlugin.getInstance();
 
         // Validate destination file

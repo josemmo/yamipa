@@ -6,13 +6,16 @@ import io.josemmo.bukkit.plugin.renderer.FakeImage;
 import io.josemmo.bukkit.plugin.renderer.ImageRenderer;
 import io.josemmo.bukkit.plugin.renderer.ItemService;
 import io.josemmo.bukkit.plugin.storage.ImageStorage;
+import net.milkbowl.vault.economy.Economy;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.SimplePie;
 import org.bukkit.Bukkit;
 import org.bukkit.event.HandlerList;
+import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import java.nio.file.Path;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -27,9 +30,12 @@ public class YamipaPlugin extends JavaPlugin {
     private ImageRenderer renderer;
     private ItemService itemService;
     private ScheduledExecutorService scheduler;
+    private boolean vaultSupportEnabled = false;
+    private Economy vaultEcon;
 
     /**
      * Get plugin instance
+     *
      * @return Plugin instance
      */
     public static @NotNull YamipaPlugin getInstance() {
@@ -38,6 +44,7 @@ public class YamipaPlugin extends JavaPlugin {
 
     /**
      * Get image storage instance
+     *
      * @return Image storage instance
      */
     public @NotNull ImageStorage getStorage() {
@@ -46,6 +53,7 @@ public class YamipaPlugin extends JavaPlugin {
 
     /**
      * Get image renderer instance
+     *
      * @return Image renderer instance
      */
     public @NotNull ImageRenderer getRenderer() {
@@ -54,6 +62,7 @@ public class YamipaPlugin extends JavaPlugin {
 
     /**
      * Get internal tasks scheduler
+     *
      * @return Tasks scheduler
      */
     public @NotNull ScheduledExecutorService getScheduler() {
@@ -61,10 +70,20 @@ public class YamipaPlugin extends JavaPlugin {
     }
 
     /**
+     * Get this instance's vault economy hook
+     *
+     * @return Economy
+     */
+    public Economy getVaultEconomy() {
+        return vaultEcon;
+    }
+
+    /**
      * Get configuration value
+     *
      * @param path         Configuration key path
      * @param defaultValue Default value
-     * @return             Configuration value
+     * @return Configuration value
      */
     private @NotNull String getConfigValue(@NotNull String path, @NotNull String defaultValue) {
         String value = getConfig().getString(path);
@@ -127,6 +146,23 @@ public class YamipaPlugin extends JavaPlugin {
             fine("ProtocolLib is now ready");
         });
 
+        // Support Vault
+        fine("Waiting for Vault to be ready...");
+        if (getServer().getPluginManager().getPlugin("Vault") != null && getServer().getPluginManager().getPlugin("Vault").isEnabled()) {
+            RegisteredServiceProvider<Economy> econ = getServer().getServicesManager().getRegistration(net.milkbowl.vault.economy.Economy.class);
+            if (econ == null) {
+                log(Level.WARNING, "No economy plugin found by Vault! There will be no economy support!");
+                vaultSupportEnabled = false;
+            } else {
+                vaultEcon = econ.getProvider();
+                vaultSupportEnabled = true;
+                fine("Vault is now ready");
+            }
+        } else {
+            log(Level.WARNING, "Vault not enabled! There will be no economy support!");
+        }
+
+
         // Initialize bStats
         Function<Integer, String> toStats = number -> {
             if (number >= 1000) return "1000+";
@@ -163,6 +199,7 @@ public class YamipaPlugin extends JavaPlugin {
 
     /**
      * Log message
+     *
      * @param level   Record level
      * @param message Message
      * @param e       Throwable instance, NULL to ignore
@@ -184,6 +221,7 @@ public class YamipaPlugin extends JavaPlugin {
 
     /**
      * Log message
+     *
      * @param level   Record level
      * @param message Message
      */
@@ -193,6 +231,7 @@ public class YamipaPlugin extends JavaPlugin {
 
     /**
      * Log warning message
+     *
      * @param message Message
      */
     public void warning(@NotNull String message) {
@@ -201,6 +240,7 @@ public class YamipaPlugin extends JavaPlugin {
 
     /**
      * Log info message
+     *
      * @param message Message
      */
     public void info(@NotNull String message) {
@@ -209,6 +249,7 @@ public class YamipaPlugin extends JavaPlugin {
 
     /**
      * Log fine message
+     *
      * @param message Message
      */
     public void fine(@NotNull String message) {
