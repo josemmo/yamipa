@@ -5,10 +5,10 @@ import io.josemmo.bukkit.plugin.renderer.FakeImage;
 import io.josemmo.bukkit.plugin.renderer.ImageRenderer;
 import io.josemmo.bukkit.plugin.renderer.ItemService;
 import io.josemmo.bukkit.plugin.storage.ImageFile;
+import io.josemmo.bukkit.plugin.utils.ActionBar;
 import io.josemmo.bukkit.plugin.utils.EconomyManager;
 import io.josemmo.bukkit.plugin.utils.Permissions;
 import io.josemmo.bukkit.plugin.utils.SelectBlockTask;
-import io.josemmo.bukkit.plugin.utils.ActionBar;
 import org.bukkit.*;
 import org.bukkit.block.BlockFace;
 import org.bukkit.command.CommandSender;
@@ -17,8 +17,9 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import javax.imageio.ImageIO;
-import java.awt.Dimension;
+import java.awt.*;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -27,7 +28,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 public class ImageCommand {
     public static final int ITEMS_PER_PAGE = 9;
@@ -73,37 +77,34 @@ public class ImageCommand {
         }
 
         // Is the page number valid?
-        int firstImageIndex = Math.max(page-1, 0) * ITEMS_PER_PAGE;
+        int firstImageIndex = Math.max(page - 1, 0) * ITEMS_PER_PAGE;
         if (firstImageIndex >= numOfImages) {
             sender.sendMessage(ChatColor.RED + "Page " + page + " not found");
             return;
         }
 
         // Render list of images
-        int stopImageIndex = (page == 0) ? numOfImages : Math.min(numOfImages, firstImageIndex+ITEMS_PER_PAGE);
+        int stopImageIndex = (page == 0) ? numOfImages : Math.min(numOfImages, firstImageIndex + ITEMS_PER_PAGE);
         if (page > 0) {
             int maxPage = (int) Math.ceil((float) numOfImages / ITEMS_PER_PAGE);
             sender.sendMessage("=== Page " + page + " out of " + maxPage + " ===");
         }
-        for (int i=firstImageIndex; i<stopImageIndex; ++i) {
+        for (int i = firstImageIndex; i < stopImageIndex; ++i) {
             sender.sendMessage("" + ChatColor.GOLD + filenames[i]);
         }
     }
 
     public static void downloadImage(@NotNull CommandSender sender, @NotNull String rawUrl, @NotNull String filename) {
-        // Because there is no config.yml, I can only write this now
-        // temp start
-        double pay = -1;
-        boolean payEnable = (pay == -1) ? false : true;
-        // temp end
-        if (sender instanceof Player) {
+        YamipaPlugin plugin = YamipaPlugin.getInstance();
+
+        // Vault Support
+        if (sender instanceof Player && YamipaPlugin.vaultSupportEnabled) {
             Player player = (Player) sender;
-            if (payEnable && EconomyManager.deductMoney(player, pay)) {
+            if (EconomyManager.deductMoney(player, YamipaPlugin.payMoney)) {
                 sender.sendMessage(ChatColor.RED + "You don't have enough money to do this");
                 return;
             }
         }
-        YamipaPlugin plugin = YamipaPlugin.getInstance();
 
         // Validate destination file
         Path basePath = Paths.get(plugin.getStorage().getBasePath());
@@ -126,7 +127,7 @@ public class ImageCommand {
             // Giphy.com
             if (url.getHost().equals("giphy.com")) {
                 String path = url.getPath();
-                String id = path.substring(path.lastIndexOf('-')+1);
+                String id = path.substring(path.lastIndexOf('-') + 1);
                 url = new URL("https://media.giphy.com/media/" + id + "/giphy.gif");
                 referrer = "https://giphy.com/";
             }
@@ -138,8 +139,8 @@ public class ImageCommand {
                     url = new URL("https://imgur.com/a/" + parts[1] + "/zip");
                     referrer = "https://imgur.com/a/" + parts[1];
                 } else {
-                    url = new URL("https://imgur.com/download/" + parts[parts.length-1] + "/");
-                    referrer = "https://imgur.com/" + parts[parts.length-1];
+                    url = new URL("https://imgur.com/download/" + parts[parts.length - 1] + "/");
+                    referrer = "https://imgur.com/" + parts[parts.length - 1];
                 }
             }
         } catch (MalformedURLException e) {
@@ -256,8 +257,8 @@ public class ImageCommand {
             // Check player's command permissions
             if (
                 !player.getUniqueId().equals(image.getPlacedBy().getUniqueId()) &&
-                !player.hasPermission("yamipa.command.remove") &&
-                !player.hasPermission("yamipa.remove")
+                    !player.hasPermission("yamipa.command.remove") &&
+                    !player.hasPermission("yamipa.remove")
             ) {
                 ActionBar.send(player, ChatColor.RED + "You cannot remove images from other players!");
                 return;
@@ -295,10 +296,10 @@ public class ImageCommand {
         // Get images in area
         Set<FakeImage> images = renderer.getImages(
             origin.getWorld(),
-            origin.getBlockX()-radius+1,
-            origin.getBlockX()+radius-1,
-            origin.getBlockZ()-radius+1,
-            origin.getBlockZ()+radius-1
+            origin.getBlockX() - radius + 1,
+            origin.getBlockX() + radius - 1,
+            origin.getBlockZ() - radius + 1,
+            origin.getBlockZ() + radius - 1
         );
 
         // Filter out images not placed by targeted player
@@ -422,7 +423,7 @@ public class ImageCommand {
             // Skip line if irrelevant
             if (player.getUniqueId().equals(senderId)) {
                 hasShownSender = true;
-            } else if (!hasShownSender && printedLines == ITEMS_PER_PAGE-1) {
+            } else if (!hasShownSender && printedLines == ITEMS_PER_PAGE - 1) {
                 continue; // Leave last line empty for sender rank
             } else if (printedLines >= ITEMS_PER_PAGE) {
                 break; // Stop printing players when chat is filled
@@ -436,8 +437,8 @@ public class ImageCommand {
             // Render player line
             sender.sendMessage(
                 "" + ChatColor.BOLD + (rank > 1000 ? "1000+" : rank) + ChatColor.RESET + ". " +
-                playerName + ChatColor.RESET +
-                ChatColor.GRAY + " - " + value + " " + (value == 1 ? "image" : "images")
+                    playerName + ChatColor.RESET +
+                    ChatColor.GRAY + " - " + value + " " + (value == 1 ? "image" : "images")
             );
             ++printedLines;
         }
@@ -469,8 +470,8 @@ public class ImageCommand {
         player.getInventory().addItem(itemStack);
         sender.sendMessage(
             ChatColor.ITALIC + "Added " + amount + " " +
-            (amount == 1 ? "image item" : "image items") +
-            " to " + player.getName() + "'s inventory"
+                (amount == 1 ? "image item" : "image items") +
+                " to " + player.getName() + "'s inventory"
         );
     }
 }

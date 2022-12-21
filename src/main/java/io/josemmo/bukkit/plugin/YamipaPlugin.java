@@ -24,13 +24,15 @@ import java.util.logging.Level;
 
 public class YamipaPlugin extends JavaPlugin {
     public static final int BSTATS_PLUGIN_ID = 10243;
+    public static boolean vaultSupportEnabled;
+    public static double payMoney;
+    public static boolean payMoneyEnable;
     private static YamipaPlugin instance;
     private boolean verbose;
     private ImageStorage storage;
     private ImageRenderer renderer;
     private ItemService itemService;
     private ScheduledExecutorService scheduler;
-    private boolean vaultSupportEnabled = false;
     private Economy vaultEcon;
 
     /**
@@ -111,6 +113,8 @@ public class YamipaPlugin extends JavaPlugin {
         String imagesPath = getConfigValue("images-path", "images");
         String cachePath = getConfigValue("cache-path", "cache");
         String dataPath = getConfigValue("data-path", "images.dat");
+        payMoney = getConfig().getDouble("pay-money", -1);
+        payMoneyEnable = (payMoney != -1);
 
         // Create image storage
         storage = new ImageStorage(
