@@ -57,10 +57,11 @@ public class FakeImage extends FakeEntity {
     private int currentStep = -1; // Current animation step
 
     /**
-     * Enable plugin-wide image animation support
+     * Configure class
+     * @param animImages Animate images
      */
-    public static void enableAnimation() {
-        animateImages = true;
+    public static void configure(boolean animImages) {
+        animateImages = animImages;
     }
 
     /**
