@@ -5,11 +5,15 @@ import com.sk89q.worldguard.LocalPlayer;
 import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.internal.platform.WorldGuardPlatform;
+import io.josemmo.bukkit.plugin.YamipaPlugin;
 import me.ryanhamshire.GriefPrevention.GriefPrevention;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import java.util.concurrent.Callable;
+import java.util.logging.Level;
 
 public class Permissions {
     @Nullable private static WorldGuard worldGuard = null;
@@ -48,8 +52,20 @@ public class Permissions {
         }
 
         // Check GriefPrevention permissions
-        if (griefPrevention != null && griefPrevention.allowBuild(player, location) != null) {
-            return false;
+        if (griefPrevention != null) {
+            YamipaPlugin plugin = YamipaPlugin.getInstance();
+            Callable<Boolean> canEditCallable = () -> griefPrevention.allowBuild(player, location) == null;
+            try {
+                Boolean canEdit = Bukkit.isPrimaryThread() ?
+                    canEditCallable.call() :
+                    Bukkit.getScheduler().callSyncMethod(plugin, canEditCallable).get();
+                if (!canEdit) {
+                    return false;
+                }
+            } catch (Exception e) {
+                plugin.log(Level.SEVERE, "Failed to get player permissions from GriefPrevention", e);
+                return false;
+            }
         }
 
         // Passed all checks, player can edit this block
