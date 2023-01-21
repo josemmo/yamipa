@@ -4,12 +4,14 @@ import io.josemmo.bukkit.plugin.YamipaPlugin;
 import io.josemmo.bukkit.plugin.utils.CsvConfiguration;
 import org.bukkit.*;
 import org.bukkit.block.BlockFace;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.*;
+import org.bukkit.event.vehicle.VehicleMoveEvent;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -436,5 +438,17 @@ public class ImageRenderer implements Listener {
         if (event.getTo() == null) return;
         if (event.getFrom().getChunk().equals(event.getTo().getChunk())) return;
         onPlayerLocationChange(event.getPlayer(), event.getTo());
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
+    public void onVehicleMove(@NotNull VehicleMoveEvent event) {
+        List<Entity> passengers = event.getVehicle().getPassengers();
+        if (passengers.isEmpty()) return;
+        if (event.getFrom().getChunk().equals(event.getTo().getChunk())) return;
+        for (Entity passenger : passengers) {
+            if (passenger instanceof Player) {
+                onPlayerLocationChange((Player) passenger, event.getTo());
+            }
+        }
     }
 }
