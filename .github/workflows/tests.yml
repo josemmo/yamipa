@@ -85,8 +85,9 @@ jobs:
           else
             url="https://github.com/dmulloy2/ProtocolLib/releases/download/4.8.0/ProtocolLib.jar"
           fi
-          mkdir -p ./server/plugins
+          mkdir -p ./server/plugins/ProtocolLib
           wget -q "$url" -O ./server/plugins/ProtocolLib.jar
+          echo -e "global:\n  auto updater:\n    notify: false\n    download: false" > ./server/plugins/ProtocolLib/config.yml
 
       # Install plugin
       - name: Install plugin

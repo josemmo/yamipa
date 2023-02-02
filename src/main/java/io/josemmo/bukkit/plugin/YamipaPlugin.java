@@ -60,17 +60,6 @@ public class YamipaPlugin extends JavaPlugin {
         return scheduler;
     }
 
-    /**
-     * Get configuration value
-     * @param path         Configuration key path
-     * @param defaultValue Default value
-     * @return             Configuration value
-     */
-    private @NotNull String getConfigValue(@NotNull String path, @NotNull String defaultValue) {
-        String value = getConfig().getString(path);
-        return (value == null) ? defaultValue : value;
-    }
-
     @Override
     public void onLoad() {
         instance = this;
@@ -79,7 +68,7 @@ public class YamipaPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         // Initialize logger
-        verbose = getConfig().getBoolean("verbose");
+        verbose = getConfig().getBoolean("verbose", false);
         if (verbose) {
             info("Running on VERBOSE mode");
         }
@@ -89,9 +78,9 @@ public class YamipaPlugin extends JavaPlugin {
 
         // Read plugin configuration paths
         Path basePath = getDataFolder().toPath();
-        String imagesPath = getConfigValue("images-path", "images");
-        String cachePath = getConfigValue("cache-path", "cache");
-        String dataPath = getConfigValue("data-path", "images.dat");
+        String imagesPath = getConfig().getString("images-path", "images");
+        String cachePath = getConfig().getString("cache-path", "cache");
+        String dataPath = getConfig().getString("data-path", "images.dat");
 
         // Create image storage
         storage = new ImageStorage(
@@ -106,10 +95,8 @@ public class YamipaPlugin extends JavaPlugin {
 
         // Create image renderer
         boolean animateImages = getConfig().getBoolean("animate-images", true);
-        if (animateImages) {
-            FakeImage.enableAnimation();
-            info("Enabled image animation support");
-        }
+        FakeImage.configure(animateImages);
+        info(animateImages ? "Enabled image animation support" : "Image animation support is disabled");
         renderer = new ImageRenderer(basePath.resolve(dataPath).toString());
         renderer.start();
 

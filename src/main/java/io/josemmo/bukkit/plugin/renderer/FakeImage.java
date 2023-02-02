@@ -57,10 +57,11 @@ public class FakeImage extends FakeEntity {
     private int currentStep = -1; // Current animation step
 
     /**
-     * Enable plugin-wide image animation support
+     * Configure class
+     * @param animImages Animate images
      */
-    public static void enableAnimation() {
-        animateImages = true;
+    public static void configure(boolean animImages) {
+        animateImages = animImages;
     }
 
     /**
@@ -518,10 +519,16 @@ public class FakeImage extends FakeEntity {
      */
     private void nextStep() {
         currentStep = (currentStep + 1) % numOfSteps;
-        for (Player player : observingPlayers) {
-            for (FakeItemFrame frame : frames) {
-                frame.render(player, currentStep);
+        try {
+            for (Player player : observingPlayers) {
+                for (FakeItemFrame frame : frames) {
+                    frame.render(player, currentStep);
+                }
             }
+        } catch (ConcurrentModificationException e) {
+            // We can safely ignore this exception as it will just result
+            // in a dropped step (all `observingPlayers` modifications are
+            // called from the same thread).
         }
     }
 }
