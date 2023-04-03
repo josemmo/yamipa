@@ -1,5 +1,8 @@
 package io.josemmo.bukkit.plugin.utils;
 
+import com.palmergames.bukkit.towny.TownyAPI;
+import com.palmergames.bukkit.towny.object.TownyPermission;
+import com.palmergames.bukkit.towny.utils.PlayerCacheUtil;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldguard.LocalPlayer;
 import com.sk89q.worldguard.WorldGuard;
@@ -11,6 +14,7 @@ import io.josemmo.bukkit.plugin.YamipaPlugin;
 import me.ryanhamshire.GriefPrevention.GriefPrevention;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,6 +24,7 @@ import java.util.logging.Level;
 public class Permissions {
     @Nullable private static WorldGuard worldGuard = null;
     @Nullable private static GriefPrevention griefPrevention = null;
+    @Nullable private static TownyAPI townyApi = null;
 
     static {
         try {
@@ -33,6 +38,12 @@ public class Permissions {
         } catch (NoClassDefFoundError __) {
             // GriefPrevention is not installed
         }
+
+        try {
+            townyApi = TownyAPI.getInstance();
+        } catch (NoClassDefFoundError __) {
+            // Towny is not installed
+        }
     }
 
     /**
@@ -43,7 +54,8 @@ public class Permissions {
      */
     public static boolean canBuild(@NotNull Player player, @NotNull Location location) {
         return queryWorldGuard(player, location, true)
-            && queryGriefPrevention(player, location, true);
+            && queryGriefPrevention(player, location, true)
+            && queryTowny(player, location, true);
     }
 
     /**
@@ -54,7 +66,8 @@ public class Permissions {
      */
     public static boolean canDestroy(@NotNull Player player, @NotNull Location location) {
         return queryWorldGuard(player, location, false)
-            && queryGriefPrevention(player, location, false);
+            && queryGriefPrevention(player, location, false)
+            && queryTowny(player, location, false);
     }
 
     private static boolean queryWorldGuard(@NotNull Player player, @NotNull Location location, boolean isBuild) {
@@ -99,5 +112,14 @@ public class Permissions {
             plugin.log(Level.SEVERE, "Failed to get player permissions from GriefPrevention", e);
             return false;
         }
+    }
+
+    private static boolean queryTowny(@NotNull Player player, @NotNull Location location, boolean isBuild) {
+        if (townyApi == null) {
+            return true;
+        }
+        Material material = location.getBlock().getType();
+        TownyPermission.ActionType type = isBuild ? TownyPermission.ActionType.BUILD : TownyPermission.ActionType.DESTROY;
+        return PlayerCacheUtil.getCachePermission(player, location, material, type);
     }
 }

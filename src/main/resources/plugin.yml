@@ -8,6 +8,7 @@ softdepend:
   - Hyperverse
   - Multiverse-Core
   - My_Worlds
+  - Towny
   - WorldGuard
 
 permissions:

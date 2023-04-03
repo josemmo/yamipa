@@ -132,6 +132,7 @@ The supported plugins are:
 
 - [WorldGuard](https://enginehub.org/worldguard/)
 - [GriefPrevention](https://www.spigotmc.org/resources/griefprevention.1884/)
+- [Towny Advanced](https://townyadvanced.github.io/)
 
 ## Flags
 Images from this plugin have a set of boolean attributes called "flags" that modify its behavior. Possible values are:
