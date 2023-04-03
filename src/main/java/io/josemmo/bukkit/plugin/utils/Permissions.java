@@ -42,7 +42,7 @@ public class Permissions {
      * @return          Whether player can build or not
      */
     public static boolean canBuild(@NotNull Player player, @NotNull Location location) {
-        return queryWorldGuard(player, location, Flags.BLOCK_PLACE)
+        return queryWorldGuard(player, location, true)
             && queryGriefPrevention(player, location, true);
     }
 
@@ -53,11 +53,11 @@ public class Permissions {
      * @return          Whether player can destroy or not
      */
     public static boolean canDestroy(@NotNull Player player, @NotNull Location location) {
-        return queryWorldGuard(player, location, Flags.BLOCK_BREAK)
+        return queryWorldGuard(player, location, false)
             && queryGriefPrevention(player, location, false);
     }
 
-    private static boolean queryWorldGuard(@NotNull Player player, @NotNull Location location, @NotNull StateFlag flag) {
+    private static boolean queryWorldGuard(@NotNull Player player, @NotNull Location location, boolean isBuild) {
         if (worldGuard == null) {
             return true;
         }
@@ -74,6 +74,7 @@ public class Permissions {
         }
 
         // Check permission (note "BUILD" flag must always be present)
+        StateFlag flag = isBuild ? Flags.BLOCK_PLACE : Flags.BLOCK_BREAK;
         return platform.getRegionContainer().createQuery()
             .testState(BukkitAdapter.adapt(location), wrappedPlayer, Flags.BUILD, flag);
     }
