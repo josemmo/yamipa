@@ -212,7 +212,7 @@ public class ImageCommand {
 
         // Make sure image can be placed
         for (Location loc : fakeImage.getAllLocations()) {
-            if (!Permissions.canEditBlock(player, loc)) {
+            if (!Permissions.canBuild(player, loc)) {
                 ActionBar.send(player, ChatColor.RED + "You're not allowed to place an image here!");
                 return false;
             }
@@ -260,7 +260,7 @@ public class ImageCommand {
     public static boolean removeImage(@NotNull Player player, @NotNull FakeImage image) {
         // Check block permissions
         for (Location loc : image.getAllLocations()) {
-            if (!Permissions.canEditBlock(player, loc)) {
+            if (!Permissions.canDestroy(player, loc)) {
                 ActionBar.send(player, ChatColor.RED + "You're not allowed to remove this image!");
                 return false;
             }
@@ -299,7 +299,7 @@ public class ImageCommand {
             Player senderAsPlayer = (Player) sender;
             images.removeIf(image -> {
                 for (Location loc : image.getAllLocations()) {
-                    if (!Permissions.canEditBlock(senderAsPlayer, loc)) {
+                    if (!Permissions.canDestroy(senderAsPlayer, loc)) {
                         return true;
                     }
                 }
