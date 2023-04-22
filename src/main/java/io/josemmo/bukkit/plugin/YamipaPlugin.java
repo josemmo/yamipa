@@ -9,15 +9,19 @@ import io.josemmo.bukkit.plugin.storage.ImageStorage;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.SimplePie;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;	
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
+import java.nio.file.Files;
 import java.util.concurrent.Executors;
+import java.util.*;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Function;
 import java.util.logging.Level;
+import java.lang.StringBuilder;
 
 public class YamipaPlugin extends JavaPlugin {
     public static final int BSTATS_PLUGIN_ID = 10243;
@@ -29,6 +33,7 @@ public class YamipaPlugin extends JavaPlugin {
     private ImageRenderer renderer;
     private ItemService itemService;
     private ScheduledExecutorService scheduler;
+    private HashSet<String> disabledPlayers = new HashSet<String>();
 
     /**
      * Get plugin instance
@@ -70,6 +75,14 @@ public class YamipaPlugin extends JavaPlugin {
 	    return maxHeight;
     }
 
+    public boolean playerDisabled(Player p) {
+	    info(p.getName());
+	    if (disabledPlayers.contains(p.getName())) {
+		    info("player disabled");
+	    }
+	    return disabledPlayers.contains(p.getName());
+    }
+
     @Override
     public void onLoad() {
         instance = this;
@@ -105,6 +118,19 @@ public class YamipaPlugin extends JavaPlugin {
 
 	maxWidth = getConfig().getInt("max-width", 5);
 	maxHeight = getConfig().getInt("max-height", 5);
+
+	// read in disabled players
+	Path playersPath = basePath.resolve(getConfig().getString("players-path", "players.dat"));
+	try {
+		List<String> data = Files.readAllLines(playersPath);
+		for (String s : data) {
+		    info(s);
+			disabledPlayers.add(s);
+		}
+	} catch (Exception e) {
+		info("error reading players.dat");
+	}
+
 
         // Create image renderer
         boolean animateImages = getConfig().getBoolean("animate-images", true);
@@ -144,6 +170,19 @@ public class YamipaPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        Path basePath = getDataFolder().toPath();
+	Path playersPath = basePath.resolve(getConfig().getString("players-path", "players.dat"));
+	StringBuilder data = new StringBuilder();
+	for (String s : disabledPlayers) {
+		data.append(s + '\n');
+	}
+
+	try {
+	Files.write(playersPath, data.toString().getBytes());
+	} catch (Exception e) {
+		info("error writing players.dat");
+	}
+
         // Stop plugin components
         storage.stop();
         renderer.stop();

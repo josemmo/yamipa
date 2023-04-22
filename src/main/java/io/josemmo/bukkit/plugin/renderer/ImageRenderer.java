@@ -365,6 +365,10 @@ public class ImageRenderer implements Listener {
      */
     private void onPlayerLocationChange(@NotNull Player player, @NotNull Location location) {
         // Ignore NPC events from other plugins
+	if (YamipaPlugin.getInstance().playerDisabled(player)) {
+		return;
+	}
+
         if (player.hasMetadata("NPC")) {
             plugin.fine("Ignored NPC event from Player#" + player.getName());
             return;
