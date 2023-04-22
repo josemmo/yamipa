@@ -23,6 +23,8 @@ public class YamipaPlugin extends JavaPlugin {
     public static final int BSTATS_PLUGIN_ID = 10243;
     private static YamipaPlugin instance;
     private boolean verbose;
+    private int maxWidth;
+    private int maxHeight;
     private ImageStorage storage;
     private ImageRenderer renderer;
     private ItemService itemService;
@@ -60,6 +62,14 @@ public class YamipaPlugin extends JavaPlugin {
         return scheduler;
     }
 
+    public int getMaxWidth() {
+	return maxWidth;
+    }
+
+    public int getMaxHeight() {
+	    return maxHeight;
+    }
+
     @Override
     public void onLoad() {
         instance = this;
@@ -92,6 +102,9 @@ public class YamipaPlugin extends JavaPlugin {
         } catch (Exception e) {
             log(Level.SEVERE, "Failed to initialize image storage", e);
         }
+
+	maxWidth = getConfig().getInt("max-width", 5);
+	maxHeight = getConfig().getInt("max-height", 5);
 
         // Create image renderer
         boolean animateImages = getConfig().getBoolean("animate-images", true);

@@ -177,6 +177,12 @@ public class ImageCommand {
         int height,
         int flags
     ) {
+
+	    if (!validSize(width, height)) {
+		    player.sendMessage(ChatColor.RED + "Image size is too large!");
+		    return;
+	    }
+
         // Get image size in blocks
         Dimension sizeInPixels = image.getSize();
         if (sizeInPixels == null) {
@@ -439,6 +445,11 @@ public class ImageCommand {
         int height,
         int flags
     ) {
+	    if (!validSize(width, height)) {
+		    player.sendMessage(ChatColor.RED + "Image size is too large!");
+		    return;
+	    }
+
         // Get image size in blocks
         Dimension sizeInPixels = image.getSize();
         if (sizeInPixels == null) {
@@ -459,5 +470,11 @@ public class ImageCommand {
             (amount == 1 ? "image item" : "image items") +
             " to " + player.getName() + "'s inventory"
         );
+    }
+
+    private static boolean validSize(int width, int height) {
+	    int maxWidth = YamipaPlugin.getInstance().getMaxWidth();
+	    int maxHeight = YamipaPlugin.getInstance().getMaxHeight();
+	    return width <= maxWidth && height <= maxHeight;
     }
 }
