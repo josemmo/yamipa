@@ -51,6 +51,8 @@ animate-images: true   # Set to "false" to disable GIF support
 images-path: images    # Path to images directory
 cache-path: cache      # Path to cache directory
 data-path: images.dat  # Path to placed images database file
+max-width: 5           # maximum block width of a placeable image
+max-height: 5          # maximum block height of a placeable image
 ```
 
 This library uses bStats to anonymously report the number of installs. If you don't like this, feel free to
@@ -110,6 +112,7 @@ Yamipa defines the following permissions:
 | `yamipa.command.remove`     |     OPs     | To use the `/image remove` command                              |
 | `yamipa.command.remove.own` |     OPs     | Same as previous, but only for images placed by the same player |
 | `yamipa.command.top`        |     OPs     | To use the `/image top` command                                 |
+| `yamipa.command.toggle`     |     OPs     | To use the `/image toggle` command                              |
 | `yamipa.item.place`         | All players | To place image items                                            |
 | `yamipa.item.remove`        | All players | To remove image items (that have the `REMO` flag)               |
 | `yamipa.item.remove.own`    | All players | Same as previous, but only for images placed by the same player |
