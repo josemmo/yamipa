@@ -75,11 +75,17 @@ public class YamipaPlugin extends JavaPlugin {
 	    return maxHeight;
     }
 
-    public boolean playerDisabled(Player p) {
-	    info(p.getName());
-	    if (disabledPlayers.contains(p.getName())) {
-		    info("player disabled");
+
+    public void setPlayer(Player p, boolean display) {
+	    if (!display) {
+		    disabledPlayers.add(p.getName());
+	    } else {
+		    disabledPlayers.remove(p.getName());
 	    }
+    }
+
+
+    public boolean playerDisabled(Player p) {
 	    return disabledPlayers.contains(p.getName());
     }
 
@@ -123,10 +129,7 @@ public class YamipaPlugin extends JavaPlugin {
 	Path playersPath = basePath.resolve(getConfig().getString("players-path", "players.dat"));
 	try {
 		List<String> data = Files.readAllLines(playersPath);
-		for (String s : data) {
-		    info(s);
-			disabledPlayers.add(s);
-		}
+		disabledPlayers.addAll(data);
 	} catch (Exception e) {
 		info("error reading players.dat");
 	}

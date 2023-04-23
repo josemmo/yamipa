@@ -472,6 +472,11 @@ public class ImageCommand {
         );
     }
 
+    public static void playerToggle(@NotNull Player player) {
+	    boolean status = YamipaPlugin.getInstance().playerDisabled(player);
+	    YamipaPlugin.getInstance().setPlayer(player, status);
+    }
+
     private static boolean validSize(int width, int height) {
 	    int maxWidth = YamipaPlugin.getInstance().getMaxWidth();
 	    int maxHeight = YamipaPlugin.getInstance().getMaxHeight();

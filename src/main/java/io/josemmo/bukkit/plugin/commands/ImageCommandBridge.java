@@ -66,7 +66,8 @@ public class ImageCommandBridge {
                 "yamipa.command.list", "yamipa.list",
                 "yamipa.command.place", "yamipa.place",
                 "yamipa.command.remove.own", "yamipa.remove",
-                "yamipa.command.top", "yamipa.top"
+                "yamipa.command.top", "yamipa.top",
+		"yamipa.command.toggle", "yamipa.toggle"
             )
             .executes((sender, args) -> {
                 ImageCommand.showHelp(sender, (String) args[0]);
@@ -201,6 +202,12 @@ public class ImageCommandBridge {
             .executes((sender, __) -> {
                 ImageCommand.showTopPlayers(sender);
             });
+
+	root.addSubcommand("toggle")
+		.withPermission("yamipa.command.toggle", "yamipa.toggle")
+		.executesPlayer((sender, __) -> {
+			ImageCommand.playerToggle(sender);
+		});
 
         return root;
     }

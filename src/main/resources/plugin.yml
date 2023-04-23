@@ -26,6 +26,7 @@ permissions:
       yamipa.place: true
       yamipa.remove: true
       yamipa.top: true
+      yamipa.toggle: true
 
   # All command permissions
   yamipa.command.*:
@@ -39,6 +40,7 @@ permissions:
       yamipa.command.place: true
       yamipa.command.remove: true
       yamipa.command.top: true
+      yamipa.command.toggle: true
 
   # Command permissions
   yamipa.command.clear:
@@ -60,6 +62,8 @@ permissions:
   yamipa.command.remove.own:
     default: op
   yamipa.command.top:
+    default: op
+  yamipa.command.toggle:
     default: op
 
   # All item permissions
@@ -95,4 +99,6 @@ permissions:
   yamipa.remove:
     default: op
   yamipa.top:
+    default: op
+  yamipa.toggle:
     default: op

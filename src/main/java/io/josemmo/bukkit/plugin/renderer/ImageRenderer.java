@@ -366,6 +366,14 @@ public class ImageRenderer implements Listener {
     private void onPlayerLocationChange(@NotNull Player player, @NotNull Location location) {
         // Ignore NPC events from other plugins
 	if (YamipaPlugin.getInstance().playerDisabled(player)) {
+		if (!playersLocation.containsKey(player)) return;
+		WorldAreaId prevWorldAreaId = playersLocation.get(player);
+		Set<FakeImage> imagesToUnload = (prevWorldAreaId == null) ? new HashSet<>() : getImagesInViewDistance(prevWorldAreaId);
+		for (FakeImage image : imagesToUnload) {
+		    image.destroy(player);
+		}
+		playersLocation.remove(player);
+
 		return;
 	}
 

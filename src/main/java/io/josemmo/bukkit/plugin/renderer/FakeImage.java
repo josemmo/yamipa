@@ -1,6 +1,5 @@
 package io.josemmo.bukkit.plugin.renderer;
 
-import io.josemmo.bukkit.plugin.YamipaPlugin;
 import io.josemmo.bukkit.plugin.storage.ImageFile;
 import io.josemmo.bukkit.plugin.utils.DirectionUtils;
 import org.bukkit.Location;
@@ -397,10 +396,6 @@ public class FakeImage extends FakeEntity {
      */
     public void spawn(@NotNull Player player) {
         plugin.fine("Received request to spawn FakeImage#(" + location + "," + face + ") for Player#" + player.getName());
-	if (YamipaPlugin.getInstance().playerDisabled(player)) {
-		return;
-	}
-
         // Send pixels if instance is already loaded
         if (frames != null) {
             spawnOnceLoaded(player);
