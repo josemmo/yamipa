@@ -1,11 +1,13 @@
 package io.josemmo.bukkit.plugin.renderer;
 
+import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.injector.player.PlayerInjectionHandler;
 import com.comphenix.protocol.wrappers.WrappedDataWatcher;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
+import io.josemmo.bukkit.plugin.utils.Internals;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.Field;
@@ -91,6 +93,23 @@ public abstract class FakeEntity {
             // Server is shutting down and cannot send the packet, ignore
         } catch (Exception e) {
             plugin.log(Level.SEVERE, "Failed to send FakeEntity packet", e);
+        }
+    }
+
+    /**
+     * Try to send several packets
+     * @param player  Player who will receive the packets
+     * @param packets Packets to send
+     */
+    protected static void tryToSendPackets(@NotNull Player player, @NotNull Iterable<PacketContainer> packets) {
+        if (Internals.MINECRAFT_VERSION < 19.4f) {
+            for (PacketContainer packet : packets) {
+                tryToSendPacket(player, packet);
+            }
+        } else {
+            PacketContainer container = new PacketContainer(PacketType.Play.Server.BUNDLE);
+            container.getPacketBundles().write(0, packets);
+            tryToSendPacket(player, container);
         }
     }
 

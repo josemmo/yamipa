@@ -120,30 +120,37 @@ public class FakeMap extends FakeEntity {
     }
 
     /**
-     * Send map pixels to player
-     * @param player Player instance
+     * Request re-send of map pixels
+     * @param  player Player who is expected to receive pixels
+     * @return        Whether re-send authorization was granted or not
      */
-    public void sendPixels(@NotNull Player player) {
+    public boolean requestResend(@NotNull Player player) {
         UUID uuid = player.getUniqueId();
         long now = Instant.now().getEpochSecond();
 
-        // Avoid re-sending pixels too frequently
+        // Has enough time passed since last re-send?
         long last = lastPlayerSendTime.getOrDefault(uuid, 0L);
         if ((now-last) <= RESEND_THRESHOLD && (player.getLastPlayed()/1000) < last) {
-            return;
+            return false;
         }
 
-        // Create map data packet
+        // Authorize re-send and update latest timestamp
+        lastPlayerSendTime.put(uuid, now);
+        plugin.fine("Granted sending pixels for FakeMap#" + id + " to Player#" + player.getName());
+        return true;
+    }
+
+    /**
+     * Get map pixels packet
+     * @return Map pixels packet
+     */
+    public @NotNull MapDataPacket getPixelsPacket() {
         MapDataPacket mapDataPacket = new MapDataPacket();
         mapDataPacket.setId(id)
             .setScale(0) // Fully zoomed-in
             .setLocked(true)
             .setArea(DIMENSION, DIMENSION, 0, 0)
             .setPixels(pixels);
-
-        // Send packet
-        tryToSendPacket(player, mapDataPacket);
-        lastPlayerSendTime.put(uuid, now);
-        plugin.fine("Sent pixels for FakeMap#" + id + " to Player#" + player.getName());
+        return mapDataPacket;
     }
 }
