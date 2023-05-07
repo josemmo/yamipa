@@ -1,5 +1,6 @@
 package io.josemmo.bukkit.plugin.renderer;
 
+import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.utility.MinecraftReflection;
 import com.comphenix.protocol.wrappers.nbt.NbtCompound;
 import com.comphenix.protocol.wrappers.nbt.NbtFactory;
@@ -15,6 +16,8 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class FakeItemFrame extends FakeEntity {
@@ -67,10 +70,18 @@ public class FakeItemFrame extends FakeEntity {
     }
 
     /**
-     * Spawn empty item frame in player's client
-     * @param player Player instance
+     * Get frame ID
+     * @return Frame ID
      */
-    public void spawn(@NotNull Player player) {
+    public int getId() {
+        return id;
+    }
+
+    /**
+     * Get entity spawn packet
+     * @return Spawn packet
+     */
+    public @NotNull SpawnEntityPacket getSpawnPacket() {
         // Calculate frame position in relation to target block
         double x = location.getBlockX();
         double y = location.getBlockY();
@@ -115,18 +126,23 @@ public class FakeItemFrame extends FakeEntity {
             .setPosition(x, y, z)
             .setRotation(pitch, yaw)
             .setData(orientation);
-        tryToSendPacket(player, framePacket);
-        plugin.fine("Spawned FakeItemFrame#" + this.id + " for Player#" + player.getName());
+
+        return framePacket;
     }
 
     /**
-     * Send frame of animation to player
-     * @param player Player instance
-     * @param step   Map step to send
+     * Get frame of animation packets
+     * @param player Player who is expected to receive packets (for caching reasons)
+     * @param step   Map step
      */
-    public void render(@NotNull Player player, int step) {
-        // Send map pixels
-        maps[step].sendPixels(player);
+    public @NotNull List<PacketContainer> getRenderPackets(@NotNull Player player, int step) {
+        List<PacketContainer> packets = new ArrayList<>(2);
+
+        // Enqueue map pixels packet (if needed)
+        boolean mustSendPixels = maps[step].requestResend(player);
+        if (mustSendPixels) {
+            packets.add(maps[step].getPixelsPacket());
+        }
 
         // Create and attach filled map
         ItemStack itemStack = MinecraftReflection.getBukkitItemStack(new ItemStack(Material.FILLED_MAP));
@@ -135,25 +151,24 @@ public class FakeItemFrame extends FakeEntity {
         NbtFactory.setItemTag(itemStack, itemStackNbt);
 
         // Build entity metadata packet
-        EntityMetadataPacket mapPacket = new EntityMetadataPacket();
-        mapPacket.setId(id)
+        EntityMetadataPacket metadataPacket = new EntityMetadataPacket();
+        metadataPacket.setId(id)
             .setInvisible(true)
             .setItem(itemStack)
             .setRotation(rotation)
             .build();
+        packets.add(metadataPacket);
 
-        // Send animation status update
-        tryToSendPacket(player, mapPacket);
+        return packets;
     }
 
     /**
-     * Destroy item frame from player's client
-     * @param player Player instance
+     * Get destroy item frame packet
+     * @return Destroy packet
      */
-    public void destroy(@NotNull Player player) {
+    public @NotNull DestroyEntityPacket getDestroyPacket() {
         DestroyEntityPacket destroyPacket = new DestroyEntityPacket();
         destroyPacket.setId(id);
-        tryToSendPacket(player, destroyPacket);
-        plugin.fine("Destroyed FakeItemFrame#" + this.id + " for Player#" + player.getName());
+        return destroyPacket;
     }
 }

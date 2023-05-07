@@ -1,5 +1,6 @@
 package io.josemmo.bukkit.plugin.renderer;
 
+import com.comphenix.protocol.events.PacketContainer;
 import io.josemmo.bukkit.plugin.storage.ImageFile;
 import io.josemmo.bukkit.plugin.utils.DirectionUtils;
 import org.bukkit.Location;
@@ -12,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
@@ -429,11 +431,19 @@ public class FakeImage extends FakeEntity {
      * @param player Player instance
      */
     private void spawnOnceLoaded(@NotNull Player player) {
+        String playerName = player.getName();
         observingPlayers.add(player);
+
+        // Prepare packets to send
+        List<PacketContainer> packets = new ArrayList<>();
         for (FakeItemFrame frame : frames) {
-            frame.spawn(player);
-            frame.render(player, 0);
+            packets.add(frame.getSpawnPacket());
+            packets.addAll(frame.getRenderPackets(player, 0));
+            plugin.fine("Spawned FakeItemFrame#" + frame.getId() + " for Player#" + playerName);
         }
+
+        // Send packets
+        tryToSendPackets(player, packets);
     }
 
     /**
@@ -459,9 +469,13 @@ public class FakeImage extends FakeEntity {
         if (frames != null) {
             Set<Player> targets = (player == null) ? observingPlayers : Collections.singleton(player);
             for (Player target : targets) {
+                String targetName = target.getName();
+                List<PacketContainer> packets = new ArrayList<>();
                 for (FakeItemFrame frame : frames) {
-                    frame.destroy(target);
+                    packets.add(frame.getDestroyPacket());
+                    plugin.fine("Destroyed FakeItemFrame#" + frame.getId() + " for Player#" + targetName);
                 }
+                tryToSendPackets(target, packets);
             }
         }
 
@@ -521,9 +535,11 @@ public class FakeImage extends FakeEntity {
         currentStep = (currentStep + 1) % numOfSteps;
         try {
             for (Player player : observingPlayers) {
+                List<PacketContainer> packets = new ArrayList<>();
                 for (FakeItemFrame frame : frames) {
-                    frame.render(player, currentStep);
+                    packets.addAll(frame.getRenderPackets(player, currentStep));
                 }
+                tryToSendPackets(player, packets);
             }
         } catch (ConcurrentModificationException e) {
             // We can safely ignore this exception as it will just result
