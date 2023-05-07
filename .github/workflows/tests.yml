@@ -81,7 +81,7 @@ jobs:
           VERSION: ${{ matrix.version }}
         run: |
           if [ $VERSION == "1.19.4" ]; then
-            url="https://ci.dmulloy2.net/job/ProtocolLib/lastStableBuild/artifact/target/ProtocolLib.jar"
+            url="https://ci.dmulloy2.net/job/ProtocolLib/lastSuccessfulBuild/artifact/build/libs/ProtocolLib.jar"
           else
             url="https://github.com/dmulloy2/ProtocolLib/releases/download/4.8.0/ProtocolLib.jar"
           fi
