@@ -96,16 +96,16 @@ This plugin adds the following commands:
   `/image clear 0 0 world 9999999 00000000-0000-0000-0000-000000000000`
 
 ## Permissions
-If you want more granular control over the players who can use a particular set of commands, permissions are the way to go!
+If you want more granular control over the features exposed to players, permissions are the way to go!
 
 Yamipa defines the following permissions:
 
-| Command                     |   Default   | Description                                                     |
+| Permission                  |   Default   | Description                                                     |
 |:----------------------------|:-----------:|:----------------------------------------------------------------|
 | `yamipa.command.clear`      |     OPs     | To use the `/image clear` command                               |
 | `yamipa.command.describe`   |     OPs     | To use the `/image describe` command                            |
 | `yamipa.command.download`   |     OPs     | To use the `/image download` command                            |
-| `yamipa.command.give`       |     OPs     | To use the `/image give` download                               |
+| `yamipa.command.give`       |     OPs     | To use the `/image give` command                                |
 | `yamipa.command.list`       |     OPs     | To use the `/image list` command                                |
 | `yamipa.command.place`      |     OPs     | To use the `/image place` command                               |
 | `yamipa.command.remove`     |     OPs     | To use the `/image remove` command                              |
