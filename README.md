@@ -5,7 +5,7 @@
 [![bStats Servers](https://img.shields.io/bstats/servers/10243)](https://bstats.org/plugin/bukkit/Yamipa/10243)
 [![License](https://img.shields.io/github/license/josemmo/yamipa)](LICENSE)
 
-Yamipa is an Spigot plugin that allows players to place images (even **animated**!) on any surface in your Minecraft server
+Yamipa is a Spigot plugin that allows players to place images (even **animated**!) on any surface in your Minecraft server
 without having to install any local client mod.
 
 It is designed with performance and compatibility in mind, so even the most low-specs servers should be able to run it.
@@ -24,8 +24,9 @@ Download the JAR file for the [latest release](https://github.com/josemmo/yamipa
 ### Requirements
 Before installing Yamipa make sure you meet the following requirements:
 
-- CraftBukkit, Spigot or PaperMC v1.16 or higher
-- [ProtocolLib](https://www.spigotmc.org/resources/protocollib.1997/) v4.6.1 or higher
+- CraftBukkit, Spigot or PaperMC 1.16 or higher
+- [ProtocolLib](https://www.spigotmc.org/resources/protocollib.1997/) v4.8.0 or higher
+  (latest [dev build](https://ci.dmulloy2.net/job/ProtocolLib/lastSuccessfulBuild/) for 1.19.4)
 
 Here are the Minecraft distributions where Yamipa should be able to run:
 | Minecraft version | CraftBukkit | Spigot | PaperMC |
