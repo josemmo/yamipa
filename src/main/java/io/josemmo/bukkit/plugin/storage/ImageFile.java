@@ -416,7 +416,7 @@ public class ImageFile {
 
         // Delete disk cache files
         File[] files = Paths.get(plugin.getStorage().getCachePath()).toFile().listFiles((__, filename) -> {
-            return filename.matches(Pattern.quote(name) + "\\.[0-9]+-[0-9]+\\." + CACHE_EXT);
+            return filename.matches(Pattern.quote(name.replace("\\", "_")) + "\\.[0-9]+-[0-9]+\\." + CACHE_EXT);
         });
         if (files == null) {
             plugin.warning("An error occurred when listing cache files for image \"" + name + "\"");

@@ -76,12 +76,10 @@ public class ImageStorage {
         registerDir(directory.toPath(), watchService);
 
         // Start watching for changes
-        final boolean[] running = {true};
         task = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, () -> {
-            while(running[0]) {
+            while(true) {
                 WatchKey watchKey = watchService.poll(); // Parse all happened events
                 if (watchKey == null)  { // Stop if no events are present
-                    running[0] = false;
                     return;
                 }
 
@@ -89,10 +87,9 @@ public class ImageStorage {
                     WatchEvent.Kind<?> kind = event.kind();
                     File file = keyPathMap.get(watchKey).resolve((Path) event.context()).toFile();
 
-
                     String filename = keyPathMap.get(watchKey).toString()
-                        .replace("plugins\\Yamipa\\images\\", "")
-                        .replace("plugins\\Yamipa\\images", "") + "\\" + file.getName();
+                        .replace(basePath + "\\", "")
+                        .replace(basePath, "") + "\\" + file.getName();
                     if (filename.startsWith("\\")) filename = filename.substring(1);
 
                     synchronized (this) {
@@ -107,7 +104,6 @@ public class ImageStorage {
                             if (imageFile != null) {
                                 imageFile.invalidate();
                                 cachedImages.remove(filename);
-                                System.out.println("Removed images");
                             }
                             plugin.fine("Detected file deletion at " + filename);
                         } else if (cachedImages.containsKey(filename)) {
