@@ -39,7 +39,7 @@ public class ImageFileArgument extends StringArgument {
         @NotNull SuggestionsBuilder builder
     ) {
         for (String filename : YamipaPlugin.getInstance().getStorage().getAllFilenames()) {
-            builder.suggest(filename);
+            builder.suggest("\"" + filename.replace("\\", "/") + "\"");
         }
         return builder.buildFuture();
     }

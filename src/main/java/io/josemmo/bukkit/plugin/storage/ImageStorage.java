@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
+import java.util.HashMap;
 import java.util.Objects;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -22,6 +23,8 @@ public class ImageStorage {
     private BukkitTask task;
     private WatchService watchService;
 
+    private HashMap<WatchKey, Path> keyPathMap;
+
     /**
      * Class constructor
      * @param basePath  Path to directory containing the images
@@ -30,6 +33,7 @@ public class ImageStorage {
     public ImageStorage(@NotNull String basePath, @NotNull String cachePath) {
         this.basePath = basePath;
         this.cachePath = cachePath;
+        keyPathMap = new HashMap<>();
     }
 
     /**
@@ -64,22 +68,12 @@ public class ImageStorage {
         }
 
         // Do initial directory listing
-        for (File file : Objects.requireNonNull(directory.listFiles())) {
-            if (file.isDirectory()) continue;
-            String filename = file.getName();
-            cachedImages.put(filename, new ImageFile(filename, file.getAbsolutePath()));
-        }
+        getFilesRec(directory, "");
         plugin.fine("Found " + cachedImages.size() + " file(s) in images directory");
 
         // Prepare watch service
         watchService = FileSystems.getDefault().newWatchService();
-        Path directoryPath = directory.toPath();
-        directoryPath.register(
-            watchService,
-            StandardWatchEventKinds.ENTRY_CREATE,
-            StandardWatchEventKinds.ENTRY_DELETE,
-            StandardWatchEventKinds.ENTRY_MODIFY
-        );
+        registerDir(directory.toPath(), watchService);
 
         // Start watching for changes
         task = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, () -> {
@@ -88,16 +82,27 @@ public class ImageStorage {
 
             watchKey.pollEvents().forEach(event -> {
                 WatchEvent.Kind<?> kind = event.kind();
-                File file = directoryPath.resolve((Path) event.context()).toFile();
-                if (file.isDirectory()) return;
+                File file = keyPathMap.get(watchKey).resolve((Path) event.context()).toFile();
 
-                String filename = file.getName();
+
+                String filename = keyPathMap.get(watchKey).toString()
+                    .replace("plugins\\Yamipa\\images\\", "")
+                    .replace("plugins\\Yamipa\\images", "") + "\\" + file.getName();
+                if(filename.startsWith("\\")) filename = filename.substring(1);
+
                 synchronized (this) {
+                    if(file.isDirectory()){
+                        if(kind == StandardWatchEventKinds.ENTRY_CREATE) {
+                            registerDir(file.toPath(), watchService);
+                        }
+                        return;
+                    }
                     if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
                         ImageFile imageFile = cachedImages.get(filename);
                         if (imageFile != null) {
                             imageFile.invalidate();
                             cachedImages.remove(filename);
+                            System.out.println("Removed images");
                         }
                         plugin.fine("Detected file deletion at " + filename);
                     } else if (cachedImages.containsKey(filename)) {
@@ -106,13 +111,49 @@ public class ImageStorage {
                     } else {
                         cachedImages.put(filename, new ImageFile(filename, file.getAbsolutePath()));
                         plugin.fine("Detected file creation at " + filename);
+                        System.out.println(cachedImages);
                     }
                 }
             });
 
             watchKey.reset();
         }, POLLING_INTERVAL, POLLING_INTERVAL);
-        plugin.fine("Started watching for file changes in images directory");
+        plugin.fine("Started watching for file changes in images directory and subdirectories");
+    }
+
+    private void getFilesRec(File directory, String path){
+        if(!directory.isDirectory()) return;
+        for (File file : Objects.requireNonNull(directory.listFiles())) {
+            if (file.isDirectory()) {
+                getFilesRec(file, path + "\\" + file.getName());
+                continue;
+            }
+            String filename = path + "\\" + file.getName();
+            if(filename.startsWith("\\")) filename = filename.substring(1);
+            cachedImages.put(filename, new ImageFile(filename, file.getAbsolutePath()));
+        }
+    }
+
+    private void registerDir(Path path, WatchService service){
+        if(!Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS)) return;
+
+        plugin.fine("Watching new Directory: " + path);
+
+        WatchKey key;
+        try {
+            key = path.register(service,
+                StandardWatchEventKinds.ENTRY_DELETE,
+                StandardWatchEventKinds.ENTRY_CREATE,
+                StandardWatchEventKinds.ENTRY_MODIFY);
+        } catch (IOException e){
+            return; // Error
+        }
+
+        keyPathMap.put(key, path);
+
+        for(File f : path.toFile().listFiles()){
+            registerDir(f.toPath(), watchService);
+        }
     }
 
     /**
@@ -156,6 +197,6 @@ public class ImageStorage {
      * @return          Image instance or NULL if not found
      */
     public synchronized @Nullable ImageFile get(@NotNull String filename) {
-        return cachedImages.get(filename);
+        return cachedImages.get(filename.replace("/", "\\"));
     }
 }

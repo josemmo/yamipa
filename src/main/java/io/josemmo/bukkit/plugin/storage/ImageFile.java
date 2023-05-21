@@ -241,7 +241,7 @@ public class ImageFile {
         }
 
         // Try to get maps from disk cache
-        String cacheFilename = name + "." + cacheKey + "." + CACHE_EXT;
+        String cacheFilename = name.replace("\\", "_") + "." + cacheKey + "." + CACHE_EXT;
         File cacheFile = Paths.get(plugin.getStorage().getCachePath(), cacheFilename).toFile();
         if (cacheFile.isFile() && cacheFile.lastModified() >= getLastModified()) {
             try {
