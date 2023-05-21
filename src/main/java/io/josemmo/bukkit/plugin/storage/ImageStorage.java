@@ -23,7 +23,7 @@ public class ImageStorage {
     private BukkitTask task;
     private WatchService watchService;
 
-    private HashMap<WatchKey, Path> keyPathMap;
+    private final HashMap<WatchKey, Path> keyPathMap;
 
     /**
      * Class constructor
@@ -76,47 +76,52 @@ public class ImageStorage {
         registerDir(directory.toPath(), watchService);
 
         // Start watching for changes
+        final boolean[] running = {true};
         task = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, () -> {
-            WatchKey watchKey = watchService.poll();
-            if (watchKey == null) return;
-
-            watchKey.pollEvents().forEach(event -> {
-                WatchEvent.Kind<?> kind = event.kind();
-                File file = keyPathMap.get(watchKey).resolve((Path) event.context()).toFile();
-
-
-                String filename = keyPathMap.get(watchKey).toString()
-                    .replace("plugins\\Yamipa\\images\\", "")
-                    .replace("plugins\\Yamipa\\images", "") + "\\" + file.getName();
-                if(filename.startsWith("\\")) filename = filename.substring(1);
-
-                synchronized (this) {
-                    if(file.isDirectory()){
-                        if(kind == StandardWatchEventKinds.ENTRY_CREATE) {
-                            registerDir(file.toPath(), watchService);
-                        }
-                        return;
-                    }
-                    if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
-                        ImageFile imageFile = cachedImages.get(filename);
-                        if (imageFile != null) {
-                            imageFile.invalidate();
-                            cachedImages.remove(filename);
-                            System.out.println("Removed images");
-                        }
-                        plugin.fine("Detected file deletion at " + filename);
-                    } else if (cachedImages.containsKey(filename)) {
-                        cachedImages.get(filename).invalidate();
-                        plugin.fine("Detected file update at " + filename);
-                    } else {
-                        cachedImages.put(filename, new ImageFile(filename, file.getAbsolutePath()));
-                        plugin.fine("Detected file creation at " + filename);
-                        System.out.println(cachedImages);
-                    }
+            while(running[0]) {
+                WatchKey watchKey = watchService.poll(); // Parse all happened events
+                if (watchKey == null)  { // Stop if no events are present
+                    running[0] = false;
+                    return;
                 }
-            });
 
-            watchKey.reset();
+                watchKey.pollEvents().forEach(event -> {
+                    WatchEvent.Kind<?> kind = event.kind();
+                    File file = keyPathMap.get(watchKey).resolve((Path) event.context()).toFile();
+
+
+                    String filename = keyPathMap.get(watchKey).toString()
+                        .replace("plugins\\Yamipa\\images\\", "")
+                        .replace("plugins\\Yamipa\\images", "") + "\\" + file.getName();
+                    if (filename.startsWith("\\")) filename = filename.substring(1);
+
+                    synchronized (this) {
+                        if (file.isDirectory()) {
+                            if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
+                                registerDir(file.toPath(), watchService);
+                            }
+                            return;
+                        }
+                        if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
+                            ImageFile imageFile = cachedImages.get(filename);
+                            if (imageFile != null) {
+                                imageFile.invalidate();
+                                cachedImages.remove(filename);
+                                System.out.println("Removed images");
+                            }
+                            plugin.fine("Detected file deletion at " + filename);
+                        } else if (cachedImages.containsKey(filename)) {
+                            cachedImages.get(filename).invalidate();
+                            plugin.fine("Detected file update at " + filename);
+                        } else {
+                            cachedImages.put(filename, new ImageFile(filename, file.getAbsolutePath()));
+                            plugin.fine("Detected file creation at " + filename);
+                        }
+                    }
+                });
+
+                watchKey.reset();
+            }
         }, POLLING_INTERVAL, POLLING_INTERVAL);
         plugin.fine("Started watching for file changes in images directory and subdirectories");
     }
@@ -151,7 +156,7 @@ public class ImageStorage {
 
         keyPathMap.put(key, path);
 
-        for(File f : path.toFile().listFiles()){
+        for(File f : Objects.requireNonNull(path.toFile().listFiles())){
             registerDir(f.toPath(), watchService);
         }
     }
