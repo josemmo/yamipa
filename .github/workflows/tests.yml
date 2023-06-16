@@ -77,14 +77,8 @@ jobs:
 
       # Install dependencies
       - name: Install plugin dependencies
-        env:
-          VERSION: ${{ matrix.version }}
         run: |
-          if [ $VERSION == "1.19.4" ]; then
-            url="https://ci.dmulloy2.net/job/ProtocolLib/lastSuccessfulBuild/artifact/build/libs/ProtocolLib.jar"
-          else
-            url="https://github.com/dmulloy2/ProtocolLib/releases/download/4.8.0/ProtocolLib.jar"
-          fi
+          url="https://github.com/dmulloy2/ProtocolLib/releases/download/5.0.0/ProtocolLib.jar"
           mkdir -p ./server/plugins/ProtocolLib
           wget -q "$url" -O ./server/plugins/ProtocolLib.jar
           echo -e "global:\n  auto updater:\n    notify: false\n    download: false" > ./server/plugins/ProtocolLib/config.yml
