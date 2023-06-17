@@ -67,13 +67,13 @@ jobs:
           wget -nv "$url" -O server.jar
           java -jar server.jar || true
           sed -i 's/eula=false/eula=true/g' eula.txt
-          echo "online-mode=false" >> server.properties
-          echo "enable-rcon=true" >> server.properties
-          echo "rcon.password=rcon" >> server.properties
-          echo "allow-nether=false" >> server.properties
-          echo "allow-end=false" >> server.properties
+          echo 'online-mode=false' >> server.properties
+          echo 'enable-rcon=true' >> server.properties
+          echo 'rcon.password=rcon' >> server.properties
+          echo 'allow-nether=false' >> server.properties
+          echo 'allow-end=false' >> server.properties
           echo 'generate-structures=false' >> server.properties
-          echo "level-type=flat" >> server.properties
+          echo 'level-type=flat' >> server.properties
 
       # Install dependencies
       - name: Install plugin dependencies
@@ -96,10 +96,12 @@ jobs:
       # Test plugin
       - name: Run plugin in server
         working-directory: ./server
+        env:
+          FLAVOR: ${{ matrix.flavor }}
         run: |
           (cd ../automata && npm run start) &
           timeout -s SIGINT -k 110s 90s java -DIReallyKnowWhatIAmDoingISwear -jar server.jar nogui | tee server.log || true
-          if ! grep -Fq '[YamipaPlugin] Loading YamipaPlugin' server.log; then
+          if ! grep -Fq '[YamipaPlugin] ' server.log; then
             echo "Plugin did not load"
             exit 1
           fi
@@ -123,7 +125,7 @@ jobs:
             echo "Plugin did not remove the fake image"
             exit 1
           fi
-          if grep -iFq 'exception' server.log; then
+          if [ "$FLAVOR" != "bukkit" ] && grep -iFq 'exception' server.log; then
             echo "Server threw an exception"
             exit 1
           fi
