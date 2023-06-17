@@ -25,8 +25,7 @@ Download the JAR file for the [latest release](https://github.com/josemmo/yamipa
 Before installing Yamipa make sure you meet the following requirements:
 
 - CraftBukkit, Spigot or PaperMC 1.16 or higher
-- [ProtocolLib](https://www.spigotmc.org/resources/protocollib.1997/) v4.8.0 or higher
-  (latest [dev build](https://ci.dmulloy2.net/job/ProtocolLib/lastSuccessfulBuild/) for 1.19.4)
+- [ProtocolLib](https://www.spigotmc.org/resources/protocollib.1997/) v5.0.0 or higher
 
 Here are the Minecraft distributions where Yamipa should be able to run:
 | Minecraft version | CraftBukkit | Spigot | PaperMC |
@@ -35,6 +34,7 @@ Here are the Minecraft distributions where Yamipa should be able to run:
 |     1.17 & 1.17.1 |     ✅      |   ✅    |   ✅    |
 |     1.18 & 1.18.x |     ✅      |   ✅    |   ✅    |
 |     1.19 & 1.19.x |     ✅      |   ✅    |   ✅    |
+|     1.20 & 1.20.1 |     ✅      |   ✅    |   ✅    |
 
 ## Configuration
 Yamipa is ready-to-go right out of the box. By default, it creates the following files and directories under the
@@ -96,16 +96,16 @@ This plugin adds the following commands:
   `/image clear 0 0 world 9999999 00000000-0000-0000-0000-000000000000`
 
 ## Permissions
-If you want more granular control over the players who can use a particular set of commands, permissions are the way to go!
+If you want more granular control over the features exposed to players, permissions are the way to go!
 
 Yamipa defines the following permissions:
 
-| Command                     |   Default   | Description                                                     |
+| Permission                  |   Default   | Description                                                     |
 |:----------------------------|:-----------:|:----------------------------------------------------------------|
 | `yamipa.command.clear`      |     OPs     | To use the `/image clear` command                               |
 | `yamipa.command.describe`   |     OPs     | To use the `/image describe` command                            |
 | `yamipa.command.download`   |     OPs     | To use the `/image download` command                            |
-| `yamipa.command.give`       |     OPs     | To use the `/image give` download                               |
+| `yamipa.command.give`       |     OPs     | To use the `/image give` command                                |
 | `yamipa.command.list`       |     OPs     | To use the `/image list` command                                |
 | `yamipa.command.place`      |     OPs     | To use the `/image place` command                               |
 | `yamipa.command.remove`     |     OPs     | To use the `/image remove` command                              |

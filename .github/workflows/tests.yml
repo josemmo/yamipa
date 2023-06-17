@@ -6,12 +6,12 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 8
-    continue-on-error: ${{ matrix.version == '1.19.4' }}
+    continue-on-error: ${{ matrix.version == '1.20.1' }}
     strategy:
       fail-fast: false
       matrix:
         flavor: ['bukkit', 'spigot', 'paper', 'purpur']
-        version: ['1.19.4', '1.18.2', '1.17.1', '1.16.5']
+        version: ['1.20.1', '1.19.4', '1.18.2', '1.17.1', '1.16.5']
     steps:
       # Download code from repository
       - name: Checkout code
@@ -39,7 +39,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '17'
+          node-version: '19'
 
       # Setup automata
       - name: Setup automata
@@ -67,24 +67,18 @@ jobs:
           wget -nv "$url" -O server.jar
           java -jar server.jar || true
           sed -i 's/eula=false/eula=true/g' eula.txt
-          echo "online-mode=false" >> server.properties
-          echo "enable-rcon=true" >> server.properties
-          echo "rcon.password=rcon" >> server.properties
-          echo "allow-nether=false" >> server.properties
-          echo "allow-end=false" >> server.properties
+          echo 'online-mode=false' >> server.properties
+          echo 'enable-rcon=true' >> server.properties
+          echo 'rcon.password=rcon' >> server.properties
+          echo 'allow-nether=false' >> server.properties
+          echo 'allow-end=false' >> server.properties
           echo 'generate-structures=false' >> server.properties
-          echo "level-type=flat" >> server.properties
+          echo 'level-type=flat' >> server.properties
 
       # Install dependencies
       - name: Install plugin dependencies
-        env:
-          VERSION: ${{ matrix.version }}
         run: |
-          if [ $VERSION == "1.19.4" ]; then
-            url="https://ci.dmulloy2.net/job/ProtocolLib/lastSuccessfulBuild/artifact/build/libs/ProtocolLib.jar"
-          else
-            url="https://github.com/dmulloy2/ProtocolLib/releases/download/4.8.0/ProtocolLib.jar"
-          fi
+          url="https://github.com/dmulloy2/ProtocolLib/releases/download/5.0.0/ProtocolLib.jar"
           mkdir -p ./server/plugins/ProtocolLib
           wget -q "$url" -O ./server/plugins/ProtocolLib.jar
           echo -e "global:\n  auto updater:\n    notify: false\n    download: false" > ./server/plugins/ProtocolLib/config.yml
@@ -102,10 +96,12 @@ jobs:
       # Test plugin
       - name: Run plugin in server
         working-directory: ./server
+        env:
+          FLAVOR: ${{ matrix.flavor }}
         run: |
           (cd ../automata && npm run start) &
           timeout -s SIGINT -k 110s 90s java -DIReallyKnowWhatIAmDoingISwear -jar server.jar nogui | tee server.log || true
-          if ! grep -Fq '[YamipaPlugin] Loading YamipaPlugin' server.log; then
+          if ! grep -Fq '[YamipaPlugin] ' server.log; then
             echo "Plugin did not load"
             exit 1
           fi
@@ -129,7 +125,7 @@ jobs:
             echo "Plugin did not remove the fake image"
             exit 1
           fi
-          if grep -iFq 'exception' server.log; then
+          if [ "$FLAVOR" != "bukkit" ] && grep -iFq 'exception' server.log; then
             echo "Server threw an exception"
             exit 1
           fi

@@ -1,10 +1,7 @@
 package io.josemmo.bukkit.plugin;
 
 import io.josemmo.bukkit.plugin.commands.ImageCommandBridge;
-import io.josemmo.bukkit.plugin.renderer.FakeEntity;
-import io.josemmo.bukkit.plugin.renderer.FakeImage;
-import io.josemmo.bukkit.plugin.renderer.ImageRenderer;
-import io.josemmo.bukkit.plugin.renderer.ItemService;
+import io.josemmo.bukkit.plugin.renderer.*;
 import io.josemmo.bukkit.plugin.storage.ImageStorage;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.SimplePie;
@@ -13,6 +10,7 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import java.awt.Color;
 import java.nio.file.Path;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -107,12 +105,14 @@ public class YamipaPlugin extends JavaPlugin {
         // Create thread pool
         scheduler = Executors.newScheduledThreadPool(6);
 
-        // Warm-up ProtocolLib
+        // Warm-up plugin dependencies
         fine("Waiting for ProtocolLib to be ready...");
         scheduler.execute(() -> {
             FakeEntity.waitForProtocolLib();
             fine("ProtocolLib is now ready");
         });
+        fine("Triggered map color cache warm-up");
+        FakeMap.pixelToIndex(Color.RED.getRGB()); // Ask for a color index to force cache generation
 
         // Initialize bStats
         Function<Integer, String> toStats = number -> {
