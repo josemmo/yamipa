@@ -48,9 +48,9 @@ public class ItemService extends InteractWithEntityListener implements Listener 
 
         // Set metadata
         PersistentDataContainer itemData = itemMeta.getPersistentDataContainer();
-        itemMeta.setDisplayName(image.getName() + ChatColor.AQUA + " (" + width + "x" + height + ")");
+        itemMeta.setDisplayName(image.getFilename() + ChatColor.AQUA + " (" + width + "x" + height + ")");
         itemMeta.setLore(Collections.singletonList("Yamipa image"));
-        itemData.set(NSK_FILENAME, PersistentDataType.STRING, image.getName());
+        itemData.set(NSK_FILENAME, PersistentDataType.STRING, image.getFilename());
         itemData.set(NSK_WIDTH, PersistentDataType.INTEGER, width);
         itemData.set(NSK_HEIGHT, PersistentDataType.INTEGER, height);
         itemData.set(NSK_FLAGS, PersistentDataType.INTEGER, flags);

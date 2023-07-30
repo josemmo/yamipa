@@ -20,7 +20,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -38,25 +38,25 @@ public class ImageFile {
     private final ConcurrentHashMap<String, Lock> locks = new ConcurrentHashMap<>();
     private final Map<String, FakeMapsContainer> cache = new HashMap<>();
     private final Map<String, Set<FakeImage>> subscribers = new HashMap<>();
-    private final String name;
-    private final String path;
+    private final String filename;
+    private final Path path;
 
     /**
      * Class constructor
-     * @param name Image file name
-     * @param path Path to image file
+     * @param filename Image filename
+     * @param path     Path to image file
      */
-    protected ImageFile(@NotNull String name, @NotNull String path) {
-        this.name = name;
+    protected ImageFile(@NotNull String filename, @NotNull Path path) {
+        this.filename = filename;
         this.path = path;
     }
 
     /**
-     * Get image file name
-     * @return Image file name
+     * Get image filename
+     * @return Image filename
      */
-    public @NotNull String getName() {
-        return name;
+    public @NotNull String getFilename() {
+        return filename;
     }
 
     /**
@@ -65,7 +65,7 @@ public class ImageFile {
      * @throws IOException if failed to get suitable image reader
      */
     private @NotNull ImageReader getImageReader() throws IOException {
-        ImageInputStream inputStream = ImageIO.createImageInputStream(new File(path));
+        ImageInputStream inputStream = ImageIO.createImageInputStream(path.toFile());
         ImageReader reader = ImageIO.getImageReaders(inputStream).next();
         reader.setInput(inputStream);
         return reader;
@@ -187,7 +187,7 @@ public class ImageFile {
      */
     public long getLastModified() {
         try {
-            return Files.getLastModifiedTime(Paths.get(path)).toMillis();
+            return Files.getLastModifiedTime(path).toMillis();
         } catch (Exception __) {
             return 0L;
         }
@@ -241,8 +241,8 @@ public class ImageFile {
         }
 
         // Try to get maps from disk cache
-        String cacheFilename = name + "." + cacheKey + "." + CACHE_EXT;
-        File cacheFile = Paths.get(plugin.getStorage().getCachePath(), cacheFilename).toFile();
+        String cacheFilename = filename + "." + cacheKey + "." + CACHE_EXT;
+        File cacheFile = plugin.getStorage().getCachePath().resolve(cacheFilename).toFile();
         if (cacheFile.isFile() && cacheFile.lastModified() >= getLastModified()) {
             try {
                 FakeMapsContainer container = readMapsFromCacheFile(cacheFile, width, height);
@@ -282,6 +282,7 @@ public class ImageFile {
             // Persist in disk cache
             container = new FakeMapsContainer(matrix, delay);
             try {
+                cacheFile.getParentFile().mkdirs();
                 writeMapsToCacheFile(container, cacheFile);
             } catch (IOException e) {
                 plugin.log(Level.SEVERE, "Failed to write to cache file \"" + cacheFile.getAbsolutePath() + "\"", e);
@@ -401,7 +402,7 @@ public class ImageFile {
         if (currentSubscribers.isEmpty()) {
             subscribers.remove(cacheKey);
             cache.remove(cacheKey);
-            plugin.fine("Invalidated cached maps \"" + cacheKey + "\" in ImageFile#(" + name + ")");
+            plugin.fine("Invalidated cached maps \"" + cacheKey + "\" in ImageFile#(" + filename + ")");
         }
     }
 
@@ -414,14 +415,21 @@ public class ImageFile {
     public synchronized void invalidate() {
         cache.clear();
 
-        // Delete disk cache files
-        File[] files = Paths.get(plugin.getStorage().getCachePath()).toFile().listFiles((__, filename) -> {
-            return filename.matches(Pattern.quote(name) + "\\.[0-9]+-[0-9]+\\." + CACHE_EXT);
-        });
-        if (files == null) {
-            plugin.warning("An error occurred when listing cache files for image \"" + name + "\"");
+        // Find cache files to delete
+        Path cachePath = plugin.getStorage().getCachePath();
+        String cachePattern = Pattern.quote(path.getFileName().toString()) + "\\.[0-9]+-[0-9]+\\." + CACHE_EXT;
+        File cacheDirectory = cachePath.resolve(filename).getParent().toFile();
+        if (!cacheDirectory.exists()) {
+            // Cache (sub)directory does not exist, no need to delete files
             return;
         }
+        File[] files = cacheDirectory.listFiles((__, item) -> item.matches(cachePattern));
+        if (files == null) {
+            plugin.warning("An error occurred when listing cache files for image \"" + filename + "\"");
+            return;
+        }
+
+        // Delete disk cache files
         for (File file : files) {
             if (!file.delete()) {
                 plugin.warning("Failed to delete cache file \"" + file.getAbsolutePath() + "\"");

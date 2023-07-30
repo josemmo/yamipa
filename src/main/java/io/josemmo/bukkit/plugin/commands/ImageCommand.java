@@ -24,7 +24,6 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -93,7 +92,7 @@ public class ImageCommand {
         YamipaPlugin plugin = YamipaPlugin.getInstance();
 
         // Validate destination file
-        Path basePath = Paths.get(plugin.getStorage().getBasePath());
+        Path basePath = plugin.getStorage().getBasePath();
         Path destPath = basePath.resolve(filename);
         if (!destPath.getParent().equals(basePath)) {
             sender.sendMessage(ChatColor.RED + "Not a valid destination filename");
@@ -207,7 +206,7 @@ public class ImageCommand {
 
         // Create new fake image instance
         Rotation rotation = FakeImage.getRotationFromPlayerEyesight(face, player.getEyeLocation());
-        FakeImage fakeImage = new FakeImage(image.getName(), location, face, rotation,
+        FakeImage fakeImage = new FakeImage(image.getFilename(), location, face, rotation,
             width, height, new Date(), player, flags);
 
         // Make sure image can be placed
