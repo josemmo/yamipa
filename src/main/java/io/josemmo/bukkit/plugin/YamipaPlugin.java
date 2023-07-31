@@ -145,18 +145,22 @@ public class YamipaPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        // Stop plugin components
-        if (storage != null) {
-            storage.stop();
-            storage = null;
+        // Stop item service
+        if (itemService != null) {
+            itemService.stop();
+            itemService = null;
         }
+
+        // Stop image renderer
         if (renderer != null) {
             renderer.stop();
             renderer = null;
         }
-        if (itemService != null) {
-            itemService.stop();
-            itemService = null;
+
+        // Stop image storage
+        if (storage != null) {
+            storage.stop();
+            storage = null;
         }
 
         // Stop internal scheduler
