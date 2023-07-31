@@ -109,19 +109,19 @@ jobs:
             echo "Plugin did not enabled verbose mode"
             exit 1
           fi
-          if ! grep -Fq '[YamipaPlugin] Found 5 file(s) in images directory' server.log; then
+          if ! grep -Fq '[YamipaPlugin] [ImageStorage] Found 5 file(s) in images directory' server.log; then
             echo "Plugin did not read image directory"
             exit 1
           fi
-          if ! grep -Fq '[YamipaPlugin] Fixed command permissions' server.log; then
+          if ! grep -Fq '[YamipaPlugin] [ImageCommandBridge] Fixed command permissions' server.log; then
             echo "Plugin did not fixed command permissions"
             exit 1
           fi
-          if ! grep -Fq '[YamipaPlugin] Created FakeImage' server.log; then
+          if ! grep -Fq '[YamipaPlugin] [FakeImage] Created FakeImage' server.log; then
             echo "Plugin did not place the fake image"
             exit 1
           fi
-          if ! grep -Fq '[YamipaPlugin] Invalidated FakeImage' server.log; then
+          if ! grep -Fq '[YamipaPlugin] [FakeImage] Invalidated FakeImage' server.log; then
             echo "Plugin did not remove the fake image"
             exit 1
           fi
