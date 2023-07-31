@@ -75,17 +75,17 @@ This plugin adds the following commands:
 - Show help\
   `/image`
 - Download an image from a URL and save it with another name\
-  `/image download "https://www.example.com/a/b/c/1234.jpg" imagename.jpg`
+  `/image download "https://www.example.com/a/b/c/1234.jpg" "imagename.jpg"`
 - Give 10 image items to "TestPlayer" for the "test.jpg" image (3x5 blocks)\
-  `/image give TestPlayer test.jpg 10 3 5`
+  `/image give TestPlayer "test.jpg" 10 3 5`
 - Give 10 image items to "TestPlayer" that will not drop an image item when removed\
-  `/image give TestPlayer test.jpg 10 3 5 -DROP`
+  `/image give TestPlayer "test.jpg" 10 3 5 -DROP`
 - Start the dialog to place an image with a width of 3 blocks and auto height\
-  `/image place imagename.jpg 3`
+  `/image place "imagename.jpg" 3`
 - Start the dialog to place a 3-blocks wide and 2-blocks high image\
-  `/image place imagename.jpg 3 2`
+  `/image place "imagename.jpg" 3 2`
 - Start the dialog to place an image that glows in the dark\
-  `/image place imagename.jpg 3 2 +GLOW`
+  `/image place "imagename.jpg" 3 2 +GLOW`
 - Start the dialog to remove a placed image while keeping the original file\
   `/image remove`
 - Remove all placed images in a radius of 5 blocks around the spawn\
