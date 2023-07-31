@@ -18,7 +18,7 @@ import java.util.*;
  * directory.
  */
 public class ImageStorage {
-    private static final boolean IS_WINDOWS = System.getProperty("os.name").toLowerCase(Locale.ENGLISH).contains("win");
+    private static final boolean IS_WINDOWS = System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win");
     private static final Logger LOGGER = Logger.getLogger("ImageStorage");
     /** Map of registered files indexed by filename */
     private final SortedMap<String, ImageFile> files = new TreeMap<>();

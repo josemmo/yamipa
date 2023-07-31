@@ -86,7 +86,7 @@ public class ImageCommand {
             sender.sendMessage("=== Page " + page + " out of " + maxPage + " ===");
         }
         for (int i=firstImageIndex; i<stopImageIndex; ++i) {
-            sender.sendMessage("" + ChatColor.GOLD + filenames[i]);
+            sender.sendMessage(ChatColor.GOLD + filenames[i]);
         }
     }
 
@@ -188,9 +188,7 @@ public class ImageCommand {
 
         // Ask player where to place image
         SelectBlockTask task = new SelectBlockTask(player);
-        task.onSuccess((location, face) -> {
-            placeImage(player, image, width, finalHeight, flags, location, face);
-        });
+        task.onSuccess((location, face) -> placeImage(player, image, width, finalHeight, flags, location, face));
         task.onFailure(() -> ActionBar.send(player, ChatColor.RED + "Image placing canceled"));
         task.run("Right click a block to continue");
     }
@@ -282,7 +280,7 @@ public class ImageCommand {
 
         // Get images in area
         Set<FakeImage> images = renderer.getImages(
-            origin.getWorld(),
+            Objects.requireNonNull(origin.getWorld()),
             origin.getBlockX()-radius+1,
             origin.getBlockX()+radius-1,
             origin.getBlockZ()-radius+1,

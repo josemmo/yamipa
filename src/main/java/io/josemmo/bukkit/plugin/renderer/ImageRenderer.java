@@ -244,7 +244,7 @@ public class ImageRenderer implements Listener {
      * @param  maxX  Maximum X coordinate
      * @param  minZ  Minimum Z coordinate
      * @param  maxZ  Maximum Z coordinate
-     * @return       List of found images
+     * @return       Set of found images
      */
     public @NotNull Set<FakeImage> getImages(@NotNull World world, int minX, int maxX, int minZ, int maxZ) {
         Set<FakeImage> response = new HashSet<>();
