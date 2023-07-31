@@ -35,7 +35,6 @@ public class ImageFile {
     public static final byte[] CACHE_SIGNATURE = new byte[] {0x59, 0x4d, 0x50}; // "YMP"
     public static final int CACHE_VERSION = 1;
     private static final Logger LOGGER = Logger.getLogger("ImageFile");
-    private static final YamipaPlugin plugin = YamipaPlugin.getInstance();
     private final ConcurrentHashMap<String, Lock> locks = new ConcurrentHashMap<>();
     private final Map<String, FakeMapsContainer> cache = new HashMap<>();
     private final Map<String, Set<FakeImage>> subscribers = new HashMap<>();
@@ -243,7 +242,7 @@ public class ImageFile {
 
         // Try to get maps from disk cache
         String cacheFilename = filename + "." + cacheKey + "." + CACHE_EXT;
-        File cacheFile = plugin.getStorage().getCachePath().resolve(cacheFilename).toFile();
+        File cacheFile = YamipaPlugin.getInstance().getStorage().getCachePath().resolve(cacheFilename).toFile();
         if (cacheFile.isFile() && cacheFile.lastModified() >= getLastModified()) {
             try {
                 FakeMapsContainer container = readMapsFromCacheFile(cacheFile, width, height);
@@ -417,7 +416,7 @@ public class ImageFile {
         cache.clear();
 
         // Find cache files to delete
-        Path cachePath = plugin.getStorage().getCachePath();
+        Path cachePath = YamipaPlugin.getInstance().getStorage().getCachePath();
         String cachePattern = Pattern.quote(path.getFileName().toString()) + "\\.[0-9]+-[0-9]+\\." + CACHE_EXT;
         File cacheDirectory = cachePath.resolve(filename).getParent().toFile();
         if (!cacheDirectory.exists()) {
