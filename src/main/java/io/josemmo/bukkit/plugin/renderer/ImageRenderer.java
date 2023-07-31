@@ -22,7 +22,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 public class ImageRenderer implements Listener {
@@ -91,7 +90,7 @@ public class ImageRenderer implements Listener {
         try {
             config.load(configPath);
         } catch (IOException e) {
-            plugin.log(Level.SEVERE, "Failed to load placed fake images from disk", e);
+            plugin.severe("Failed to load placed fake images from disk", e);
             return;
         }
 
@@ -122,7 +121,7 @@ public class ImageRenderer implements Listener {
                     placedAt, placedBy, flags);
                 addImage(fakeImage, true);
             } catch (Exception e) {
-                plugin.log(Level.SEVERE, "Invalid fake image properties: " + String.join(";", row), e);
+                plugin.severe("Invalid fake image properties: " + String.join(";", row), e);
             }
         }
     }
@@ -169,7 +168,7 @@ public class ImageRenderer implements Listener {
             config.save(configPath);
             plugin.info("Saved placed fake images to disk");
         } catch (IOException e) {
-            plugin.log(Level.SEVERE, "Failed to save placed fake images to disk", e);
+            plugin.severe("Failed to save placed fake images to disk", e);
         }
     }
 

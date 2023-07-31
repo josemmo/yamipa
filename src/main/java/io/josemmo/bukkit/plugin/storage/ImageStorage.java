@@ -8,7 +8,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
-import java.util.logging.Level;
 
 /**
  * A service whose purpose is to keep track of all available image files in a given directory.
@@ -89,7 +88,7 @@ public class ImageStorage {
             try {
                 watchService.close();
             } catch (IOException e) {
-                plugin.log(Level.WARNING, "Failed to close watch service", e);
+                plugin.warning("Failed to close watch service", e);
             }
             watchService = null;
         }
@@ -155,7 +154,7 @@ public class ImageStorage {
                 path.register(watchService, events, modifiers);
                 plugin.fine("Started watching directory at \"" + path.toAbsolutePath() + "\"");
             } catch (IOException e) {
-                plugin.log(Level.SEVERE, "Failed to register directory", e);
+                plugin.severe("Failed to register directory", e);
             }
         }
     }

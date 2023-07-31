@@ -19,7 +19,6 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.Callable;
-import java.util.logging.Level;
 
 public class Permissions {
     @Nullable private static WorldGuard worldGuard = null;
@@ -109,7 +108,7 @@ public class Permissions {
                 canEditCallable.call() :
                 Bukkit.getScheduler().callSyncMethod(plugin, canEditCallable).get();
         } catch (Exception e) {
-            plugin.log(Level.SEVERE, "Failed to get player permissions from GriefPrevention", e);
+            plugin.severe("Failed to get player permissions from GriefPrevention", e);
             return false;
         }
     }

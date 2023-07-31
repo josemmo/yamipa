@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Level;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 
@@ -251,7 +250,7 @@ public class ImageFile {
             } catch (IllegalArgumentException e) {
                 plugin.info("Cache file \"" + cacheFile.getAbsolutePath() + "\" is outdated and will be overwritten");
             } catch (Exception e) {
-                plugin.log(Level.WARNING, "Cache file \"" + cacheFile.getAbsolutePath() + "\" is corrupted", e);
+                plugin.warning("Cache file \"" + cacheFile.getAbsolutePath() + "\" is corrupted", e);
             }
         }
 
@@ -285,11 +284,11 @@ public class ImageFile {
                 cacheFile.getParentFile().mkdirs();
                 writeMapsToCacheFile(container, cacheFile);
             } catch (IOException e) {
-                plugin.log(Level.SEVERE, "Failed to write to cache file \"" + cacheFile.getAbsolutePath() + "\"", e);
+                plugin.severe("Failed to write to cache file \"" + cacheFile.getAbsolutePath() + "\"", e);
             }
         } catch (Exception e) {
             container = FakeMap.getErrorMatrix(width, height);
-            plugin.log(Level.SEVERE, "Failed to render image(s) from file \"" + path + "\"", e);
+            plugin.severe("Failed to render image(s) from file \"" + path + "\"", e);
         }
 
         // Persist in memory cache and return

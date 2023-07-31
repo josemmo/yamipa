@@ -11,7 +11,6 @@ import io.josemmo.bukkit.plugin.utils.Internals;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.Field;
-import java.util.logging.Level;
 
 public abstract class FakeEntity {
     protected static final YamipaPlugin plugin = YamipaPlugin.getInstance();
@@ -32,7 +31,7 @@ public abstract class FakeEntity {
                 throw new RuntimeException("No valid candidate field found in ProtocolManager");
             }
         } catch (Exception e) {
-            plugin.log(Level.SEVERE, "Failed to get PlayerInjectionHandler from ProtocolLib", e);
+            plugin.severe("Failed to get PlayerInjectionHandler from ProtocolLib", e);
         }
     }
 
@@ -92,7 +91,7 @@ public abstract class FakeEntity {
         } catch (IllegalStateException e) {
             // Server is shutting down and cannot send the packet, ignore
         } catch (Exception e) {
-            plugin.log(Level.SEVERE, "Failed to send FakeEntity packet", e);
+            plugin.severe("Failed to send FakeEntity packet", e);
         }
     }
 

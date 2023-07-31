@@ -152,9 +152,9 @@ public class YamipaPlugin extends JavaPlugin {
      * Log message
      * @param level   Record level
      * @param message Message
-     * @param e       Throwable instance, NULL to ignore
+     * @param e       Optional throwable to log
      */
-    public void log(@NotNull Level level, @NotNull String message, @Nullable Throwable e) {
+    private void log(@NotNull Level level, @NotNull String message, @Nullable Throwable e) {
         // Fix log level
         if (level.intValue() < Level.INFO.intValue()) {
             if (!verbose) return;
@@ -170,12 +170,21 @@ public class YamipaPlugin extends JavaPlugin {
     }
 
     /**
-     * Log message
-     * @param level   Record level
+     * Log severe message
      * @param message Message
+     * @param e       Throwable to log
      */
-    public void log(@NotNull Level level, @NotNull String message) {
-        log(level, message, null);
+    public void severe(@NotNull String message, @NotNull Throwable e) {
+        log(Level.SEVERE, message, e);
+    }
+
+    /**
+     * Log warning message
+     * @param message Message
+     * @param e       Throwable to log
+     */
+    public void warning(@NotNull String message, @NotNull Throwable e) {
+        log(Level.WARNING, message, e);
     }
 
     /**
@@ -183,7 +192,7 @@ public class YamipaPlugin extends JavaPlugin {
      * @param message Message
      */
     public void warning(@NotNull String message) {
-        log(Level.WARNING, message);
+        log(Level.WARNING, message, null);
     }
 
     /**
@@ -191,7 +200,7 @@ public class YamipaPlugin extends JavaPlugin {
      * @param message Message
      */
     public void info(@NotNull String message) {
-        log(Level.INFO, message);
+        log(Level.INFO, message, null);
     }
 
     /**
@@ -199,6 +208,6 @@ public class YamipaPlugin extends JavaPlugin {
      * @param message Message
      */
     public void fine(@NotNull String message) {
-        log(Level.FINE, message);
+        log(Level.FINE, message, null);
     }
 }
