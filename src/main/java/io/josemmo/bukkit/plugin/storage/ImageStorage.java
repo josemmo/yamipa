@@ -71,6 +71,7 @@ public class ImageStorage {
         watchServiceThread = new WatcherThread();
         watchServiceThread.start();
         registerDirectory(basePath, true);
+        plugin.fine("Found " + files.size() + " file(s) in images directory");
     }
 
     /**
