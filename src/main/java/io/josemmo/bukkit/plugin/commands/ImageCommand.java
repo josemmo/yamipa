@@ -29,7 +29,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class ImageCommand {
-    public static final int ITEMS_PER_PAGE = 9;
+    private static final int ITEMS_PER_PAGE = 9;
     private static final Logger LOGGER = Logger.getLogger("ImageCommand");
 
     public static void showHelp(@NotNull CommandSender s, @NotNull String commandName) {

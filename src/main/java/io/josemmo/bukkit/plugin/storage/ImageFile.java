@@ -31,9 +31,9 @@ import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 
 public class ImageFile {
-    public static final String CACHE_EXT = "cache";
-    public static final byte[] CACHE_SIGNATURE = new byte[] {0x59, 0x4d, 0x50}; // "YMP"
-    public static final int CACHE_VERSION = 1;
+    private static final String CACHE_EXT = "cache";
+    private static final byte[] CACHE_SIGNATURE = new byte[] {0x59, 0x4d, 0x50}; // "YMP"
+    private static final int CACHE_VERSION = 1;
     private static final Logger LOGGER = Logger.getLogger("ImageFile");
     private final ConcurrentHashMap<String, Lock> locks = new ConcurrentHashMap<>();
     private final Map<String, FakeMapsContainer> cache = new HashMap<>();

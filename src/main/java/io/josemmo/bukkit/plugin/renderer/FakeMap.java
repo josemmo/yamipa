@@ -5,6 +5,7 @@ import io.josemmo.bukkit.plugin.utils.Logger;
 import org.bukkit.entity.Player;
 import org.bukkit.map.MapPalette;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.time.Instant;
 import java.util.Arrays;
@@ -19,8 +20,8 @@ public class FakeMap extends FakeEntity {
     private static final int MAX_MAP_ID = Integer.MAX_VALUE;
     private static final int RESEND_THRESHOLD = 60*5; // Seconds after sending pixels when resending should be avoided
     private static final Logger LOGGER = Logger.getLogger("FakeMap");
-    private static final AtomicInteger lastMapId = new AtomicInteger(-1);
-    private static FakeMap errorInstance;
+    private static final AtomicInteger LAST_MAP_ID = new AtomicInteger(MIN_MAP_ID);
+    private static @Nullable FakeMap ERROR_INSTANCE;
     private final int id;
     private final byte[] pixels;
     private final ConcurrentMap<UUID, Long> lastPlayerSendTime = new ConcurrentHashMap<>();
@@ -30,8 +31,8 @@ public class FakeMap extends FakeEntity {
      * @return Next unused map ID
      */
     private static int getNextId() {
-        return lastMapId.updateAndGet(lastId -> {
-            if (lastId <= MIN_MAP_ID) {
+        return LAST_MAP_ID.updateAndGet(lastId -> {
+            if (lastId == MIN_MAP_ID) {
                 return MAX_MAP_ID;
             }
             return lastId - 1;
@@ -53,12 +54,12 @@ public class FakeMap extends FakeEntity {
      * @return Error instance
      */
     private static @NotNull FakeMap getErrorInstance() {
-        if (errorInstance == null) {
+        if (ERROR_INSTANCE == null) {
             byte[] pixels = new byte[DIMENSION * DIMENSION];
             Arrays.fill(pixels, pixelToIndex(Color.RED.getRGB()));
-            errorInstance = new FakeMap(pixels);
+            ERROR_INSTANCE = new FakeMap(pixels);
         }
-        return errorInstance;
+        return ERROR_INSTANCE;
     }
 
     /**

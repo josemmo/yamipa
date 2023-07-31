@@ -11,24 +11,25 @@ import io.josemmo.bukkit.plugin.utils.Internals;
 import io.josemmo.bukkit.plugin.utils.Logger;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Field;
 
 public abstract class FakeEntity {
     private static final Logger LOGGER = Logger.getLogger("FakeEntity");
-    private static final ProtocolManager connection = ProtocolLibrary.getProtocolManager();
-    private static PlayerInjectionHandler playerInjectionHandler = null;
-    private static boolean ready = false;
+    private static final ProtocolManager CONNECTION = ProtocolLibrary.getProtocolManager();
+    private static @Nullable PlayerInjectionHandler PLAYER_INJECTION_HANDLER;
+    private static boolean READY = false;
 
     static {
         try {
-            for (Field field : connection.getClass().getDeclaredFields()) {
+            for (Field field : CONNECTION.getClass().getDeclaredFields()) {
                 if (field.getType().equals(PlayerInjectionHandler.class)) {
                     field.setAccessible(true);
-                    playerInjectionHandler = (PlayerInjectionHandler) field.get(connection);
+                    PLAYER_INJECTION_HANDLER = (PlayerInjectionHandler) field.get(CONNECTION);
                     break;
                 }
             }
-            if (playerInjectionHandler == null) {
+            if (PLAYER_INJECTION_HANDLER == null) {
                 throw new RuntimeException("No valid candidate field found in ProtocolManager");
             }
         } catch (Exception e) {
@@ -42,7 +43,7 @@ public abstract class FakeEntity {
      * NOTE: Will wait synchronously, blocking the invoker thread
      */
     public static synchronized void waitForProtocolLib() {
-        if (ready) {
+        if (READY) {
             // ProtocolLib is ready
             return;
         }
@@ -51,7 +52,7 @@ public abstract class FakeEntity {
         while (true) {
             try {
                 WrappedDataWatcher.Registry.get(Byte.class);
-                ready = true;
+                READY = true;
                 break;
             } catch (Exception e) {
                 if (++retry > 20) {
@@ -84,10 +85,10 @@ public abstract class FakeEntity {
      */
     protected static void tryToSendPacket(@NotNull Player player, @NotNull PacketContainer packet) {
         try {
-            if (playerInjectionHandler == null) { // Use single-threaded packet sending if reflection failed
-                connection.sendServerPacket(player, packet);
+            if (PLAYER_INJECTION_HANDLER == null) { // Use single-threaded packet sending if reflection failed
+                CONNECTION.sendServerPacket(player, packet);
             } else { // Use non-blocking packet sending if available (faster, the expected case)
-                playerInjectionHandler.sendServerPacket(player, packet, null, false);
+                PLAYER_INJECTION_HANDLER.sendServerPacket(player, packet, null, false);
             }
         } catch (IllegalStateException e) {
             // Server is shutting down and cannot send the packet, ignore

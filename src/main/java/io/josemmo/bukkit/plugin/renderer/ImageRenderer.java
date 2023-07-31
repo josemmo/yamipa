@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 public class ImageRenderer implements Listener {
-    public static final long SAVE_INTERVAL = 20L * 90; // In server ticks
+    private static final long SAVE_INTERVAL = 20L * 90; // In server ticks
     private static final Logger LOGGER = Logger.getLogger("ImageRenderer");
     private final String configPath;
     private BukkitTask saveTask;

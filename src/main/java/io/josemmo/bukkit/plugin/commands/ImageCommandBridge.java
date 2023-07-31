@@ -16,8 +16,8 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 public class ImageCommandBridge {
-    public static final String COMMAND_NAME = "yamipa";
-    public static final String[] COMMAND_ALIASES = new String[] {"image", "images"};
+    private static final String COMMAND_NAME = "yamipa";
+    private static final String[] COMMAND_ALIASES = new String[] {"image", "images"};
     private static final Logger LOGGER = Logger.getLogger("ImageCommandBridge");
 
     /**
