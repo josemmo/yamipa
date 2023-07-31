@@ -15,9 +15,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class FakeMap extends FakeEntity {
     public static final int DIMENSION = 128;
-    public static final int MIN_MAP_ID = Integer.MAX_VALUE / 4;
-    public static final int MAX_MAP_ID = Integer.MAX_VALUE;
-    public static final int RESEND_THRESHOLD = 60*5; // Seconds after sending pixels when resending should be avoided
+    private static final int MIN_MAP_ID = Integer.MAX_VALUE / 4;
+    private static final int MAX_MAP_ID = Integer.MAX_VALUE;
+    private static final int RESEND_THRESHOLD = 60*5; // Seconds after sending pixels when resending should be avoided
     private static final Logger LOGGER = Logger.getLogger("FakeMap");
     private static final AtomicInteger lastMapId = new AtomicInteger(-1);
     private static FakeMap errorInstance;
