@@ -5,6 +5,7 @@ import io.josemmo.bukkit.plugin.renderer.FakeImage;
 import io.josemmo.bukkit.plugin.renderer.ImageRenderer;
 import io.josemmo.bukkit.plugin.renderer.ItemService;
 import io.josemmo.bukkit.plugin.storage.ImageFile;
+import io.josemmo.bukkit.plugin.utils.Logger;
 import io.josemmo.bukkit.plugin.utils.Permissions;
 import io.josemmo.bukkit.plugin.utils.SelectBlockTask;
 import io.josemmo.bukkit.plugin.utils.ActionBar;
@@ -29,6 +30,7 @@ import java.util.*;
 
 public class ImageCommand {
     public static final int ITEMS_PER_PAGE = 9;
+    private static final Logger LOGGER = Logger.getLogger("ImageCommand");
 
     public static void showHelp(@NotNull CommandSender s, @NotNull String commandName) {
         String cmd = "/" + commandName;
@@ -159,10 +161,10 @@ public class ImageCommand {
                 sender.sendMessage(ChatColor.GREEN + "Done!");
             } catch (IOException e) {
                 sender.sendMessage(ChatColor.RED + "An error occurred trying to download the remote file");
-                plugin.warning("Failed to download file from \"" + finalUrl + "\": " + e.getClass().getName());
+                LOGGER.warning("Failed to download file from \"" + finalUrl + "\": " + e.getClass().getName());
             } catch (IllegalArgumentException e) {
                 if (Files.exists(destPath) && !destPath.toFile().delete()) {
-                    plugin.warning("Failed to delete corrupted file \"" + destPath + "\"");
+                    LOGGER.warning("Failed to delete corrupted file \"" + destPath + "\"");
                 }
                 sender.sendMessage(ChatColor.RED + e.getMessage());
             }

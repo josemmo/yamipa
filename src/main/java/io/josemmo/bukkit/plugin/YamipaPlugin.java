@@ -3,6 +3,7 @@ package io.josemmo.bukkit.plugin;
 import io.josemmo.bukkit.plugin.commands.ImageCommandBridge;
 import io.josemmo.bukkit.plugin.renderer.*;
 import io.josemmo.bukkit.plugin.storage.ImageStorage;
+import io.josemmo.bukkit.plugin.utils.Logger;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.SimplePie;
 import org.bukkit.Bukkit;
@@ -20,6 +21,7 @@ import java.util.logging.Level;
 public class YamipaPlugin extends JavaPlugin {
     public static final int BSTATS_PLUGIN_ID = 10243;
     private static YamipaPlugin instance;
+    private static final Logger LOGGER = Logger.getLogger();
     private boolean verbose;
     private ImageStorage storage;
     private ImageRenderer renderer;
@@ -68,7 +70,7 @@ public class YamipaPlugin extends JavaPlugin {
         // Initialize logger
         verbose = getConfig().getBoolean("verbose", false);
         if (verbose) {
-            info("Running on VERBOSE mode");
+            LOGGER.info("Running on VERBOSE mode");
         }
 
         // Register plugin commands
@@ -88,13 +90,13 @@ public class YamipaPlugin extends JavaPlugin {
         try {
             storage.start();
         } catch (Exception e) {
-            log(Level.SEVERE, "Failed to initialize image storage", e);
+            LOGGER.severe("Failed to initialize image storage", e);
         }
 
         // Create image renderer
         boolean animateImages = getConfig().getBoolean("animate-images", true);
         FakeImage.configure(animateImages);
-        info(animateImages ? "Enabled image animation support" : "Image animation support is disabled");
+        LOGGER.info(animateImages ? "Enabled image animation support" : "Image animation support is disabled");
         renderer = new ImageRenderer(basePath.resolve(dataPath).toString());
         renderer.start();
 
@@ -106,12 +108,12 @@ public class YamipaPlugin extends JavaPlugin {
         scheduler = Executors.newScheduledThreadPool(6);
 
         // Warm-up plugin dependencies
-        fine("Waiting for ProtocolLib to be ready...");
+        LOGGER.fine("Waiting for ProtocolLib to be ready...");
         scheduler.execute(() -> {
             FakeEntity.waitForProtocolLib();
-            fine("ProtocolLib is now ready");
+            LOGGER.fine("ProtocolLib is now ready");
         });
-        fine("Triggered map color cache warm-up");
+        LOGGER.fine("Triggered map color cache warm-up");
         FakeMap.pixelToIndex(Color.RED.getRGB()); // Ask for a color index to force cache generation
 
         // Initialize bStats
@@ -146,68 +148,6 @@ public class YamipaPlugin extends JavaPlugin {
         // Remove Bukkit listeners and tasks
         HandlerList.unregisterAll(this);
         Bukkit.getScheduler().cancelTasks(this);
-    }
 
-    /**
-     * Log message
-     * @param level   Record level
-     * @param message Message
-     * @param e       Optional throwable to log
-     */
-    private void log(@NotNull Level level, @NotNull String message, @Nullable Throwable e) {
-        // Fix log level
-        if (level.intValue() < Level.INFO.intValue()) {
-            if (!verbose) return;
-            level = Level.INFO;
-        }
-
-        // Proxy record to real logger
-        if (e == null) {
-            getLogger().log(level, message);
-        } else {
-            getLogger().log(level, message, e);
-        }
-    }
-
-    /**
-     * Log severe message
-     * @param message Message
-     * @param e       Throwable to log
-     */
-    public void severe(@NotNull String message, @NotNull Throwable e) {
-        log(Level.SEVERE, message, e);
-    }
-
-    /**
-     * Log warning message
-     * @param message Message
-     * @param e       Throwable to log
-     */
-    public void warning(@NotNull String message, @NotNull Throwable e) {
-        log(Level.WARNING, message, e);
-    }
-
-    /**
-     * Log warning message
-     * @param message Message
-     */
-    public void warning(@NotNull String message) {
-        log(Level.WARNING, message, null);
-    }
-
-    /**
-     * Log info message
-     * @param message Message
-     */
-    public void info(@NotNull String message) {
-        log(Level.INFO, message, null);
-    }
-
-    /**
-     * Log fine message
-     * @param message Message
-     */
-    public void fine(@NotNull String message) {
-        log(Level.FINE, message, null);
     }
 }

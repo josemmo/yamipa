@@ -5,6 +5,7 @@ import io.josemmo.bukkit.plugin.YamipaPlugin;
 import io.josemmo.bukkit.plugin.renderer.FakeImage;
 import io.josemmo.bukkit.plugin.renderer.FakeMap;
 import io.josemmo.bukkit.plugin.renderer.FakeMapsContainer;
+import io.josemmo.bukkit.plugin.utils.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import javax.imageio.ImageIO;
@@ -33,6 +34,7 @@ public class ImageFile {
     public static final String CACHE_EXT = "cache";
     public static final byte[] CACHE_SIGNATURE = new byte[] {0x59, 0x4d, 0x50}; // "YMP"
     public static final int CACHE_VERSION = 1;
+    private static final Logger LOGGER = Logger.getLogger("ImageFile");
     private static final YamipaPlugin plugin = YamipaPlugin.getInstance();
     private final ConcurrentHashMap<String, Lock> locks = new ConcurrentHashMap<>();
     private final Map<String, FakeMapsContainer> cache = new HashMap<>();
@@ -248,9 +250,9 @@ public class ImageFile {
                 cache.put(cacheKey, container);
                 return container;
             } catch (IllegalArgumentException e) {
-                plugin.info("Cache file \"" + cacheFile.getAbsolutePath() + "\" is outdated and will be overwritten");
+                LOGGER.info("Cache file \"" + cacheFile.getAbsolutePath() + "\" is outdated and will be overwritten");
             } catch (Exception e) {
-                plugin.warning("Cache file \"" + cacheFile.getAbsolutePath() + "\" is corrupted", e);
+                LOGGER.warning("Cache file \"" + cacheFile.getAbsolutePath() + "\" is corrupted", e);
             }
         }
 
@@ -284,11 +286,11 @@ public class ImageFile {
                 cacheFile.getParentFile().mkdirs();
                 writeMapsToCacheFile(container, cacheFile);
             } catch (IOException e) {
-                plugin.severe("Failed to write to cache file \"" + cacheFile.getAbsolutePath() + "\"", e);
+                LOGGER.severe("Failed to write to cache file \"" + cacheFile.getAbsolutePath() + "\"", e);
             }
         } catch (Exception e) {
             container = FakeMap.getErrorMatrix(width, height);
-            plugin.severe("Failed to render image(s) from file \"" + path + "\"", e);
+            LOGGER.severe("Failed to render image(s) from file \"" + path + "\"", e);
         }
 
         // Persist in memory cache and return
@@ -401,7 +403,7 @@ public class ImageFile {
         if (currentSubscribers.isEmpty()) {
             subscribers.remove(cacheKey);
             cache.remove(cacheKey);
-            plugin.fine("Invalidated cached maps \"" + cacheKey + "\" in ImageFile#(" + filename + ")");
+            LOGGER.fine("Invalidated cached maps \"" + cacheKey + "\" in ImageFile#(" + filename + ")");
         }
     }
 
@@ -424,14 +426,14 @@ public class ImageFile {
         }
         File[] files = cacheDirectory.listFiles((__, item) -> item.matches(cachePattern));
         if (files == null) {
-            plugin.warning("An error occurred when listing cache files for image \"" + filename + "\"");
+            LOGGER.warning("An error occurred when listing cache files for image \"" + filename + "\"");
             return;
         }
 
         // Delete disk cache files
         for (File file : files) {
             if (!file.delete()) {
-                plugin.warning("Failed to delete cache file \"" + file.getAbsolutePath() + "\"");
+                LOGGER.warning("Failed to delete cache file \"" + file.getAbsolutePath() + "\"");
             }
         }
     }

@@ -7,6 +7,7 @@ import io.josemmo.bukkit.plugin.commands.arguments.*;
 import io.josemmo.bukkit.plugin.renderer.FakeImage;
 import io.josemmo.bukkit.plugin.storage.ImageFile;
 import io.josemmo.bukkit.plugin.utils.Internals;
+import io.josemmo.bukkit.plugin.utils.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
@@ -17,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 public class ImageCommandBridge {
     public static final String COMMAND_NAME = "yamipa";
     public static final String[] COMMAND_ALIASES = new String[] {"image", "images"};
+    private static final Logger LOGGER = Logger.getLogger("ImageCommandBridge");
 
     /**
      * Register command
@@ -42,7 +44,7 @@ public class ImageCommandBridge {
             );
             dispatcher.getRoot().addChild(aliasNode);
         }
-        plugin.fine("Registered plugin command and aliases");
+        LOGGER.fine("Registered plugin command and aliases");
 
         // Fix "minecraft.command.*" permissions
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
@@ -50,7 +52,7 @@ public class ImageCommandBridge {
             for (String alias : COMMAND_ALIASES) {
                 fixPermissions(alias);
             }
-            plugin.fine("Fixed command permissions");
+            LOGGER.fine("Fixed command permissions");
         });
     }
 

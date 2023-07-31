@@ -21,9 +21,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.Callable;
 
 public class Permissions {
-    @Nullable private static WorldGuard worldGuard = null;
-    @Nullable private static GriefPrevention griefPrevention = null;
-    @Nullable private static TownyAPI townyApi = null;
+    private static final Logger LOGGER = Logger.getLogger();
+    private static @Nullable WorldGuard worldGuard;
+    private static @Nullable GriefPrevention griefPrevention;
+    private static @Nullable TownyAPI townyApi;
 
     static {
         try {
@@ -108,7 +109,7 @@ public class Permissions {
                 canEditCallable.call() :
                 Bukkit.getScheduler().callSyncMethod(plugin, canEditCallable).get();
         } catch (Exception e) {
-            plugin.severe("Failed to get player permissions from GriefPrevention", e);
+            LOGGER.severe("Failed to get player permissions from GriefPrevention", e);
             return false;
         }
     }

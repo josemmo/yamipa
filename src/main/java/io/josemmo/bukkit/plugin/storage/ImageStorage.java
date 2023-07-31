@@ -1,7 +1,7 @@
 package io.josemmo.bukkit.plugin.storage;
 
 import com.sun.nio.file.ExtendedWatchEventModifier;
-import io.josemmo.bukkit.plugin.YamipaPlugin;
+import io.josemmo.bukkit.plugin.utils.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import java.io.File;
@@ -19,7 +19,7 @@ import java.util.*;
  */
 public class ImageStorage {
     private static final boolean IS_WINDOWS = System.getProperty("os.name").toLowerCase(Locale.ENGLISH).contains("win");
-    private static final YamipaPlugin plugin = YamipaPlugin.getInstance();
+    private static final Logger LOGGER = Logger.getLogger("ImageStorage");
     /** Map of registered files indexed by filename */
     private final SortedMap<String, ImageFile> files = new TreeMap<>();
     private final Path basePath;
@@ -60,10 +60,10 @@ public class ImageStorage {
     public void start() throws IOException {
         // Create base directories if necessary
         if (basePath.toFile().mkdirs()) {
-            plugin.info("Created images directory as it did not exist");
+            LOGGER.info("Created images directory as it did not exist");
         }
         if (cachePath.toFile().mkdirs()) {
-            plugin.info("Created cache directory as it did not exist");
+            LOGGER.info("Created cache directory as it did not exist");
         }
 
         // Start watching files
@@ -71,7 +71,7 @@ public class ImageStorage {
         watchServiceThread = new WatcherThread();
         watchServiceThread.start();
         registerDirectory(basePath, true);
-        plugin.fine("Found " + files.size() + " file(s) in images directory");
+        LOGGER.fine("Found " + files.size() + " file(s) in images directory");
     }
 
     /**
@@ -89,7 +89,7 @@ public class ImageStorage {
             try {
                 watchService.close();
             } catch (IOException e) {
-                plugin.warning("Failed to close watch service", e);
+                LOGGER.warning("Failed to close watch service", e);
             }
             watchService = null;
         }
@@ -128,7 +128,7 @@ public class ImageStorage {
     private synchronized void registerDirectory(@NotNull Path path, boolean isBase) {
         // Validate path
         if (!Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS)) {
-            plugin.warning("Cannot list files in \"" + path.toAbsolutePath() + "\" as it is not a valid directory");
+            LOGGER.warning("Cannot list files in \"" + path.toAbsolutePath() + "\" as it is not a valid directory");
             return;
         }
 
@@ -153,9 +153,9 @@ public class ImageStorage {
                     new WatchEvent.Modifier[]{ExtendedWatchEventModifier.FILE_TREE} :
                     new WatchEvent.Modifier[0];
                 path.register(watchService, events, modifiers);
-                plugin.fine("Started watching directory at \"" + path.toAbsolutePath() + "\"");
+                LOGGER.fine("Started watching directory at \"" + path.toAbsolutePath() + "\"");
             } catch (IOException e) {
-                plugin.severe("Failed to register directory", e);
+                LOGGER.severe("Failed to register directory", e);
             }
         }
     }
@@ -167,7 +167,7 @@ public class ImageStorage {
     private synchronized void registerFile(@NotNull Path path) {
         // Validate path
         if (!Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS)) {
-            plugin.warning("Cannot register \"" + path.toAbsolutePath() + "\" as it is not a valid file");
+            LOGGER.warning("Cannot register \"" + path.toAbsolutePath() + "\" as it is not a valid file");
             return;
         }
 
@@ -175,7 +175,7 @@ public class ImageStorage {
         String filename = getFilename(path);
         ImageFile imageFile = new ImageFile(filename, path);
         if (files.putIfAbsent(filename, imageFile) == null) {
-            plugin.fine("Registered file \"" + filename + "\"");
+            LOGGER.fine("Registered file \"" + filename + "\"");
         }
     }
 
@@ -191,7 +191,7 @@ public class ImageStorage {
             if (entryKey.startsWith(filename+"/")) {
                 foundFirst = true;
                 iter.remove();
-                plugin.fine("Unregistered file \"" + entryKey + "\"");
+                LOGGER.fine("Unregistered file \"" + entryKey + "\"");
             } else if (foundFirst) {
                 // We can break early because set is alphabetically sorted by key
                 break;
@@ -207,7 +207,7 @@ public class ImageStorage {
         ImageFile imageFile = files.remove(filename);
         if (imageFile != null) {
             imageFile.invalidate();
-            plugin.fine("Unregistered file \"" + filename + "\"");
+            LOGGER.fine("Unregistered file \"" + filename + "\"");
         }
     }
 

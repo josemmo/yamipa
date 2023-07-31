@@ -1,6 +1,7 @@
 package io.josemmo.bukkit.plugin.renderer;
 
 import io.josemmo.bukkit.plugin.packets.MapDataPacket;
+import io.josemmo.bukkit.plugin.utils.Logger;
 import org.bukkit.entity.Player;
 import org.bukkit.map.MapPalette;
 import org.jetbrains.annotations.NotNull;
@@ -17,6 +18,7 @@ public class FakeMap extends FakeEntity {
     public static final int MIN_MAP_ID = Integer.MAX_VALUE / 4;
     public static final int MAX_MAP_ID = Integer.MAX_VALUE;
     public static final int RESEND_THRESHOLD = 60*5; // Seconds after sending pixels when resending should be avoided
+    private static final Logger LOGGER = Logger.getLogger("FakeMap");
     private static final AtomicInteger lastMapId = new AtomicInteger(-1);
     private static FakeMap errorInstance;
     private final int id;
@@ -90,7 +92,7 @@ public class FakeMap extends FakeEntity {
             System.arraycopy(pixels, startX+(startY+y)*scanSize, this.pixels, y*DIMENSION, DIMENSION);
         }
 
-        plugin.fine("Created FakeMap#" + this.id);
+        LOGGER.fine("Created FakeMap#" + this.id);
     }
 
     /**
@@ -100,7 +102,7 @@ public class FakeMap extends FakeEntity {
     public FakeMap(byte[] pixels) {
         this.id = getNextId();
         this.pixels = pixels;
-        plugin.fine("Created FakeMap#" + this.id);
+        LOGGER.fine("Created FakeMap#" + this.id);
     }
 
     /**
@@ -136,7 +138,7 @@ public class FakeMap extends FakeEntity {
 
         // Authorize re-send and update latest timestamp
         lastPlayerSendTime.put(uuid, now);
-        plugin.fine("Granted sending pixels for FakeMap#" + id + " to Player#" + player.getName());
+        LOGGER.fine("Granted sending pixels for FakeMap#" + id + " to Player#" + player.getName());
         return true;
     }
 

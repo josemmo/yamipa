@@ -8,11 +8,13 @@ import com.comphenix.protocol.injector.player.PlayerInjectionHandler;
 import com.comphenix.protocol.wrappers.WrappedDataWatcher;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
 import io.josemmo.bukkit.plugin.utils.Internals;
+import io.josemmo.bukkit.plugin.utils.Logger;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.Field;
 
 public abstract class FakeEntity {
+    private static final Logger LOGGER = Logger.getLogger("FakeEntity");
     protected static final YamipaPlugin plugin = YamipaPlugin.getInstance();
     private static final ProtocolManager connection = ProtocolLibrary.getProtocolManager();
     private static PlayerInjectionHandler playerInjectionHandler = null;
@@ -31,7 +33,7 @@ public abstract class FakeEntity {
                 throw new RuntimeException("No valid candidate field found in ProtocolManager");
             }
         } catch (Exception e) {
-            plugin.severe("Failed to get PlayerInjectionHandler from ProtocolLib", e);
+            LOGGER.severe("Failed to get PlayerInjectionHandler from ProtocolLib", e);
         }
     }
 
@@ -91,7 +93,7 @@ public abstract class FakeEntity {
         } catch (IllegalStateException e) {
             // Server is shutting down and cannot send the packet, ignore
         } catch (Exception e) {
-            plugin.severe("Failed to send FakeEntity packet", e);
+            LOGGER.severe("Failed to send FakeEntity packet", e);
         }
     }
 

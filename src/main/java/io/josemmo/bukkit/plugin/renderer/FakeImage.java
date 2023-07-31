@@ -3,6 +3,7 @@ package io.josemmo.bukkit.plugin.renderer;
 import com.comphenix.protocol.events.PacketContainer;
 import io.josemmo.bukkit.plugin.storage.ImageFile;
 import io.josemmo.bukkit.plugin.utils.DirectionUtils;
+import io.josemmo.bukkit.plugin.utils.Logger;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Rotation;
@@ -19,6 +20,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 
 public class FakeImage extends FakeEntity {
+    private static final Logger LOGGER = Logger.getLogger("FakeImage");
+
+    // Image constants
     public static final int MAX_DIMENSION = 30; // In blocks
     public static final int MAX_STEPS = 500; // For animated images
     public static final int MIN_DELAY = 1; // Minimum step delay in 50ms intervals (50ms / 50ms)
@@ -177,7 +181,7 @@ public class FakeImage extends FakeEntity {
             }
         }
 
-        plugin.fine("Created FakeImage#(" + location + "," + face + ") from ImageFile#(" + filename + ")");
+        LOGGER.fine("Created FakeImage#(" + location + "," + face + ") from ImageFile#(" + filename + ")");
     }
 
     /**
@@ -353,7 +357,7 @@ public class FakeImage extends FakeEntity {
         FakeMapsContainer container;
         if (file == null) {
             container = FakeMap.getErrorMatrix(width, height);
-            plugin.warning("File \"" + filename + "\" does not exist");
+            LOGGER.warning("File \"" + filename + "\" does not exist");
         } else {
             container = file.getMapsAndSubscribe(this);
         }
@@ -382,7 +386,7 @@ public class FakeImage extends FakeEntity {
                 delay*50L,
                 TimeUnit.MILLISECONDS
             );
-            plugin.fine("Spawned animation task for FakeImage#(" + location + "," + face + ")");
+            LOGGER.fine("Spawned animation task for FakeImage#(" + location + "," + face + ")");
         }
 
         // Notify listener
@@ -397,7 +401,7 @@ public class FakeImage extends FakeEntity {
      * @param player Player instance
      */
     public void spawn(@NotNull Player player) {
-        plugin.fine("Received request to spawn FakeImage#(" + location + "," + face + ") for Player#" + player.getName());
+        LOGGER.fine("Received request to spawn FakeImage#(" + location + "," + face + ") for Player#" + player.getName());
 
         // Send pixels if instance is already loaded
         if (frames != null) {
@@ -439,7 +443,7 @@ public class FakeImage extends FakeEntity {
         for (FakeItemFrame frame : frames) {
             packets.add(frame.getSpawnPacket());
             packets.addAll(frame.getRenderPackets(player, 0));
-            plugin.fine("Spawned FakeItemFrame#" + frame.getId() + " for Player#" + playerName);
+            LOGGER.fine("Spawned FakeItemFrame#" + frame.getId() + " for Player#" + playerName);
         }
 
         // Send packets
@@ -460,7 +464,7 @@ public class FakeImage extends FakeEntity {
      * @param player Player instance or NULL for all observing players
      */
     public void destroy(@Nullable Player player) {
-        plugin.fine(
+        LOGGER.fine(
             "Received request to destroy FakeImage#(" + location + "," + face + ") for " +
             (player == null ? "all players" : "Player#" + player.getName())
         );
@@ -473,7 +477,7 @@ public class FakeImage extends FakeEntity {
                 List<PacketContainer> packets = new ArrayList<>();
                 for (FakeItemFrame frame : frames) {
                     packets.add(frame.getDestroyPacket());
-                    plugin.fine("Destroyed FakeItemFrame#" + frame.getId() + " for Player#" + targetName);
+                    LOGGER.fine("Destroyed FakeItemFrame#" + frame.getId() + " for Player#" + targetName);
                 }
                 tryToSendPackets(target, packets);
             }
@@ -514,12 +518,12 @@ public class FakeImage extends FakeEntity {
             task.cancel(true);
             task = null;
             currentStep = -1;
-            plugin.fine("Destroyed animation task for FakeImage#(" + location + "," + face + ")");
+            LOGGER.fine("Destroyed animation task for FakeImage#(" + location + "," + face + ")");
         }
 
         // Free array of fake item frames
         frames = null;
-        plugin.fine("Invalidated FakeImage#(" + location + "," + face + ")");
+        LOGGER.fine("Invalidated FakeImage#(" + location + "," + face + ")");
 
         // Notify invalidation to source ImageFile
         ImageFile file = getFile();

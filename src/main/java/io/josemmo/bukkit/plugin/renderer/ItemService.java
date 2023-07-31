@@ -5,6 +5,7 @@ import io.josemmo.bukkit.plugin.commands.ImageCommand;
 import io.josemmo.bukkit.plugin.storage.ImageFile;
 import io.josemmo.bukkit.plugin.utils.ActionBar;
 import io.josemmo.bukkit.plugin.utils.InteractWithEntityListener;
+import io.josemmo.bukkit.plugin.utils.Logger;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -27,6 +28,7 @@ import java.util.Collections;
 import java.util.Objects;
 
 public class ItemService extends InteractWithEntityListener implements Listener {
+    private static final Logger LOGGER = Logger.getLogger("ItemService");
     private static final YamipaPlugin plugin = YamipaPlugin.getInstance();
     private static final NamespacedKey NSK_FILENAME = new NamespacedKey(plugin, "filename");
     private static final NamespacedKey NSK_WIDTH = new NamespacedKey(plugin, "width");
@@ -132,14 +134,14 @@ public class ItemService extends InteractWithEntityListener implements Listener 
             return;
         }
         if (width == null || height == null || flags == null) {
-            plugin.warning(player + " tried to place corrupted image item (missing width/height/flags properties)");
+            LOGGER.warning(player + " tried to place corrupted image item (missing width/height/flags properties)");
             return;
         }
 
         // Validate filename
         ImageFile image = YamipaPlugin.getInstance().getStorage().get(filename);
         if (image == null) {
-            plugin.warning(player + " tried to place corrupted image item (\"" + filename + "\" no longer exists)");
+            LOGGER.warning(player + " tried to place corrupted image item (\"" + filename + "\" no longer exists)");
             ActionBar.send(player, ChatColor.RED + "Image file \"" + filename + "\" no longer exists");
             return;
         }

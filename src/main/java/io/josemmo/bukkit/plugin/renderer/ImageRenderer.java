@@ -2,6 +2,7 @@ package io.josemmo.bukkit.plugin.renderer;
 
 import io.josemmo.bukkit.plugin.YamipaPlugin;
 import io.josemmo.bukkit.plugin.utils.CsvConfiguration;
+import io.josemmo.bukkit.plugin.utils.Logger;
 import org.bukkit.*;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Entity;
@@ -26,6 +27,7 @@ import java.util.stream.Collectors;
 
 public class ImageRenderer implements Listener {
     public static final long SAVE_INTERVAL = 20L * 90; // In server ticks
+    private static final Logger LOGGER = Logger.getLogger("ImageRenderer");
     private static final YamipaPlugin plugin = YamipaPlugin.getInstance();
     private final String configPath;
     private BukkitTask saveTask;
@@ -81,7 +83,7 @@ public class ImageRenderer implements Listener {
      */
     private void loadConfig() {
         if (!Files.isRegularFile(Paths.get(configPath))) {
-            plugin.info("No placed fake images configuration file found");
+            LOGGER.info("No placed fake images configuration file found");
             return;
         }
 
@@ -90,7 +92,7 @@ public class ImageRenderer implements Listener {
         try {
             config.load(configPath);
         } catch (IOException e) {
-            plugin.severe("Failed to load placed fake images from disk", e);
+            LOGGER.severe("Failed to load placed fake images from disk", e);
             return;
         }
 
@@ -121,7 +123,7 @@ public class ImageRenderer implements Listener {
                     placedAt, placedBy, flags);
                 addImage(fakeImage, true);
             } catch (Exception e) {
-                plugin.severe("Invalid fake image properties: " + String.join(";", row), e);
+                LOGGER.severe("Invalid fake image properties: " + String.join(";", row), e);
             }
         }
     }
@@ -166,9 +168,9 @@ public class ImageRenderer implements Listener {
         // Write to disk
         try {
             config.save(configPath);
-            plugin.info("Saved placed fake images to disk");
+            LOGGER.info("Saved placed fake images to disk");
         } catch (IOException e) {
-            plugin.severe("Failed to save placed fake images to disk", e);
+            LOGGER.severe("Failed to save placed fake images to disk", e);
         }
     }
 
@@ -183,7 +185,7 @@ public class ImageRenderer implements Listener {
         // Add image to renderer
         for (WorldAreaId worldAreaId : imageWorldAreaIds) {
             images.computeIfAbsent(worldAreaId, __ -> {
-                plugin.fine("Created WorldArea#(" + worldAreaId + ")");
+                LOGGER.fine("Created WorldArea#(" + worldAreaId + ")");
                 return ConcurrentHashMap.newKeySet();
             }).add(image);
         }
@@ -273,7 +275,7 @@ public class ImageRenderer implements Listener {
             Set<FakeImage> worldAreaImages = images.get(worldAreaId);
             worldAreaImages.remove(image);
             if (worldAreaImages.isEmpty()) {
-                plugin.fine("Destroyed WorldArea#(" + worldAreaId + ")");
+                LOGGER.fine("Destroyed WorldArea#(" + worldAreaId + ")");
                 images.remove(worldAreaId);
             }
         }
@@ -365,7 +367,7 @@ public class ImageRenderer implements Listener {
     private void onPlayerLocationChange(@NotNull Player player, @NotNull Location location) {
         // Ignore NPC events from other plugins
         if (player.hasMetadata("NPC")) {
-            plugin.fine("Ignored NPC event from Player#" + player.getName());
+            LOGGER.fine("Ignored NPC event from Player#" + player.getName());
             return;
         }
 
@@ -376,7 +378,7 @@ public class ImageRenderer implements Listener {
             return;
         }
         playersLocation.put(player, worldAreaId);
-        plugin.fine("Player#" + player.getName() + " moved to WorldArea#(" + worldAreaId + ")");
+        LOGGER.fine("Player#" + player.getName() + " moved to WorldArea#(" + worldAreaId + ")");
 
         // Get images that should be spawned/destroyed
         Set<FakeImage> desiredState = getImagesInViewDistance(worldAreaId);
