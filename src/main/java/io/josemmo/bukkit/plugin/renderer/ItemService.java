@@ -29,11 +29,18 @@ import java.util.Objects;
 
 public class ItemService extends InteractWithEntityListener implements Listener {
     private static final Logger LOGGER = Logger.getLogger("ItemService");
-    private static final YamipaPlugin plugin = YamipaPlugin.getInstance();
-    private static final NamespacedKey NSK_FILENAME = new NamespacedKey(plugin, "filename");
-    private static final NamespacedKey NSK_WIDTH = new NamespacedKey(plugin, "width");
-    private static final NamespacedKey NSK_HEIGHT = new NamespacedKey(plugin, "height");
-    private static final NamespacedKey NSK_FLAGS = new NamespacedKey(plugin, "flags");
+    private static final NamespacedKey NSK_FILENAME;
+    private static final NamespacedKey NSK_WIDTH;
+    private static final NamespacedKey NSK_HEIGHT;
+    private static final NamespacedKey NSK_FLAGS;
+
+    static {
+        YamipaPlugin plugin = YamipaPlugin.getInstance(); // Only used for getting namespace, reference will be freed
+        NSK_FILENAME = new NamespacedKey(plugin, "filename");
+        NSK_WIDTH = new NamespacedKey(plugin, "width");
+        NSK_HEIGHT = new NamespacedKey(plugin, "height");
+        NSK_FLAGS = new NamespacedKey(plugin, "flags");
+    }
 
     /**
      * Get image item
@@ -66,6 +73,7 @@ public class ItemService extends InteractWithEntityListener implements Listener 
      */
     public void start() {
         register();
+        YamipaPlugin plugin = YamipaPlugin.getInstance();
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
@@ -178,7 +186,7 @@ public class ItemService extends InteractWithEntityListener implements Listener 
 
     @Override
     public boolean onAttack(@NotNull Player player, @NotNull Block block, @NotNull BlockFace face) {
-        ImageRenderer renderer = plugin.getRenderer();
+        ImageRenderer renderer = YamipaPlugin.getInstance().getRenderer();
         Location location = block.getLocation();
 
         // Has the player clicked a removable placed image?
@@ -209,9 +217,8 @@ public class ItemService extends InteractWithEntityListener implements Listener 
             ImageFile imageFile = Objects.requireNonNull(image.getFile());
             ItemStack imageItem = getImageItem(imageFile, 1, image.getWidth(), image.getHeight(), image.getFlags());
             Location dropLocation = location.clone().add(0.5, -0.5, 0.5).add(face.getDirection());
-            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
-                block.getWorld().dropItem(dropLocation, imageItem);
-            });
+            YamipaPlugin plugin = YamipaPlugin.getInstance();
+            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> block.getWorld().dropItem(dropLocation, imageItem));
         }
 
         return false;

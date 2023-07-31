@@ -13,27 +13,28 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import java.awt.Color;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Function;
-import java.util.logging.Level;
 
 public class YamipaPlugin extends JavaPlugin {
     public static final int BSTATS_PLUGIN_ID = 10243;
-    private static YamipaPlugin instance;
     private static final Logger LOGGER = Logger.getLogger();
+    private static @Nullable YamipaPlugin INSTANCE;
     private boolean verbose;
-    private ImageStorage storage;
-    private ImageRenderer renderer;
-    private ItemService itemService;
-    private ScheduledExecutorService scheduler;
+    private @Nullable ImageStorage storage;
+    private @Nullable ImageRenderer renderer;
+    private @Nullable ItemService itemService;
+    private @Nullable ScheduledExecutorService scheduler;
 
     /**
      * Get plugin instance
      * @return Plugin instance
      */
     public static @NotNull YamipaPlugin getInstance() {
-        return instance;
+        Objects.requireNonNull(INSTANCE, "Cannot get plugin instance if plugin is not running");
+        return INSTANCE;
     }
 
     /**
@@ -41,6 +42,7 @@ public class YamipaPlugin extends JavaPlugin {
      * @return Image storage instance
      */
     public @NotNull ImageStorage getStorage() {
+        Objects.requireNonNull(storage, "Cannot get storage instance if plugin is not running");
         return storage;
     }
 
@@ -49,6 +51,7 @@ public class YamipaPlugin extends JavaPlugin {
      * @return Image renderer instance
      */
     public @NotNull ImageRenderer getRenderer() {
+        Objects.requireNonNull(renderer, "Cannot get renderer instance if plugin is not running");
         return renderer;
     }
 
@@ -57,12 +60,21 @@ public class YamipaPlugin extends JavaPlugin {
      * @return Tasks scheduler
      */
     public @NotNull ScheduledExecutorService getScheduler() {
+        Objects.requireNonNull(scheduler, "Cannot get scheduler instance if plugin is not running");
         return scheduler;
+    }
+
+    /**
+     * Is verbose
+     * @return Whether plugin is running in verbose mode
+     */
+    public boolean isVerbose() {
+        return verbose;
     }
 
     @Override
     public void onLoad() {
-        instance = this;
+        INSTANCE = this;
     }
 
     @Override
@@ -134,20 +146,30 @@ public class YamipaPlugin extends JavaPlugin {
     @Override
     public void onDisable() {
         // Stop plugin components
-        storage.stop();
-        renderer.stop();
-        itemService.stop();
-        storage = null;
-        renderer = null;
-        itemService = null;
+        if (storage != null) {
+            storage.stop();
+            storage = null;
+        }
+        if (renderer != null) {
+            renderer.stop();
+            renderer = null;
+        }
+        if (itemService != null) {
+            itemService.stop();
+            itemService = null;
+        }
 
         // Stop internal scheduler
-        scheduler.shutdownNow();
-        scheduler = null;
+        if (scheduler != null) {
+            scheduler.shutdownNow();
+            scheduler = null;
+        }
 
         // Remove Bukkit listeners and tasks
         HandlerList.unregisterAll(this);
         Bukkit.getScheduler().cancelTasks(this);
 
+        // Unlink reference to instance
+        INSTANCE = null;
     }
 }

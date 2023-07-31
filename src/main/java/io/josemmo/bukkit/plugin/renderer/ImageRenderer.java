@@ -28,7 +28,6 @@ import java.util.stream.Collectors;
 public class ImageRenderer implements Listener {
     public static final long SAVE_INTERVAL = 20L * 90; // In server ticks
     private static final Logger LOGGER = Logger.getLogger("ImageRenderer");
-    private static final YamipaPlugin plugin = YamipaPlugin.getInstance();
     private final String configPath;
     private BukkitTask saveTask;
     private final AtomicBoolean hasConfigChanged = new AtomicBoolean(false);
@@ -49,6 +48,7 @@ public class ImageRenderer implements Listener {
      */
     public void start() {
         loadConfig();
+        YamipaPlugin plugin = YamipaPlugin.getInstance();
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
         saveTask = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, this::saveConfig, SAVE_INTERVAL, SAVE_INTERVAL);
     }
@@ -100,7 +100,7 @@ public class ImageRenderer implements Listener {
         for (String[] row : config.getRows()) {
             try {
                 String filename = row[0];
-                World world = Objects.requireNonNull(plugin.getServer().getWorld(row[1]));
+                World world = Objects.requireNonNull(YamipaPlugin.getInstance().getServer().getWorld(row[1]));
                 double x = Integer.parseInt(row[2]);
                 double y = Integer.parseInt(row[3]);
                 double z = Integer.parseInt(row[4]);
@@ -109,10 +109,10 @@ public class ImageRenderer implements Listener {
                 Rotation rotation = Rotation.valueOf(row[6]);
                 int width = Math.min(FakeImage.MAX_DIMENSION, Math.abs(Integer.parseInt(row[7])));
                 int height = Math.min(FakeImage.MAX_DIMENSION, Math.abs(Integer.parseInt(row[8])));
-                Date placedAt = (row.length > 9 && !row[9].equals("")) ?
+                Date placedAt = (row.length > 9 && !row[9].isEmpty()) ?
                     new Date(Long.parseLong(row[9])*1000L) :
                     null;
-                UUID placedById = (row.length > 10 && !row[10].equals("")) ?
+                UUID placedById = (row.length > 10 && !row[10].isEmpty()) ?
                     UUID.fromString(row[10]) :
                     FakeImage.UNKNOWN_PLAYER_ID;
                 OfflinePlayer placedBy = Bukkit.getOfflinePlayer(placedById);
@@ -429,9 +429,8 @@ public class ImageRenderer implements Listener {
 
         // Wait until next server tick before handling location change
         // This is necessary as teleport events get fired *before* teleporting the player
-        Bukkit.getScheduler().runTask(plugin, () -> {
-            onPlayerLocationChange(event.getPlayer(), event.getTo());
-        });
+        YamipaPlugin plugin = YamipaPlugin.getInstance();
+        Bukkit.getScheduler().runTask(plugin, () -> onPlayerLocationChange(event.getPlayer(), event.getTo()));
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)

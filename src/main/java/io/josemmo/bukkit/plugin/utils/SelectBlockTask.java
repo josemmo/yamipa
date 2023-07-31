@@ -23,7 +23,6 @@ import java.util.function.BiConsumer;
 
 public class SelectBlockTask {
     private static final Logger LOGGER = Logger.getLogger("SelectBlockTask");
-    private static final YamipaPlugin plugin = YamipaPlugin.getInstance();
     private static final Map<UUID, SelectBlockTask> instances = new HashMap<>();
     private static SelectBlockTaskListener listener = null;
     private final Player player;
@@ -106,6 +105,7 @@ public class SelectBlockTask {
         @Override
         public void register() {
             super.register();
+            YamipaPlugin plugin = YamipaPlugin.getInstance();
             plugin.getServer().getPluginManager().registerEvents(this, plugin);
         }
 

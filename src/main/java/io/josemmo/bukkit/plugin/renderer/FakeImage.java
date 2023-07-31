@@ -1,6 +1,7 @@
 package io.josemmo.bukkit.plugin.renderer;
 
 import com.comphenix.protocol.events.PacketContainer;
+import io.josemmo.bukkit.plugin.YamipaPlugin;
 import io.josemmo.bukkit.plugin.storage.ImageFile;
 import io.josemmo.bukkit.plugin.utils.DirectionUtils;
 import io.josemmo.bukkit.plugin.utils.Logger;
@@ -197,7 +198,7 @@ public class FakeImage extends FakeEntity {
      * @return Image file instance or NULL if not found
      */
     public @Nullable ImageFile getFile() {
-        return plugin.getStorage().get(filename);
+        return YamipaPlugin.getInstance().getStorage().get(filename);
     }
 
     /**
@@ -380,7 +381,7 @@ public class FakeImage extends FakeEntity {
 
         // Start animation task (if needed)
         if (animateImages && task == null && hasFlag(FLAG_ANIMATABLE) && numOfSteps > 1) {
-            task = plugin.getScheduler().scheduleAtFixedRate(
+            task = YamipaPlugin.getInstance().getScheduler().scheduleAtFixedRate(
                 this::nextStep,
                 0,
                 delay*50L,

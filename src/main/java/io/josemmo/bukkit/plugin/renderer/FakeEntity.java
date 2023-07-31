@@ -15,7 +15,6 @@ import java.lang.reflect.Field;
 
 public abstract class FakeEntity {
     private static final Logger LOGGER = Logger.getLogger("FakeEntity");
-    protected static final YamipaPlugin plugin = YamipaPlugin.getInstance();
     private static final ProtocolManager connection = ProtocolLibrary.getProtocolManager();
     private static PlayerInjectionHandler playerInjectionHandler = null;
     private static boolean ready = false;
@@ -119,6 +118,6 @@ public abstract class FakeEntity {
      * @param callback Callback to execute
      */
     protected static void tryToRunAsyncTask(@NotNull Runnable callback) {
-        plugin.getScheduler().execute(callback);
+        YamipaPlugin.getInstance().getScheduler().execute(callback);
     }
 }
