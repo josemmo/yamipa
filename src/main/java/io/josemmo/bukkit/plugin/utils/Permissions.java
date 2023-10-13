@@ -149,11 +149,8 @@ public class Permissions {
 
         RoleFlag flag = isBuild ? me.angeschossen.lands.api.flags.type.Flags.BLOCK_PLACE : me.angeschossen.lands.api.flags.type.Flags.BLOCK_BREAK;
 
-        @Nullable LandPlayer landPlayer = landsApi.getLandPlayer(player.getUniqueId());
-        if (landPlayer == null) { // if the player is offline, check against UUID without bypass permissions
-            return landWorld.hasRoleFlag(player.getUniqueId(), location, flag);
-        } else { // if online, check against online player with bypass permissions
-            return landWorld.hasRoleFlag(landPlayer, location, flag, location.getBlock().getType(), false); // we don't want to send a denied message
-        }
+        LandPlayer landPlayer = landsApi.getLandPlayer(player.getUniqueId());
+        // check against online player with bypass permissions
+        return landWorld.hasRoleFlag(landPlayer, location, flag, location.getBlock().getType(), false); // we don't want to send a denied message
     }
 }
