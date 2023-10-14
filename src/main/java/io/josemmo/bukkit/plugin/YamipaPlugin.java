@@ -27,6 +27,7 @@ public class YamipaPlugin extends JavaPlugin {
     private @Nullable ImageRenderer renderer;
     private @Nullable ItemService itemService;
     private @Nullable ScheduledExecutorService scheduler;
+    private @Nullable Metrics metrics;
 
     /**
      * Get plugin instance
@@ -137,7 +138,7 @@ public class YamipaPlugin extends JavaPlugin {
             if (number >= 10) return "10-49";
             return "0-9";
         };
-        Metrics metrics = new Metrics(this, BSTATS_PLUGIN_ID);
+        metrics = new Metrics(this, BSTATS_PLUGIN_ID);
         metrics.addCustomChart(new SimplePie("animate_images", () -> FakeImage.isAnimationEnabled() ? "true" : "false"));
         metrics.addCustomChart(new SimplePie("number_of_image_files", () -> toStats.apply(storage.size())));
         metrics.addCustomChart(new SimplePie("number_of_placed_images", () -> toStats.apply(renderer.size())));
@@ -145,6 +146,12 @@ public class YamipaPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        // Stop metrics
+        if (metrics != null) {
+            metrics.shutdown();
+            metrics = null;
+        }
+
         // Stop item service
         if (itemService != null) {
             itemService.stop();
