@@ -93,6 +93,14 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- https://jitpack.io/com/github/Angeschossen/LandsAPI/ -->
+        <dependency>
+            <groupId>com.github.angeschossen</groupId>
+            <artifactId>LandsAPI</artifactId>
+            <version>6.35.0</version>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- https://repo.maven.apache.org/maven2/org/jetbrains/annotations/ -->
         <dependency>
             <groupId>org.jetbrains</groupId>

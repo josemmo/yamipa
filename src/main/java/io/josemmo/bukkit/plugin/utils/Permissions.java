@@ -11,6 +11,9 @@ import com.sk89q.worldguard.internal.platform.WorldGuardPlatform;
 import com.sk89q.worldguard.protection.flags.Flags;
 import com.sk89q.worldguard.protection.flags.StateFlag;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
+import me.angeschossen.lands.api.LandsIntegration;
+import me.angeschossen.lands.api.flags.type.RoleFlag;
+import me.angeschossen.lands.api.land.LandWorld;
 import me.ryanhamshire.GriefPrevention.GriefPrevention;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -25,6 +28,7 @@ public class Permissions {
     @Nullable private static WorldGuard worldGuard = null;
     @Nullable private static GriefPrevention griefPrevention = null;
     @Nullable private static TownyAPI townyApi = null;
+    @Nullable private static LandsIntegration landsApi = null;
 
     static {
         try {
@@ -44,6 +48,12 @@ public class Permissions {
         } catch (NoClassDefFoundError __) {
             // Towny is not installed
         }
+
+        try {
+            landsApi = LandsIntegration.of(YamipaPlugin.getInstance());
+        } catch (NoClassDefFoundError __) {
+            // Lands is not installed
+        }
     }
 
     /**
@@ -55,7 +65,8 @@ public class Permissions {
     public static boolean canBuild(@NotNull Player player, @NotNull Location location) {
         return queryWorldGuard(player, location, true)
             && queryGriefPrevention(player, location, true)
-            && queryTowny(player, location, true);
+            && queryTowny(player, location, true)
+            && queryLands(player, location, true);
     }
 
     /**
@@ -67,7 +78,8 @@ public class Permissions {
     public static boolean canDestroy(@NotNull Player player, @NotNull Location location) {
         return queryWorldGuard(player, location, false)
             && queryGriefPrevention(player, location, false)
-            && queryTowny(player, location, false);
+            && queryTowny(player, location, false)
+            && queryLands(player, location, false);
     }
 
     private static boolean queryWorldGuard(@NotNull Player player, @NotNull Location location, boolean isBuild) {
@@ -121,5 +133,19 @@ public class Permissions {
         Material material = location.getBlock().getType();
         TownyPermission.ActionType type = isBuild ? TownyPermission.ActionType.BUILD : TownyPermission.ActionType.DESTROY;
         return PlayerCacheUtil.getCachePermission(player, location, material, type);
+    }
+
+    private static boolean queryLands(@NotNull Player player, @NotNull Location location, boolean isBuild) {
+        if (landsApi == null) {
+            return true;
+        }
+        LandWorld landWorld = landsApi.getWorld(location.getWorld());
+        if (landWorld == null) {
+            return true;
+        }
+        RoleFlag flag = isBuild ?
+            me.angeschossen.lands.api.flags.type.Flags.BLOCK_PLACE :
+            me.angeschossen.lands.api.flags.type.Flags.BLOCK_BREAK;
+        return landWorld.hasRoleFlag(player.getUniqueId(), location, flag);
     }
 }
