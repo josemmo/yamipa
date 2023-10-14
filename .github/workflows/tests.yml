@@ -6,12 +6,12 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 8
-    continue-on-error: ${{ matrix.version == '1.20.1' }}
+    continue-on-error: ${{ matrix.version == '1.20.2' }}
     strategy:
       fail-fast: false
       matrix:
         flavor: ['bukkit', 'spigot', 'paper', 'purpur']
-        version: ['1.20.1', '1.19.4', '1.18.2', '1.17.1', '1.16.5']
+        version: ['1.20.2', '1.19.4', '1.18.2', '1.17.1', '1.16.5']
     steps:
       # Download code from repository
       - name: Checkout code
@@ -39,7 +39,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '19'
+          node-version: '20'
 
       # Setup automata
       - name: Setup automata
@@ -78,7 +78,7 @@ jobs:
       # Install dependencies
       - name: Install plugin dependencies
         run: |
-          url="https://github.com/dmulloy2/ProtocolLib/releases/download/5.0.0/ProtocolLib.jar"
+          url="https://ci.dmulloy2.net/job/ProtocolLib/lastSuccessfulBuild/artifact/build/libs/ProtocolLib.jar"
           mkdir -p ./server/plugins/ProtocolLib
           wget -q "$url" -O ./server/plugins/ProtocolLib.jar
           echo -e "global:\n  auto updater:\n    notify: false\n    download: false" > ./server/plugins/ProtocolLib/config.yml

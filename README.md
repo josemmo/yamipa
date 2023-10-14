@@ -34,7 +34,7 @@ Here are the Minecraft distributions where Yamipa should be able to run:
 |     1.17 & 1.17.1 |     ✅      |   ✅    |   ✅    |
 |     1.18 & 1.18.x |     ✅      |   ✅    |   ✅    |
 |     1.19 & 1.19.x |     ✅      |   ✅    |   ✅    |
-|     1.20 & 1.20.1 |     ✅      |   ✅    |   ✅    |
+|     1.20 & 1.20.x |     ✅      |   ✅    |   ✅    |
 
 ## Configuration
 Yamipa is ready-to-go right out of the box. By default, it creates the following files and directories under the
@@ -134,6 +134,7 @@ The supported plugins are:
 - [WorldGuard](https://enginehub.org/worldguard/)
 - [GriefPrevention](https://www.spigotmc.org/resources/griefprevention.1884/)
 - [Towny Advanced](https://townyadvanced.github.io/)
+- [Lands](https://www.spigotmc.org/resources/53313/)
 
 ## Flags
 Images from this plugin have a set of boolean attributes called "flags" that modify its behavior. Possible values are:
