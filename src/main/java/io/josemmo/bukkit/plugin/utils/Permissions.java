@@ -77,6 +77,7 @@ public class Permissions {
      * @param  location Block location
      * @return          Whether player can destroy or not
      */
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     public static boolean canDestroy(@NotNull Player player, @NotNull Location location) {
         return queryWorldGuard(player, location, false)
             && queryGriefPrevention(player, location, false)
@@ -94,7 +95,7 @@ public class Permissions {
         // Grant if bypass permission is enabled
         boolean hasBypass = platform.getSessionManager().hasBypass(
             wrappedPlayer,
-            BukkitAdapter.adapt(location.getWorld())
+            BukkitAdapter.adapt(Objects.requireNonNull(location.getWorld()))
         );
         if (hasBypass) {
             return true;
@@ -141,7 +142,7 @@ public class Permissions {
         if (landsApi == null) {
             return true;
         }
-        LandWorld landWorld = landsApi.getWorld(location.getWorld());
+        LandWorld landWorld = landsApi.getWorld(Objects.requireNonNull(location.getWorld()));
         if (landWorld == null) {
             return true;
         }
