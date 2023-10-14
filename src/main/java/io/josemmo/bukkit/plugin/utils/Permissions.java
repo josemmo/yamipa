@@ -14,6 +14,7 @@ import io.josemmo.bukkit.plugin.YamipaPlugin;
 import me.angeschossen.lands.api.LandsIntegration;
 import me.angeschossen.lands.api.flags.type.RoleFlag;
 import me.angeschossen.lands.api.land.LandWorld;
+import me.angeschossen.lands.api.player.LandPlayer;
 import me.ryanhamshire.GriefPrevention.GriefPrevention;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -21,6 +22,7 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.logging.Level;
 
@@ -143,9 +145,10 @@ public class Permissions {
         if (landWorld == null) {
             return true;
         }
+        LandPlayer landPlayer = Objects.requireNonNull(landsApi.getLandPlayer(player.getUniqueId()));
         RoleFlag flag = isBuild ?
             me.angeschossen.lands.api.flags.type.Flags.BLOCK_PLACE :
             me.angeschossen.lands.api.flags.type.Flags.BLOCK_BREAK;
-        return landWorld.hasRoleFlag(player.getUniqueId(), location, flag);
+        return landWorld.hasRoleFlag(landPlayer, location, flag, null, false);
     }
 }
