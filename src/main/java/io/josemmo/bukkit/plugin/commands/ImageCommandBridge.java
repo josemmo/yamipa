@@ -56,6 +56,7 @@ public class ImageCommandBridge {
         });
     }
 
+    @SuppressWarnings("CodeBlock2Expr")
     private static @NotNull Command getRootCommand() {
         Command root = new Command(COMMAND_NAME);
 

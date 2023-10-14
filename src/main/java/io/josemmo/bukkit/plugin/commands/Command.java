@@ -10,6 +10,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -19,8 +20,8 @@ public class Command {
     private final String name;
     private final List<Argument> arguments = new ArrayList<>();
     private Predicate<CommandSender> requirementHandler = __ -> true;
-    private BiConsumer<CommandSender, Object[]> executesHandler = null;
-    private BiConsumer<Player, Object[]> executesPlayerHandler = null;
+    private @Nullable BiConsumer<CommandSender, Object[]> executesHandler;
+    private @Nullable BiConsumer<Player, Object[]> executesPlayerHandler;
     private final List<Command> subcommands = new ArrayList<>();
 
     /**
@@ -82,6 +83,7 @@ public class Command {
      * @param  handler Command handler
      * @return         This instance
      */
+    @SuppressWarnings("UnusedReturnValue")
     public @NotNull Command executesPlayer(@NotNull BiConsumer<Player, Object[]> handler) {
         executesPlayerHandler = handler;
         return this;
