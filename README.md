@@ -134,7 +134,7 @@ The supported plugins are:
 - [WorldGuard](https://enginehub.org/worldguard/)
 - [GriefPrevention](https://www.spigotmc.org/resources/griefprevention.1884/)
 - [Towny Advanced](https://townyadvanced.github.io/)
-- [Lands](https://www.spigotmc.org/resources/lands-%E2%AD%95-land-claim-plugin-%E2%9C%85-grief-prevention-protection-gui-management-nations-wars-1-20-support.53313/)
+- [Lands](https://www.spigotmc.org/resources/53313/)
 
 ## Flags
 Images from this plugin have a set of boolean attributes called "flags" that modify its behavior. Possible values are:

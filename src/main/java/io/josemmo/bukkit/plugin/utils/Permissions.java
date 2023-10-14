@@ -14,7 +14,6 @@ import io.josemmo.bukkit.plugin.YamipaPlugin;
 import me.angeschossen.lands.api.LandsIntegration;
 import me.angeschossen.lands.api.flags.type.RoleFlag;
 import me.angeschossen.lands.api.land.LandWorld;
-import me.angeschossen.lands.api.player.LandPlayer;
 import me.ryanhamshire.GriefPrevention.GriefPrevention;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -140,17 +139,13 @@ public class Permissions {
         if (landsApi == null) {
             return true;
         }
-
-        // landWorld is used for permission checks, since flags can be toggled in wilderness as well
-        @Nullable LandWorld landWorld = landsApi.getWorld(location.getWorld());
+        LandWorld landWorld = landsApi.getWorld(location.getWorld());
         if (landWorld == null) {
-            return true;// this is not a claim world
+            return true;
         }
-
-        RoleFlag flag = isBuild ? me.angeschossen.lands.api.flags.type.Flags.BLOCK_PLACE : me.angeschossen.lands.api.flags.type.Flags.BLOCK_BREAK;
-
-        LandPlayer landPlayer = landsApi.getLandPlayer(player.getUniqueId());
-        // check against online player with bypass permissions
-        return landWorld.hasRoleFlag(landPlayer, location, flag, location.getBlock().getType(), false); // we don't want to send a denied message
+        RoleFlag flag = isBuild ?
+            me.angeschossen.lands.api.flags.type.Flags.BLOCK_PLACE :
+            me.angeschossen.lands.api.flags.type.Flags.BLOCK_BREAK;
+        return landWorld.hasRoleFlag(player.getUniqueId(), location, flag);
     }
 }
