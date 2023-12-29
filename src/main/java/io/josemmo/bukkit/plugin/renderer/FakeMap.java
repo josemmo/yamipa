@@ -66,15 +66,15 @@ public class FakeMap extends FakeEntity {
      * Get matrix of error maps
      * @param  width  Width in blocks
      * @param  height Height in blocks
-     * @return        Fake maps container
+     * @return        Fake maps
      */
-    public static @NotNull FakeMapsContainer getErrorMatrix(int width, int height) {
+    public static @NotNull FakeMap[][][] getErrorMatrix(int width, int height) {
         FakeMap[] errorMaps = new FakeMap[] {getErrorInstance()};
         FakeMap[][][] matrix = new FakeMap[width][height][1];
         for (FakeMap[][] column : matrix) {
             Arrays.fill(column, errorMaps);
         }
-        return new FakeMapsContainer(matrix, 0);
+        return matrix;
     }
 
     /**

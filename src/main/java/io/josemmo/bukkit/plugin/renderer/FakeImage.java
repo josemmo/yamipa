@@ -2,6 +2,7 @@ package io.josemmo.bukkit.plugin.renderer;
 
 import com.comphenix.protocol.events.PacketContainer;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
+import io.josemmo.bukkit.plugin.storage.CachedMapsFile;
 import io.josemmo.bukkit.plugin.storage.ImageFile;
 import io.josemmo.bukkit.plugin.utils.DirectionUtils;
 import io.josemmo.bukkit.plugin.utils.Logger;
@@ -50,7 +51,7 @@ public class FakeImage extends FakeEntity {
     private final int flags;
     private final BiFunction<Integer, Integer, Vector> getLocationVector;
     private final Set<Player> observingPlayers = new HashSet<>();
-    private Runnable onLoadedListener = null;
+    private @Nullable Runnable onLoadedListener = null;
 
     // Generated values
     private boolean loading = false;
@@ -59,8 +60,8 @@ public class FakeImage extends FakeEntity {
     private int numOfSteps = -1;  // Total number of animation steps
 
     // Animation task attributes
-    private static boolean animateImages = false;
-    private ScheduledFuture<?> task;
+    private static boolean ANIMATE_IMAGES = false;
+    private @Nullable ScheduledFuture<?> task;
     private int currentStep = -1; // Current animation step
 
     /**
@@ -68,7 +69,7 @@ public class FakeImage extends FakeEntity {
      * @param animImages Animate images
      */
     public static void configure(boolean animImages) {
-        animateImages = animImages;
+        ANIMATE_IMAGES = animImages;
     }
 
     /**
@@ -76,7 +77,7 @@ public class FakeImage extends FakeEntity {
      * @return Is animation enabled
      */
     public static boolean isAnimationEnabled() {
-        return animateImages;
+        return ANIMATE_IMAGES;
     }
 
     /**
@@ -315,6 +316,7 @@ public class FakeImage extends FakeEntity {
      * @param  face     Block face
      * @return          TRUE for contained, FALSE otherwise
      */
+    @SuppressWarnings("RedundantIfStatement")
     public boolean contains(@NotNull Location location, @NotNull BlockFace face) {
         // Is point facing the same plane as the image?
         if (face != this.face) {
@@ -355,18 +357,18 @@ public class FakeImage extends FakeEntity {
      */
     private void load() {
         ImageFile file = getFile();
-        FakeMapsContainer container;
+
+        // Get maps to use
+        FakeMap[][][] maps;
         if (file == null) {
-            container = FakeMap.getErrorMatrix(width, height);
+            maps = FakeMap.getErrorMatrix(width, height);
             LOGGER.warning("File \"" + filename + "\" does not exist");
         } else {
-            container = file.getMapsAndSubscribe(this);
+            CachedMapsFile cachedMapsFile = file.getMapsAndSubscribe(this);
+            maps = cachedMapsFile.getMaps();
+            delay = cachedMapsFile.getDelay();
         }
-
-        // Extract data from container
-        FakeMap[][][] maps = container.getFakeMaps();
         numOfSteps = maps[0][0].length;
-        delay = container.getDelay();
 
         // Generate frames
         FakeItemFrame[] newFrames = new FakeItemFrame[width*height];
@@ -380,7 +382,7 @@ public class FakeImage extends FakeEntity {
         frames = newFrames;
 
         // Start animation task (if needed)
-        if (animateImages && task == null && hasFlag(FLAG_ANIMATABLE) && numOfSteps > 1) {
+        if (ANIMATE_IMAGES && task == null && hasFlag(FLAG_ANIMATABLE) && numOfSteps > 1) {
             task = YamipaPlugin.getInstance().getScheduler().scheduleAtFixedRate(
                 this::nextStep,
                 0,
@@ -524,6 +526,7 @@ public class FakeImage extends FakeEntity {
 
         // Free array of fake item frames
         frames = null;
+        loading = false;
         LOGGER.fine("Invalidated FakeImage#(" + location + "," + face + ")");
 
         // Notify invalidation to source ImageFile

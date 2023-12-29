@@ -24,8 +24,8 @@ public class ImageStorage {
     private final SortedMap<String, ImageFile> files = new TreeMap<>();
     private final Path basePath;
     private final Path cachePath;
-    private WatchService watchService;
-    private Thread watchServiceThread;
+    private @Nullable WatchService watchService;
+    private @Nullable Thread watchServiceThread;
 
     /**
      * Class constructor
@@ -56,8 +56,14 @@ public class ImageStorage {
     /**
      * Start service
      * @throws IOException if failed to start watch service
+     * @throws RuntimeException if already running
      */
-    public void start() throws IOException {
+    public void start() throws IOException, RuntimeException {
+        // Prevent initializing more than once
+        if (watchService != null || watchServiceThread != null) {
+            throw new RuntimeException("Service is already running");
+        }
+
         // Create base directories if necessary
         if (basePath.toFile().mkdirs()) {
             LOGGER.info("Created images directory as it did not exist");
@@ -152,9 +158,9 @@ public class ImageStorage {
                 WatchEvent.Modifier[] modifiers = IS_WINDOWS ?
                     new WatchEvent.Modifier[]{ExtendedWatchEventModifier.FILE_TREE} :
                     new WatchEvent.Modifier[0];
-                path.register(watchService, events, modifiers);
+                path.register(Objects.requireNonNull(watchService), events, modifiers);
                 LOGGER.fine("Started watching directory at \"" + path.toAbsolutePath() + "\"");
-            } catch (IOException e) {
+            } catch (IOException | NullPointerException e) {
                 LOGGER.severe("Failed to register directory", e);
             }
         }
@@ -273,7 +279,7 @@ public class ImageStorage {
         public void run() {
             try {
                 WatchKey key;
-                while ((key = watchService.take()) != null) {
+                while ((key = Objects.requireNonNull(watchService).take()) != null) {
                     for (WatchEvent<?> event : key.pollEvents()) {
                         WatchEvent.Kind<?> kind = event.kind();
                         Path keyPath = (Path) key.watchable();
@@ -284,6 +290,8 @@ public class ImageStorage {
                 }
             } catch (InterruptedException __) {
                 // Silently ignore exception, this is expected when service shuts down
+            } catch (NullPointerException e) {
+                LOGGER.severe("Watch service was stopped before watcher thread", e);
             }
         }
     }

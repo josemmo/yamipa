@@ -61,7 +61,7 @@ public class WorldAreaId {
 
     /**
      * Get nearby world area IDs in view distance (plus this one)
-     * @return List of neighbors
+     * @return Array of neighbors
      */
     public @NotNull WorldAreaId[] getNeighborhood() {
         // Get value from cache (if available)

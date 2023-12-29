@@ -131,6 +131,7 @@ public class ImageRenderer implements Listener {
     /**
      * Save configuration to disk
      */
+    @SuppressWarnings("ExtractMethodRecommender")
     private void saveConfig() {
         if (!hasConfigChanged.get()) return;
 
