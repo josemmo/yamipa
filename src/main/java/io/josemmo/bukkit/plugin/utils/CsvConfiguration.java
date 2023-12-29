@@ -6,7 +6,7 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -42,8 +42,8 @@ public class CsvConfiguration {
      * @param path File path
      * @throws IOException if failed to read file
      */
-    public void load(@NotNull String path) throws IOException {
-        try (Stream<String> stream = Files.lines(Paths.get(path), CHARSET)) {
+    public void load(@NotNull Path path) throws IOException {
+        try (Stream<String> stream = Files.lines(path, CHARSET)) {
             stream.forEach(line -> {
                 line = line.trim();
 
@@ -68,8 +68,8 @@ public class CsvConfiguration {
      * @param path File path
      * @throws IOException if failed to write file
      */
-    public void save(@NotNull String path) throws IOException {
-        try (OutputStreamWriter writer = new OutputStreamWriter(Files.newOutputStream(Paths.get(path)), CHARSET)) {
+    public void save(@NotNull Path path) throws IOException {
+        try (OutputStreamWriter writer = new OutputStreamWriter(Files.newOutputStream(path), CHARSET)) {
             for (String[] row : getRows()) {
                 writer.write(String.join(COLUMN_DELIMITER, row) + "\n");
             }

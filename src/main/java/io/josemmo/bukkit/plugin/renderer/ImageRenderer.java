@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 public class ImageRenderer implements Listener {
     private static final long SAVE_INTERVAL = 20L * 90; // In server ticks
     private static final Logger LOGGER = Logger.getLogger("ImageRenderer");
-    private final String configPath;
+    private final Path configPath;
     private BukkitTask saveTask;
     private final AtomicBoolean hasConfigChanged = new AtomicBoolean(false);
     private final ConcurrentMap<WorldAreaId, Set<FakeImage>> images = new ConcurrentHashMap<>();
@@ -39,7 +39,7 @@ public class ImageRenderer implements Listener {
      * Class constructor
      * @param configPath Path to configuration file
      */
-    public ImageRenderer(@NotNull String configPath) {
+    public ImageRenderer(@NotNull Path configPath) {
         this.configPath = configPath;
     }
 
@@ -82,7 +82,7 @@ public class ImageRenderer implements Listener {
      * Load configuration from disk
      */
     private void loadConfig() {
-        if (!Files.isRegularFile(Paths.get(configPath))) {
+        if (!Files.isRegularFile(configPath)) {
             LOGGER.info("No placed fake images configuration file found");
             return;
         }

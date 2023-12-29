@@ -110,7 +110,7 @@ public class YamipaPlugin extends JavaPlugin {
         boolean animateImages = getConfig().getBoolean("animate-images", true);
         FakeImage.configure(animateImages);
         LOGGER.info(animateImages ? "Enabled image animation support" : "Image animation support is disabled");
-        renderer = new ImageRenderer(basePath.resolve(dataPath).toString());
+        renderer = new ImageRenderer(basePath.resolve(dataPath));
         renderer.start();
 
         // Create image item service
