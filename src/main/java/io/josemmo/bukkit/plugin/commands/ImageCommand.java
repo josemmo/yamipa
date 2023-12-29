@@ -95,8 +95,8 @@ public class ImageCommand {
 
         // Validate destination file
         Path basePath = plugin.getStorage().getBasePath();
-        Path destPath = basePath.resolve(filename);
-        if (!destPath.getParent().equals(basePath)) {
+        Path destPath = basePath.resolve(filename).normalize();
+        if (!destPath.startsWith(basePath)) {
             sender.sendMessage(ChatColor.RED + "Not a valid destination filename");
             return;
         }
@@ -150,6 +150,7 @@ public class ImageCommand {
 
                 // Download file
                 sender.sendMessage("Downloading file...");
+                Files.createDirectories(destPath.getParent());
                 Files.copy(conn.getInputStream(), destPath);
 
                 // Validate downloaded file

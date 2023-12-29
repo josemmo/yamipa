@@ -134,7 +134,7 @@ public class ImageStorage {
     private synchronized void registerDirectory(@NotNull Path path, boolean isBase) {
         // Validate path
         if (!Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS)) {
-            LOGGER.warning("Cannot list files in \"" + path.toAbsolutePath() + "\" as it is not a valid directory");
+            LOGGER.warning("Cannot list files in \"" + path + "\" as it is not a valid directory");
             return;
         }
 
@@ -159,7 +159,7 @@ public class ImageStorage {
                     new WatchEvent.Modifier[]{ExtendedWatchEventModifier.FILE_TREE} :
                     new WatchEvent.Modifier[0];
                 path.register(Objects.requireNonNull(watchService), events, modifiers);
-                LOGGER.fine("Started watching directory at \"" + path.toAbsolutePath() + "\"");
+                LOGGER.fine("Started watching directory at \"" + path + "\"");
             } catch (IOException | NullPointerException e) {
                 LOGGER.severe("Failed to register directory", e);
             }
@@ -173,7 +173,7 @@ public class ImageStorage {
     private synchronized void registerFile(@NotNull Path path) {
         // Validate path
         if (!Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS)) {
-            LOGGER.warning("Cannot register \"" + path.toAbsolutePath() + "\" as it is not a valid file");
+            LOGGER.warning("Cannot register \"" + path + "\" as it is not a valid file");
             return;
         }
 

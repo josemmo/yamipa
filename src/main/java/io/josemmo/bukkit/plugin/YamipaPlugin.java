@@ -97,8 +97,8 @@ public class YamipaPlugin extends JavaPlugin {
 
         // Create image storage
         storage = new ImageStorage(
-            basePath.resolve(imagesPath).toAbsolutePath(),
-            basePath.resolve(cachePath).toAbsolutePath()
+            basePath.resolve(imagesPath).toAbsolutePath().normalize(),
+            basePath.resolve(cachePath).toAbsolutePath().normalize()
         );
         try {
             storage.start();
