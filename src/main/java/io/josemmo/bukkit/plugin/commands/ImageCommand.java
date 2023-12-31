@@ -24,12 +24,14 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class ImageCommand {
     private static final int ITEMS_PER_PAGE = 9;
+    private static final int MAX_PATH_DEPTH = 10;
     private static final Logger LOGGER = Logger.getLogger("ImageCommand");
 
     public static void showHelp(@NotNull CommandSender s, @NotNull String commandName) {
@@ -92,16 +94,29 @@ public class ImageCommand {
 
     public static void downloadImage(@NotNull CommandSender sender, @NotNull String rawUrl, @NotNull String filename) {
         YamipaPlugin plugin = YamipaPlugin.getInstance();
+        Path basePath = plugin.getStorage().getBasePath();
+
+        // Resolve destination path
+        Path destPath;
+        try {
+            destPath = basePath.resolve(filename).normalize();
+        } catch (InvalidPathException e) {
+            sender.sendMessage(ChatColor.RED + "Malformed destination path");
+            return;
+        }
 
         // Validate destination file
-        Path basePath = plugin.getStorage().getBasePath();
-        Path destPath = basePath.resolve(filename).normalize();
         if (!destPath.startsWith(basePath)) {
             sender.sendMessage(ChatColor.RED + "Not a valid destination filename");
             return;
         }
         if (destPath.toFile().exists()) {
             sender.sendMessage(ChatColor.RED + "There's already a file with that name");
+            return;
+        }
+        int depth = destPath.getNameCount() - basePath.getNameCount();
+        if (depth > MAX_PATH_DEPTH) {
+            sender.sendMessage(ChatColor.RED + "Destination path has too many directories");
             return;
         }
 
