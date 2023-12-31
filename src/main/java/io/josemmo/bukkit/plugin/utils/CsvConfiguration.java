@@ -18,7 +18,7 @@ import java.util.stream.Stream;
  */
 public class CsvConfiguration {
     public static final Charset CHARSET = StandardCharsets.UTF_8;
-    public static final String COLUMN_DELIMITER = ";";
+    public static final String COLUMN_DELIMITER = "\t";
     private final List<String[]> data = new ArrayList<>();
 
     /**
