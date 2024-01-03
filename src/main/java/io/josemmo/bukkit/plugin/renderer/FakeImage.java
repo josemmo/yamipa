@@ -60,25 +60,8 @@ public class FakeImage extends FakeEntity {
     private int numOfSteps = -1;  // Total number of animation steps
 
     // Animation task attributes
-    private static boolean ANIMATE_IMAGES = false;
     private @Nullable ScheduledFuture<?> task;
     private int currentStep = -1; // Current animation step
-
-    /**
-     * Configure class
-     * @param animImages Animate images
-     */
-    public static void configure(boolean animImages) {
-        ANIMATE_IMAGES = animImages;
-    }
-
-    /**
-     * Is animation enabled
-     * @return Is animation enabled
-     */
-    public static boolean isAnimationEnabled() {
-        return ANIMATE_IMAGES;
-    }
 
     /**
      * Get image rotation from player eyesight
@@ -382,8 +365,10 @@ public class FakeImage extends FakeEntity {
         frames = newFrames;
 
         // Start animation task (if needed)
-        if (ANIMATE_IMAGES && task == null && hasFlag(FLAG_ANIMATABLE) && numOfSteps > 1) {
-            task = YamipaPlugin.getInstance().getScheduler().scheduleAtFixedRate(
+        YamipaPlugin plugin = YamipaPlugin.getInstance();
+        boolean isAnimationEnabled = plugin.getRenderer().isAnimationEnabled();
+        if (isAnimationEnabled && task == null && hasFlag(FLAG_ANIMATABLE) && numOfSteps > 1) {
+            task = plugin.getScheduler().scheduleAtFixedRate(
                 this::nextStep,
                 0,
                 delay*50L,

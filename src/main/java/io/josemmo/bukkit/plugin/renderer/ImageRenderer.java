@@ -29,6 +29,7 @@ public class ImageRenderer implements Listener {
     private static final long SAVE_INTERVAL = 20L * 90; // In server ticks
     private static final Logger LOGGER = Logger.getLogger("ImageRenderer");
     private final Path configPath;
+    private final boolean animateImages;
     private BukkitTask saveTask;
     private final AtomicBoolean hasConfigChanged = new AtomicBoolean(false);
     private final ConcurrentMap<WorldAreaId, Set<FakeImage>> images = new ConcurrentHashMap<>();
@@ -37,10 +38,20 @@ public class ImageRenderer implements Listener {
 
     /**
      * Class constructor
-     * @param configPath Path to configuration file
+     * @param configPath    Path to configuration file
+     * @param animateImages Whether to animate images or not
      */
-    public ImageRenderer(@NotNull Path configPath) {
+    public ImageRenderer(@NotNull Path configPath, boolean animateImages) {
         this.configPath = configPath;
+        this.animateImages = animateImages;
+    }
+
+    /**
+     * Is animation enabled
+     * @return Is animation enabled
+     */
+    public boolean isAnimationEnabled() {
+        return animateImages;
     }
 
     /**

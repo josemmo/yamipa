@@ -108,9 +108,8 @@ public class YamipaPlugin extends JavaPlugin {
 
         // Create image renderer
         boolean animateImages = getConfig().getBoolean("animate-images", true);
-        FakeImage.configure(animateImages);
         LOGGER.info(animateImages ? "Enabled image animation support" : "Image animation support is disabled");
-        renderer = new ImageRenderer(basePath.resolve(dataPath));
+        renderer = new ImageRenderer(basePath.resolve(dataPath), animateImages);
         renderer.start();
 
         // Create image item service
@@ -139,7 +138,7 @@ public class YamipaPlugin extends JavaPlugin {
             return "0-9";
         };
         metrics = new Metrics(this, BSTATS_PLUGIN_ID);
-        metrics.addCustomChart(new SimplePie("animate_images", () -> FakeImage.isAnimationEnabled() ? "true" : "false"));
+        metrics.addCustomChart(new SimplePie("animate_images", () -> animateImages ? "true" : "false"));
         metrics.addCustomChart(new SimplePie("number_of_image_files", () -> toStats.apply(storage.size())));
         metrics.addCustomChart(new SimplePie("number_of_placed_images", () -> toStats.apply(renderer.size())));
     }
