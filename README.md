@@ -45,13 +45,15 @@ Yamipa is ready-to-go right out of the box. By default, it creates the following
 - `images.dat`: A file holding the list and properties (e.g. coordinates) of all placed images in your server. You
 shouldn't modify its contents.
 
-You can change the default path of these files by creating a `config.yml` file in the plugin configuration directory:
+You can change the path of these files by creating a `config.yml` file in the plugin configuration directory.
+Here are the default configuration values if you don't specify them:
 ```yaml
-verbose: false         # Set to "true" to enable more verbose logging
-animate-images: true   # Set to "false" to disable GIF support
-images-path: images    # Path to images directory
-cache-path: cache      # Path to cache directory
-data-path: images.dat  # Path to placed images database file
+verbose: false           # Set to "true" to enable more verbose logging
+animate-images: true     # Set to "false" to disable GIF support
+images-path: images      # Path to images directory
+cache-path: cache        # Path to cache directory
+data-path: images.dat    # Path to placed images database file
+max-image-dimension: 30  # Maximum width or height in blocks allowed in images
 ```
 
 This library uses bStats to anonymously report the number of installs. If you don't like this, feel free to
@@ -122,6 +124,27 @@ Similarly, if you grant the `yamipa.command.remove`, the permission `yamipa.comm
 You can change which roles or players are granted these commands by using a permission plugin,
 such as [LuckPerms](https://luckperms.net/) or [GroupManager](https://elgarl.github.io/GroupManager/).
 Both these plugins have been tested to work with Yamipa, although any similar one should work just fine.
+
+## Player variables
+Some permission plugins like LuckPerms allow server operators to assign
+[key-value pairs](https://luckperms.net/wiki/Meta-Commands) to entities as if they were permissions.
+This is useful for granting different capabilities to different players or groups.
+
+Yamipa looks for the following variables which, if found, override the default configuration value that applies to all
+players:
+
+| Variable (key)               | Overrides             | Description                                                                      |
+|:-----------------------------|:----------------------|:---------------------------------------------------------------------------------|
+| `yamipa-max-image-dimension` | `max-image-dimension` | Maximum width or height of images and image items issued by this player or group |
+
+For example, if you want to limit the image size to 5x5 blocks just for the "test" player, you can run this command:
+```sh
+# Using LuckPerms
+/lp user test meta set yamipa-max-image-dimension 5
+
+# Using GroupManager
+/manuaddv test yamipa-max-image-dimension 5
+```
 
 ## Protecting areas
 In large servers, letting your players place and remove images wherever they want might not be the most sensible idea.

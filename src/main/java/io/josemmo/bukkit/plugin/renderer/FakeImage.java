@@ -6,10 +6,12 @@ import io.josemmo.bukkit.plugin.storage.CachedMapsFile;
 import io.josemmo.bukkit.plugin.storage.ImageFile;
 import io.josemmo.bukkit.plugin.utils.DirectionUtils;
 import io.josemmo.bukkit.plugin.utils.Logger;
+import io.josemmo.bukkit.plugin.utils.Permissions;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Rotation;
 import org.bukkit.block.BlockFace;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +27,6 @@ public class FakeImage extends FakeEntity {
     private static final Logger LOGGER = Logger.getLogger("FakeImage");
 
     // Image constants
-    public static final int MAX_DIMENSION = 30; // In blocks
     public static final int MAX_STEPS = 500; // For animated images
     public static final int MIN_DELAY = 1; // Minimum step delay in 50ms intervals (50ms / 50ms)
     public static final int MAX_DELAY = 50; // Maximum step delay in 50ms intervals (5000ms / 50ms)
@@ -90,15 +91,35 @@ public class FakeImage extends FakeEntity {
     }
 
     /**
+     * Get maximum image dimension
+     * @param  sender Sender instance
+     * @return        Maximum image dimension in blocks
+     */
+    public static int getMaxImageDimension(@NotNull CommandSender sender) {
+        if (sender instanceof Player) {
+            String rawValue = Permissions.getVariable("yamipa-max-image-dimension", (Player) sender);
+            if (rawValue != null) {
+                try {
+                    return Integer.parseInt(rawValue);
+                } catch (NumberFormatException __) {
+                    LOGGER.warning("Max. image dimension for " + sender + " is not a valid integer: \"" + rawValue + "\"");
+                }
+            }
+        }
+        return YamipaPlugin.getInstance().getRenderer().getMaxImageDimension();
+    }
+
+    /**
      * Get proportional height
      * @param  sizeInPixels Image file dimension in pixels
+     * @param  sender       Sender instance
      * @param  width        Desired width in blocks
-     * @return              Height in blocks (capped at <code>FakeImage.MAX_DIMENSION</code>)
+     * @return              Height in blocks (capped at maximum image dimension for sender)
      */
-    public static int getProportionalHeight(@NotNull Dimension sizeInPixels, int width) {
+    public static int getProportionalHeight(@NotNull Dimension sizeInPixels, @NotNull CommandSender sender, int width) {
         float imageRatio = (float) sizeInPixels.height / sizeInPixels.width;
         int height = Math.round(width * imageRatio);
-        height = Math.min(height, MAX_DIMENSION);
+        height = Math.min(height, getMaxImageDimension(sender));
         return height;
     }
 

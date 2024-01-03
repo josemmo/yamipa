@@ -16,6 +16,9 @@ import me.angeschossen.lands.api.flags.type.RoleFlag;
 import me.angeschossen.lands.api.land.LandWorld;
 import me.angeschossen.lands.api.player.LandPlayer;
 import me.ryanhamshire.GriefPrevention.GriefPrevention;
+import net.luckperms.api.LuckPerms;
+import net.luckperms.api.LuckPermsProvider;
+import org.anjocaido.groupmanager.GroupManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -27,12 +30,26 @@ import java.util.concurrent.Callable;
 
 public class Permissions {
     private static final Logger LOGGER = Logger.getLogger();
+    private static @Nullable LuckPerms luckPerms;
+    private static @Nullable GroupManager groupManager;
     private static @Nullable WorldGuard worldGuard;
     private static @Nullable GriefPrevention griefPrevention;
     private static @Nullable TownyAPI townyApi;
-    private static @Nullable LandsIntegration landsApi = null;
+    private static @Nullable LandsIntegration landsApi;
 
     static {
+        try {
+            luckPerms = LuckPermsProvider.get();
+        } catch (NoClassDefFoundError | IllegalStateException __) {
+            // LuckPerms is not installed
+        }
+
+        try {
+            groupManager = (GroupManager) YamipaPlugin.getInstance().getServer().getPluginManager().getPlugin("GroupManager");
+        } catch (NoClassDefFoundError __) {
+            // GroupManager is not installed
+        }
+
         try {
             worldGuard = WorldGuard.getInstance();
         } catch (NoClassDefFoundError __) {
@@ -56,6 +73,27 @@ public class Permissions {
         } catch (NoClassDefFoundError __) {
             // Lands is not installed
         }
+    }
+
+    /**
+     * Get player variable
+     * @param  variable Variable name (key)
+     * @param  player   Player instance
+     * @return          Variable value or NULL if not found
+     */
+    public static @Nullable String getVariable(@NotNull String variable, @NotNull Player player) {
+        if (luckPerms != null) {
+            return luckPerms.getPlayerAdapter(Player.class).getUser(player).getCachedData().getMetaData()
+                .getMetaValue(variable);
+        }
+
+        if (groupManager != null) {
+            String rawValue = groupManager.getWorldsHolder().getWorldPermissions(player)
+                .getPermissionString(player.getName(), variable);
+            return rawValue.isEmpty() ? null : rawValue;
+        }
+
+        return null;
     }
 
     /**

@@ -30,6 +30,7 @@ public class ImageRenderer implements Listener {
     private static final Logger LOGGER = Logger.getLogger("ImageRenderer");
     private final Path configPath;
     private final boolean animateImages;
+    private final int maxImageDimension;
     private BukkitTask saveTask;
     private final AtomicBoolean hasConfigChanged = new AtomicBoolean(false);
     private final ConcurrentMap<WorldAreaId, Set<FakeImage>> images = new ConcurrentHashMap<>();
@@ -38,12 +39,14 @@ public class ImageRenderer implements Listener {
 
     /**
      * Class constructor
-     * @param configPath    Path to configuration file
-     * @param animateImages Whether to animate images or not
+     * @param configPath        Path to configuration file
+     * @param animateImages     Whether to animate images or not
+     * @param maxImageDimension Maximum image dimension in blocks
      */
-    public ImageRenderer(@NotNull Path configPath, boolean animateImages) {
+    public ImageRenderer(@NotNull Path configPath, boolean animateImages, int maxImageDimension) {
         this.configPath = configPath;
         this.animateImages = animateImages;
+        this.maxImageDimension = maxImageDimension;
     }
 
     /**
@@ -52,6 +55,14 @@ public class ImageRenderer implements Listener {
      */
     public boolean isAnimationEnabled() {
         return animateImages;
+    }
+
+    /**
+     * Get maximum image dimension
+     * @return Maximum image dimension in blocks
+     */
+    public int getMaxImageDimension() {
+        return maxImageDimension;
     }
 
     /**
@@ -118,8 +129,8 @@ public class ImageRenderer implements Listener {
                 Location location = new Location(world, x, y, z);
                 BlockFace face = BlockFace.valueOf(row[5]);
                 Rotation rotation = Rotation.valueOf(row[6]);
-                int width = Math.min(FakeImage.MAX_DIMENSION, Math.abs(Integer.parseInt(row[7])));
-                int height = Math.min(FakeImage.MAX_DIMENSION, Math.abs(Integer.parseInt(row[8])));
+                int width = Math.abs(Integer.parseInt(row[7]));
+                int height = Math.abs(Integer.parseInt(row[8]));
                 Date placedAt = (row.length > 9 && !row[9].isEmpty()) ?
                     new Date(Long.parseLong(row[9])*1000L) :
                     null;

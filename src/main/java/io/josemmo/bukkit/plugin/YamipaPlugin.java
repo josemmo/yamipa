@@ -109,7 +109,8 @@ public class YamipaPlugin extends JavaPlugin {
         // Create image renderer
         boolean animateImages = getConfig().getBoolean("animate-images", true);
         LOGGER.info(animateImages ? "Enabled image animation support" : "Image animation support is disabled");
-        renderer = new ImageRenderer(basePath.resolve(dataPath), animateImages);
+        int maxImageDimension = getConfig().getInt("max-image-dimension", 30);
+        renderer = new ImageRenderer(basePath.resolve(dataPath), animateImages, maxImageDimension);
         renderer.start();
 
         // Create image item service

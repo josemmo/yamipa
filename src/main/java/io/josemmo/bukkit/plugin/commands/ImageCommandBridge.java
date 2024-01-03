@@ -120,8 +120,8 @@ public class ImageCommandBridge {
             .withArgument(new OnlinePlayerArgument("player"))
             .withArgument(new ImageFileArgument("filename"))
             .withArgument(new IntegerArgument("amount", 1, 64))
-            .withArgument(new IntegerArgument("width", 1, FakeImage.MAX_DIMENSION))
-            .withArgument(new IntegerArgument("height", 1, FakeImage.MAX_DIMENSION))
+            .withArgument(new ImageDimensionArgument("width"))
+            .withArgument(new ImageDimensionArgument("height"))
             .withArgument(new ImageFlagsArgument("flags", FakeImage.DEFAULT_GIVE_FLAGS))
             .executes((sender, args) -> {
                 ImageCommand.giveImageItems(sender, (Player) args[1], (ImageFile) args[2], (int) args[3],
@@ -132,8 +132,8 @@ public class ImageCommandBridge {
             .withArgument(new OnlinePlayerArgument("player"))
             .withArgument(new ImageFileArgument("filename"))
             .withArgument(new IntegerArgument("amount", 1, 64))
-            .withArgument(new IntegerArgument("width", 1, FakeImage.MAX_DIMENSION))
-            .withArgument(new IntegerArgument("height", 1, FakeImage.MAX_DIMENSION))
+            .withArgument(new ImageDimensionArgument("width"))
+            .withArgument(new ImageDimensionArgument("height"))
             .executes((sender, args) -> {
                 ImageCommand.giveImageItems(sender, (Player) args[1], (ImageFile) args[2], (int) args[3],
                     (int) args[4], (int) args[5], FakeImage.DEFAULT_GIVE_FLAGS);
@@ -143,7 +143,7 @@ public class ImageCommandBridge {
             .withArgument(new OnlinePlayerArgument("player"))
             .withArgument(new ImageFileArgument("filename"))
             .withArgument(new IntegerArgument("amount", 1, 64))
-            .withArgument(new IntegerArgument("width", 1, FakeImage.MAX_DIMENSION))
+            .withArgument(new ImageDimensionArgument("width"))
             .executes((sender, args) -> {
                 ImageCommand.giveImageItems(sender, (Player) args[1], (ImageFile) args[2], (int) args[3],
                     (int) args[4], 0, FakeImage.DEFAULT_GIVE_FLAGS);
@@ -167,8 +167,8 @@ public class ImageCommandBridge {
         root.addSubcommand("place")
             .withPermission("yamipa.command.place", "yamipa.place")
             .withArgument(new ImageFileArgument("filename"))
-            .withArgument(new IntegerArgument("width", 1, FakeImage.MAX_DIMENSION))
-            .withArgument(new IntegerArgument("height", 1, FakeImage.MAX_DIMENSION))
+            .withArgument(new ImageDimensionArgument("width"))
+            .withArgument(new ImageDimensionArgument("height"))
             .withArgument(new ImageFlagsArgument("flags", FakeImage.DEFAULT_PLACE_FLAGS))
             .executesPlayer((player, args) -> {
                 ImageCommand.placeImage(player, (ImageFile) args[1], (int) args[2], (int) args[3], (int) args[4]);
@@ -176,8 +176,8 @@ public class ImageCommandBridge {
         root.addSubcommand("place")
             .withPermission("yamipa.command.place", "yamipa.place")
             .withArgument(new ImageFileArgument("filename"))
-            .withArgument(new IntegerArgument("width", 1, FakeImage.MAX_DIMENSION))
-            .withArgument(new IntegerArgument("height", 1, FakeImage.MAX_DIMENSION))
+            .withArgument(new ImageDimensionArgument("width"))
+            .withArgument(new ImageDimensionArgument("height"))
             .executesPlayer((player, args) -> {
                 ImageCommand.placeImage(player, (ImageFile) args[1], (int) args[2], (int) args[3],
                     FakeImage.DEFAULT_PLACE_FLAGS);
@@ -185,7 +185,7 @@ public class ImageCommandBridge {
         root.addSubcommand("place")
             .withPermission("yamipa.command.place", "yamipa.place")
             .withArgument(new ImageFileArgument("filename"))
-            .withArgument(new IntegerArgument("width", 1, FakeImage.MAX_DIMENSION))
+            .withArgument(new ImageDimensionArgument("width"))
             .executesPlayer((player, args) -> {
                 ImageCommand.placeImage(player, (ImageFile) args[1], (int) args[2], 0,
                     FakeImage.DEFAULT_PLACE_FLAGS);

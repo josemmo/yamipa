@@ -200,7 +200,7 @@ public class ImageCommand {
             player.sendMessage(ChatColor.RED + "The requested file is not a valid image");
             return;
         }
-        final int finalHeight = (height == 0) ? FakeImage.getProportionalHeight(sizeInPixels, width) : height;
+        final int finalHeight = (height == 0) ? FakeImage.getProportionalHeight(sizeInPixels, player, width) : height;
 
         // Ask player where to place image
         SelectBlockTask task = new SelectBlockTask(player);
@@ -461,7 +461,7 @@ public class ImageCommand {
             return;
         }
         if (height == 0) {
-            height = FakeImage.getProportionalHeight(sizeInPixels, width);
+            height = FakeImage.getProportionalHeight(sizeInPixels, sender, width);
         }
 
         // Create item stack

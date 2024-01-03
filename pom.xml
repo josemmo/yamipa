@@ -62,11 +62,27 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- https://repo.maven.apache.org/maven2/org/bstats/bstats-bukkit/ -->
+        <!-- https://central.sonatype.com/artifact/org.bstats/bstats-bukkit -->
         <dependency>
             <groupId>org.bstats</groupId>
             <artifactId>bstats-bukkit</artifactId>
             <version>3.0.2</version>
+        </dependency>
+
+        <!-- https://central.sonatype.com/artifact/net.luckperms/api -->
+        <dependency>
+            <groupId>net.luckperms</groupId>
+            <artifactId>api</artifactId>
+            <version>5.4</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- https://jitpack.io/com/github/ElgarL/groupmanager/ -->
+        <dependency>
+            <groupId>com.github.ElgarL</groupId>
+            <artifactId>groupmanager</artifactId>
+            <version>3.2</version>
+            <scope>provided</scope>
         </dependency>
 
         <!-- https://maven.enginehub.org/artifactory/repo/com/sk89q/worldguard/worldguard-bukkit/ -->
@@ -101,7 +117,7 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- https://repo.maven.apache.org/maven2/org/jetbrains/annotations/ -->
+        <!-- https://central.sonatype.com/artifact/org.jetbrains/annotations -->
         <dependency>
             <groupId>org.jetbrains</groupId>
             <artifactId>annotations</artifactId>
