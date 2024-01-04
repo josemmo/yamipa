@@ -1,7 +1,6 @@
 package io.josemmo.bukkit.plugin.commands.arguments;
 
-import com.mojang.brigadier.builder.RequiredArgumentBuilder;
-import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
@@ -21,8 +20,11 @@ public class ImageFileArgument extends StringArgument {
     }
 
     @Override
-    public @NotNull RequiredArgumentBuilder<?, ?> build() {
-        return super.build().suggests(this::getSuggestions);
+    public @NotNull CompletableFuture<Suggestions> suggest(@NotNull CommandSender sender, @NotNull SuggestionsBuilder builder) {
+        for (String filename : YamipaPlugin.getInstance().getStorage().getAllFilenames()) {
+            builder.suggest(StringArgumentType.escapeIfRequired(filename));
+        }
+        return builder.buildFuture();
     }
 
     @Override
@@ -32,16 +34,5 @@ public class ImageFileArgument extends StringArgument {
             throw newException("Image file does not exist");
         }
         return imageFile;
-    }
-
-    private @NotNull CompletableFuture<Suggestions> getSuggestions(
-        @NotNull CommandContext<?> ctx,
-        @NotNull SuggestionsBuilder builder
-    ) {
-        for (String filename : YamipaPlugin.getInstance().getStorage().getAllFilenames()) {
-            String suggestion = "\"" + filename.replaceAll("\"","\\\\\"") + "\"";
-            builder.suggest(suggestion);
-        }
-        return builder.buildFuture();
     }
 }

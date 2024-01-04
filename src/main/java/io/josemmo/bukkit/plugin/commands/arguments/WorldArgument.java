@@ -1,7 +1,5 @@
 package io.josemmo.bukkit.plugin.commands.arguments;
 
-import com.mojang.brigadier.builder.RequiredArgumentBuilder;
-import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
@@ -21,8 +19,11 @@ public class WorldArgument extends StringArgument {
     }
 
     @Override
-    public @NotNull RequiredArgumentBuilder<?, ?> build() {
-        return super.build().suggests(this::getSuggestions);
+    public @NotNull CompletableFuture<Suggestions> suggest(@NotNull CommandSender sender, @NotNull SuggestionsBuilder builder) {
+        for (World world : Bukkit.getWorlds()) {
+            builder.suggest(world.getName());
+        }
+        return builder.buildFuture();
     }
 
     @Override
@@ -32,15 +33,5 @@ public class WorldArgument extends StringArgument {
             throw newException("Expected world name");
         }
         return world;
-    }
-
-    private @NotNull CompletableFuture<Suggestions> getSuggestions(
-        @NotNull CommandContext<?> ctx,
-        @NotNull SuggestionsBuilder builder
-    ) {
-        for (World world : Bukkit.getWorlds()) {
-            builder.suggest(world.getName());
-        }
-        return builder.buildFuture();
     }
 }

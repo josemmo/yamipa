@@ -1,7 +1,5 @@
 package io.josemmo.bukkit.plugin.commands.arguments;
 
-import com.mojang.brigadier.builder.RequiredArgumentBuilder;
-import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
@@ -23,8 +21,9 @@ public class OnlinePlayerArgument extends StringArgument {
     }
 
     @Override
-    public @NotNull RequiredArgumentBuilder<?, ?> build() {
-        return super.build().suggests(this::getSuggestions);
+    public @NotNull CompletableFuture<Suggestions> suggest(@NotNull CommandSender sender, @NotNull SuggestionsBuilder builder) {
+        getAllowedValues().keySet().forEach(builder::suggest);
+        return builder.buildFuture();
     }
 
     @Override
@@ -34,14 +33,6 @@ public class OnlinePlayerArgument extends StringArgument {
             throw newException("Expected online player (name or UUID)");
         }
         return player;
-    }
-
-    private @NotNull CompletableFuture<Suggestions> getSuggestions(
-        @NotNull CommandContext<?> ctx,
-        @NotNull SuggestionsBuilder builder
-    ) {
-        getAllowedValues().keySet().forEach(builder::suggest);
-        return builder.buildFuture();
     }
 
     private @NotNull Map<String, Player> getAllowedValues() {
