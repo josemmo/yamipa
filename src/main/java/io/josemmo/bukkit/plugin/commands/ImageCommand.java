@@ -96,7 +96,8 @@ public class ImageCommand {
 
     public static void downloadImage(@NotNull CommandSender sender, @NotNull String rawUrl, @NotNull String filename) {
         YamipaPlugin plugin = YamipaPlugin.getInstance();
-        Path basePath = plugin.getStorage().getBasePath();
+        ImageStorage storage = plugin.getStorage();
+        Path basePath = storage.getBasePath();
 
         // Resolve destination path
         Path destPath;
@@ -110,6 +111,10 @@ public class ImageCommand {
         // Validate destination file
         if (!destPath.startsWith(basePath)) {
             sender.sendMessage(ChatColor.RED + "Not a valid destination filename");
+            return;
+        }
+        if (!storage.isPathAllowed(destPath, sender)) {
+            sender.sendMessage(ChatColor.RED + "Not allowed to download a file here");
             return;
         }
         if (destPath.toFile().exists()) {

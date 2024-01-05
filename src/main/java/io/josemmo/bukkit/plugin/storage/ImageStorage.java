@@ -135,6 +135,16 @@ public class ImageStorage {
 
     /**
      * Is path allowed
+     * @param  path   Path instance
+     * @param  sender Sender instance
+     * @return        Whether sender is allowed to access path
+     */
+    public boolean isPathAllowed(@NotNull Path path, @NotNull CommandSender sender) {
+        return isPathAllowed(getFilename(path), sender);
+    }
+
+    /**
+     * Is path allowed
      * @param  path   Path relative to {@link ImageStorage#basePath}
      * @param  sender Sender instance
      * @return        Whether sender is allowed to access path
