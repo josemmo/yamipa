@@ -96,9 +96,11 @@ public class YamipaPlugin extends JavaPlugin {
         String dataPath = getConfig().getString("data-path", "images.dat");
 
         // Create image storage
+        String allowedPaths = getConfig().getString("allowed-paths", "");
         storage = new ImageStorage(
             basePath.resolve(imagesPath).toAbsolutePath().normalize(),
-            basePath.resolve(cachePath).toAbsolutePath().normalize()
+            basePath.resolve(cachePath).toAbsolutePath().normalize(),
+            allowedPaths
         );
         try {
             storage.start();

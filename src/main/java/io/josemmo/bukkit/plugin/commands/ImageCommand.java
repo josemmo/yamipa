@@ -5,6 +5,7 @@ import io.josemmo.bukkit.plugin.renderer.FakeImage;
 import io.josemmo.bukkit.plugin.renderer.ImageRenderer;
 import io.josemmo.bukkit.plugin.renderer.ItemService;
 import io.josemmo.bukkit.plugin.storage.ImageFile;
+import io.josemmo.bukkit.plugin.storage.ImageStorage;
 import io.josemmo.bukkit.plugin.utils.Logger;
 import io.josemmo.bukkit.plugin.utils.Permissions;
 import io.josemmo.bukkit.plugin.utils.SelectBlockTask;
@@ -65,8 +66,9 @@ public class ImageCommand {
     }
 
     public static void listImages(@NotNull CommandSender sender, int page) {
-        String[] filenames = YamipaPlugin.getInstance().getStorage().getAllFilenames();
-        int numOfImages = filenames.length;
+        ImageStorage storage = YamipaPlugin.getInstance().getStorage();
+        List<String> filenames = storage.getFilenames(sender);
+        int numOfImages = filenames.size();
 
         // Are there any images available?
         if (numOfImages == 0) {
@@ -88,7 +90,7 @@ public class ImageCommand {
             sender.sendMessage("=== Page " + page + " out of " + maxPage + " ===");
         }
         for (int i=firstImageIndex; i<stopImageIndex; ++i) {
-            sender.sendMessage(ChatColor.GOLD + filenames[i]);
+            sender.sendMessage(ChatColor.GOLD + filenames.get(i));
         }
     }
 

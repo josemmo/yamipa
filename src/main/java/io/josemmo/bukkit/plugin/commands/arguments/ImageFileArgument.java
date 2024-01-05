@@ -6,6 +6,7 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
 import io.josemmo.bukkit.plugin.storage.ImageFile;
+import io.josemmo.bukkit.plugin.storage.ImageStorage;
 import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.CompletableFuture;
@@ -21,7 +22,7 @@ public class ImageFileArgument extends StringArgument {
 
     @Override
     public @NotNull CompletableFuture<Suggestions> suggest(@NotNull CommandSender sender, @NotNull SuggestionsBuilder builder) {
-        for (String filename : YamipaPlugin.getInstance().getStorage().getAllFilenames()) {
+        for (String filename : YamipaPlugin.getInstance().getStorage().getFilenames(sender)) {
             builder.suggest(StringArgumentType.escapeIfRequired(filename));
         }
         return builder.buildFuture();
@@ -29,8 +30,10 @@ public class ImageFileArgument extends StringArgument {
 
     @Override
     public @NotNull Object parse(@NotNull CommandSender sender, @NotNull Object rawValue) throws CommandSyntaxException {
-        ImageFile imageFile = YamipaPlugin.getInstance().getStorage().get((String) rawValue);
-        if (imageFile == null) {
+        String filename = (String) rawValue;
+        ImageStorage storage = YamipaPlugin.getInstance().getStorage();
+        ImageFile imageFile = storage.get(filename);
+        if (imageFile == null || !storage.isPathAllowed(filename, sender)) {
             throw newException("Image file does not exist");
         }
         return imageFile;

@@ -2,12 +2,18 @@ package io.josemmo.bukkit.plugin.storage;
 
 import com.sun.nio.file.ExtendedWatchEventModifier;
 import io.josemmo.bukkit.plugin.utils.Logger;
+import io.josemmo.bukkit.plugin.utils.Permissions;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * A service whose purpose is to keep track of all available image files in a given directory.
@@ -24,17 +30,20 @@ public class ImageStorage {
     private final SortedMap<String, ImageFile> files = new TreeMap<>();
     private final Path basePath;
     private final Path cachePath;
+    private final String allowedPaths;
     private @Nullable WatchService watchService;
     private @Nullable Thread watchServiceThread;
 
     /**
      * Class constructor
-     * @param basePath  Path to directory containing the images
-     * @param cachePath Path to directory containing the cached image maps
+     * @param basePath     Path to directory containing the images
+     * @param cachePath    Path to directory containing the cached image maps
+     * @param allowedPaths Allowed paths pattern
      */
-    public ImageStorage(@NotNull Path basePath, @NotNull Path cachePath) {
+    public ImageStorage(@NotNull Path basePath, @NotNull Path cachePath, @NotNull String allowedPaths) {
         this.basePath = basePath;
         this.cachePath = cachePath;
+        this.allowedPaths = allowedPaths;
     }
 
     /**
@@ -110,11 +119,56 @@ public class ImageStorage {
     }
 
     /**
-     * Get all image filenames
-     * @return Sorted array of filenames
+     * Get image filenames
+     * @param  sender Sender instance to filter only allowed images
+     * @return        Allowed images
      */
-    public synchronized @NotNull String[] getAllFilenames() {
-        return files.keySet().toArray(new String[0]);
+    public synchronized @NotNull List<String> getFilenames(@NotNull CommandSender sender) {
+        List<String> response = new ArrayList<>();
+        for (String filename : files.keySet()) {
+            if (isPathAllowed(filename, sender)) {
+                response.add(filename);
+            }
+        }
+        return response;
+    }
+
+    /**
+     * Is path allowed
+     * @param  path   Path relative to {@link ImageStorage#basePath}
+     * @param  sender Sender instance
+     * @return        Whether sender is allowed to access path
+     */
+    public boolean isPathAllowed(@NotNull String path, @NotNull CommandSender sender) {
+        // Find allowed paths pattern
+        String rawPattern = null;
+        if (sender instanceof Player) {
+            rawPattern = Permissions.getVariable("yamipa-allowed-paths", (Player) sender);
+        }
+        if (rawPattern == null) {
+            rawPattern = allowedPaths;
+        }
+        if (rawPattern.isEmpty()) {
+            return true;
+        }
+
+        // Replace special tokens in pattern
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            rawPattern = rawPattern.replaceAll("#player#", Matcher.quoteReplacement(Pattern.quote(player.getName())));
+            rawPattern = rawPattern.replaceAll("#uuid#", player.getUniqueId().toString());
+        } else {
+            rawPattern = rawPattern.replaceAll("#player#", ".+");
+            rawPattern = rawPattern.replaceAll("#uuid#", ".+");
+        }
+
+        // Perform partial match against pattern
+        try {
+            return Pattern.compile(rawPattern).matcher(path).find();
+        } catch (PatternSyntaxException __) {
+            LOGGER.warning("Invalid allowed paths pattern: " + rawPattern);
+            return false;
+        }
     }
 
     /**

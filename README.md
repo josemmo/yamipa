@@ -53,9 +53,42 @@ animate-images: true     # Set to "false" to disable GIF support
 images-path: images      # Path to images directory
 cache-path: cache        # Path to cache directory
 data-path: images.dat    # Path to placed images database file
+allowed-paths: null      # Set to a RegExp to limit accessible images to players
 max-image-dimension: 30  # Maximum width or height in blocks allowed in images
 ```
 
+For more information on how to set a different `allowed-paths` or `max-image-dimension` value per player, see the
+[Player variables](#player-variables) section.
+
+### Allowed paths
+The variable `allowed-paths` is a regular expression that determines whether a player is allowed to see or download
+an image file. If the desired path relative to the images directory matches this expression, then the player is allowed
+to continue.
+
+If `allowed-paths` is an empty string ("") or null, then the player can read any image file or download to any path
+inside the images directory.
+
+This regular expression must follow
+[the syntax used by Java](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html). You can test your
+expression beforehand using an online tool like [regex101](https://regex101.com/).
+In addition, you can make use of the following special tokens:
+
+- `#player#`: Player name
+- `#uuid#`: Player UUID (with hyphens)
+
+For example, if you want every player in your server to have their own subdirectory for storing files that only they
+can access, plus a shared public directory, you can use the following `allowed-paths` value:
+```regexp
+^(private/#player#|public)/
+```
+
+That way, the player "john" can see the image file at "private/john/something.jpg", but "jane" cannot.
+
+> **IMPORTANT!**\
+> Note that these restrictions **also apply to other entities** like NPCs, command blocks or the server console.
+> However, special tokens will always match in non-player contexts (e.g., "#player#" will be interpreted as ".+").
+
+### bStats
 This library uses bStats to anonymously report the number of installs. If you don't like this, feel free to
 disable it at any time by adding `enabled: false` to the
 [bStats configuration file](https://bstats.org/getting-started#:~:text=Disabling%20bStats) (it's ok, no hard feelings).
@@ -133,9 +166,10 @@ This is useful for granting different capabilities to different players or group
 Yamipa looks for the following variables which, if found, override the default configuration value that applies to all
 players:
 
-| Variable (key)               | Overrides             | Description                                                                      |
-|:-----------------------------|:----------------------|:---------------------------------------------------------------------------------|
-| `yamipa-max-image-dimension` | `max-image-dimension` | Maximum width or height of images and image items issued by this player or group |
+| Variable (key)               | Overrides             | Description                                                                       |
+|:-----------------------------|:----------------------|:----------------------------------------------------------------------------------|
+| `yamipa-allowed-paths`       | `allowed-paths`       | Regular expression that limits which paths in the images directory are accessible |
+| `yamipa-max-image-dimension` | `max-image-dimension` | Maximum width or height of images and image items issued by this player or group  |
 
 For example, if you want to limit the image size to 5x5 blocks just for the "test" player, you can run this command:
 ```sh
