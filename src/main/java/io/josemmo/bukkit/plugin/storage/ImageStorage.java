@@ -352,7 +352,7 @@ public class ImageStorage {
                     }
                     key.reset();
                 }
-            } catch (InterruptedException __) {
+            } catch (ClosedWatchServiceException | InterruptedException __) {
                 // Silently ignore exception, this is expected when service shuts down
             } catch (NullPointerException e) {
                 LOGGER.severe("Watch service was stopped before watcher thread", e);
