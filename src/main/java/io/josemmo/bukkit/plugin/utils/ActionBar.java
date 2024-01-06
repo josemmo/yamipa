@@ -7,9 +7,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
-import java.util.logging.Level;
 
 public class ActionBar {
+    private static final Logger LOGGER = Logger.getLogger("ActionBar");
     private static final YamipaPlugin plugin = YamipaPlugin.getInstance();
     private final Player player;
     private String message;
@@ -72,7 +72,7 @@ public class ActionBar {
         try {
             ProtocolLibrary.getProtocolManager().sendServerPacket(player, actionBarPacket);
         } catch (Exception e) {
-            plugin.log(Level.SEVERE, "Failed to send ActionBar to " + player.getName(), e);
+            LOGGER.severe("Failed to send ActionBar to " + player.getName(), e);
         }
         return this;
     }

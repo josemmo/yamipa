@@ -1,9 +1,11 @@
 package io.josemmo.bukkit.plugin.renderer;
 
 import io.josemmo.bukkit.plugin.packets.MapDataPacket;
+import io.josemmo.bukkit.plugin.utils.Logger;
 import org.bukkit.entity.Player;
 import org.bukkit.map.MapPalette;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.time.Instant;
 import java.util.Arrays;
@@ -14,11 +16,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class FakeMap extends FakeEntity {
     public static final int DIMENSION = 128;
-    public static final int MIN_MAP_ID = Integer.MAX_VALUE / 4;
-    public static final int MAX_MAP_ID = Integer.MAX_VALUE;
-    public static final int RESEND_THRESHOLD = 60*5; // Seconds after sending pixels when resending should be avoided
-    private static final AtomicInteger lastMapId = new AtomicInteger(-1);
-    private static FakeMap errorInstance;
+    private static final int MIN_MAP_ID = Integer.MAX_VALUE / 4;
+    private static final int MAX_MAP_ID = Integer.MAX_VALUE;
+    private static final int RESEND_THRESHOLD = 60*5; // Seconds after sending pixels when resending should be avoided
+    private static final Logger LOGGER = Logger.getLogger("FakeMap");
+    private static final AtomicInteger LAST_MAP_ID = new AtomicInteger(MIN_MAP_ID);
+    private static @Nullable FakeMap ERROR_INSTANCE;
     private final int id;
     private final byte[] pixels;
     private final ConcurrentMap<UUID, Long> lastPlayerSendTime = new ConcurrentHashMap<>();
@@ -28,8 +31,8 @@ public class FakeMap extends FakeEntity {
      * @return Next unused map ID
      */
     private static int getNextId() {
-        return lastMapId.updateAndGet(lastId -> {
-            if (lastId <= MIN_MAP_ID) {
+        return LAST_MAP_ID.updateAndGet(lastId -> {
+            if (lastId == MIN_MAP_ID) {
                 return MAX_MAP_ID;
             }
             return lastId - 1;
@@ -51,27 +54,27 @@ public class FakeMap extends FakeEntity {
      * @return Error instance
      */
     private static @NotNull FakeMap getErrorInstance() {
-        if (errorInstance == null) {
+        if (ERROR_INSTANCE == null) {
             byte[] pixels = new byte[DIMENSION * DIMENSION];
             Arrays.fill(pixels, pixelToIndex(Color.RED.getRGB()));
-            errorInstance = new FakeMap(pixels);
+            ERROR_INSTANCE = new FakeMap(pixels);
         }
-        return errorInstance;
+        return ERROR_INSTANCE;
     }
 
     /**
      * Get matrix of error maps
      * @param  width  Width in blocks
      * @param  height Height in blocks
-     * @return        Fake maps container
+     * @return        Fake maps
      */
-    public static @NotNull FakeMapsContainer getErrorMatrix(int width, int height) {
+    public static @NotNull FakeMap[][][] getErrorMatrix(int width, int height) {
         FakeMap[] errorMaps = new FakeMap[] {getErrorInstance()};
         FakeMap[][][] matrix = new FakeMap[width][height][1];
         for (FakeMap[][] column : matrix) {
             Arrays.fill(column, errorMaps);
         }
-        return new FakeMapsContainer(matrix, 0);
+        return matrix;
     }
 
     /**
@@ -90,7 +93,7 @@ public class FakeMap extends FakeEntity {
             System.arraycopy(pixels, startX+(startY+y)*scanSize, this.pixels, y*DIMENSION, DIMENSION);
         }
 
-        plugin.fine("Created FakeMap#" + this.id);
+        LOGGER.fine("Created FakeMap#" + this.id);
     }
 
     /**
@@ -100,7 +103,7 @@ public class FakeMap extends FakeEntity {
     public FakeMap(byte[] pixels) {
         this.id = getNextId();
         this.pixels = pixels;
-        plugin.fine("Created FakeMap#" + this.id);
+        LOGGER.fine("Created FakeMap#" + this.id);
     }
 
     /**
@@ -136,7 +139,7 @@ public class FakeMap extends FakeEntity {
 
         // Authorize re-send and update latest timestamp
         lastPlayerSendTime.put(uuid, now);
-        plugin.fine("Granted sending pixels for FakeMap#" + id + " to Player#" + player.getName());
+        LOGGER.fine("Granted sending pixels for FakeMap#" + id + " to Player#" + player.getName());
         return true;
     }
 

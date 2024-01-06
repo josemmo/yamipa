@@ -2,7 +2,6 @@ package io.josemmo.bukkit.plugin.commands.arguments;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
-import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
@@ -28,13 +27,11 @@ public class ImageFlagsArgument extends Argument {
 
     @Override
     public @NotNull RequiredArgumentBuilder<?, ?> build() {
-        return RequiredArgumentBuilder.argument(name, StringArgumentType.greedyString()).suggests(this::getSuggestions);
+        return RequiredArgumentBuilder.argument(name, StringArgumentType.greedyString());
     }
 
-    private @NotNull CompletableFuture<Suggestions> getSuggestions(
-        @NotNull CommandContext<?> ctx,
-        @NotNull SuggestionsBuilder builder
-    ) {
+    @Override
+    public @NotNull CompletableFuture<Suggestions> suggest(@NotNull CommandSender sender, @NotNull SuggestionsBuilder builder) {
         String input = builder.getRemaining().replaceAll("[^A-Z+\\-,]", "");
         int lastIndex = Collections.max(
             Arrays.asList(input.lastIndexOf(","), input.lastIndexOf("+"), input.lastIndexOf("-"))

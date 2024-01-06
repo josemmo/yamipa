@@ -22,7 +22,7 @@ import java.util.UUID;
 import java.util.function.BiConsumer;
 
 public class SelectBlockTask {
-    private static final YamipaPlugin plugin = YamipaPlugin.getInstance();
+    private static final Logger LOGGER = Logger.getLogger("SelectBlockTask");
     private static final Map<UUID, SelectBlockTask> instances = new HashMap<>();
     private static SelectBlockTaskListener listener = null;
     private final Player player;
@@ -71,7 +71,7 @@ public class SelectBlockTask {
         if (listener == null) {
             listener = new SelectBlockTaskListener();
             listener.register();
-            plugin.fine("Created SelectBlockTaskListener singleton");
+            LOGGER.fine("Created SelectBlockTaskListener singleton");
         }
 
         // Start task
@@ -94,7 +94,7 @@ public class SelectBlockTask {
         if (instances.isEmpty()) {
             listener.unregister();
             listener = null;
-            plugin.fine("Destroyed SelectBlockTaskListener singleton");
+            LOGGER.fine("Destroyed SelectBlockTaskListener singleton");
         }
     }
 
@@ -105,6 +105,7 @@ public class SelectBlockTask {
         @Override
         public void register() {
             super.register();
+            YamipaPlugin plugin = YamipaPlugin.getInstance();
             plugin.getServer().getPluginManager().registerEvents(this, plugin);
         }
 

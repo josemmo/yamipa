@@ -1,12 +1,17 @@
 package io.josemmo.bukkit.plugin.renderer;
 
 import com.comphenix.protocol.events.PacketContainer;
+import io.josemmo.bukkit.plugin.YamipaPlugin;
+import io.josemmo.bukkit.plugin.storage.CachedMapsFile;
 import io.josemmo.bukkit.plugin.storage.ImageFile;
 import io.josemmo.bukkit.plugin.utils.DirectionUtils;
+import io.josemmo.bukkit.plugin.utils.Logger;
+import io.josemmo.bukkit.plugin.utils.Permissions;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Rotation;
 import org.bukkit.block.BlockFace;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +24,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 
 public class FakeImage extends FakeEntity {
-    public static final int MAX_DIMENSION = 30; // In blocks
+    private static final Logger LOGGER = Logger.getLogger("FakeImage");
+
+    // Image constants
     public static final int MAX_STEPS = 500; // For animated images
     public static final int MIN_DELAY = 1; // Minimum step delay in 50ms intervals (50ms / 50ms)
     public static final int MAX_DELAY = 50; // Maximum step delay in 50ms intervals (5000ms / 50ms)
@@ -45,7 +52,7 @@ public class FakeImage extends FakeEntity {
     private final int flags;
     private final BiFunction<Integer, Integer, Vector> getLocationVector;
     private final Set<Player> observingPlayers = new HashSet<>();
-    private Runnable onLoadedListener = null;
+    private @Nullable Runnable onLoadedListener = null;
 
     // Generated values
     private boolean loading = false;
@@ -54,25 +61,8 @@ public class FakeImage extends FakeEntity {
     private int numOfSteps = -1;  // Total number of animation steps
 
     // Animation task attributes
-    private static boolean animateImages = false;
-    private ScheduledFuture<?> task;
+    private @Nullable ScheduledFuture<?> task;
     private int currentStep = -1; // Current animation step
-
-    /**
-     * Configure class
-     * @param animImages Animate images
-     */
-    public static void configure(boolean animImages) {
-        animateImages = animImages;
-    }
-
-    /**
-     * Is animation enabled
-     * @return Is animation enabled
-     */
-    public static boolean isAnimationEnabled() {
-        return animateImages;
-    }
 
     /**
      * Get image rotation from player eyesight
@@ -101,15 +91,35 @@ public class FakeImage extends FakeEntity {
     }
 
     /**
+     * Get maximum image dimension
+     * @param  sender Sender instance
+     * @return        Maximum image dimension in blocks
+     */
+    public static int getMaxImageDimension(@NotNull CommandSender sender) {
+        if (sender instanceof Player) {
+            String rawValue = Permissions.getVariable("yamipa-max-image-dimension", (Player) sender);
+            if (rawValue != null) {
+                try {
+                    return Integer.parseInt(rawValue);
+                } catch (NumberFormatException __) {
+                    LOGGER.warning("Max. image dimension for " + sender + " is not a valid integer: \"" + rawValue + "\"");
+                }
+            }
+        }
+        return YamipaPlugin.getInstance().getRenderer().getMaxImageDimension();
+    }
+
+    /**
      * Get proportional height
      * @param  sizeInPixels Image file dimension in pixels
+     * @param  sender       Sender instance
      * @param  width        Desired width in blocks
-     * @return              Height in blocks (capped at <code>FakeImage.MAX_DIMENSION</code>)
+     * @return              Height in blocks (capped at maximum image dimension for sender)
      */
-    public static int getProportionalHeight(@NotNull Dimension sizeInPixels, int width) {
+    public static int getProportionalHeight(@NotNull Dimension sizeInPixels, @NotNull CommandSender sender, int width) {
         float imageRatio = (float) sizeInPixels.height / sizeInPixels.width;
         int height = Math.round(width * imageRatio);
-        height = Math.min(height, MAX_DIMENSION);
+        height = Math.min(height, getMaxImageDimension(sender));
         return height;
     }
 
@@ -177,7 +187,7 @@ public class FakeImage extends FakeEntity {
             }
         }
 
-        plugin.fine("Created FakeImage#(" + location + "," + face + ") from ImageFile#(" + filename + ")");
+        LOGGER.fine("Created FakeImage#(" + location + "," + face + ") from ImageFile#(" + filename + ")");
     }
 
     /**
@@ -193,7 +203,7 @@ public class FakeImage extends FakeEntity {
      * @return Image file instance or NULL if not found
      */
     public @Nullable ImageFile getFile() {
-        return plugin.getStorage().get(filename);
+        return YamipaPlugin.getInstance().getStorage().get(filename);
     }
 
     /**
@@ -310,6 +320,7 @@ public class FakeImage extends FakeEntity {
      * @param  face     Block face
      * @return          TRUE for contained, FALSE otherwise
      */
+    @SuppressWarnings("RedundantIfStatement")
     public boolean contains(@NotNull Location location, @NotNull BlockFace face) {
         // Is point facing the same plane as the image?
         if (face != this.face) {
@@ -350,18 +361,18 @@ public class FakeImage extends FakeEntity {
      */
     private void load() {
         ImageFile file = getFile();
-        FakeMapsContainer container;
-        if (file == null) {
-            container = FakeMap.getErrorMatrix(width, height);
-            plugin.warning("File \"" + filename + "\" does not exist");
-        } else {
-            container = file.getMapsAndSubscribe(this);
-        }
 
-        // Extract data from container
-        FakeMap[][][] maps = container.getFakeMaps();
+        // Get maps to use
+        FakeMap[][][] maps;
+        if (file == null) {
+            maps = FakeMap.getErrorMatrix(width, height);
+            LOGGER.warning("File \"" + filename + "\" does not exist");
+        } else {
+            CachedMapsFile cachedMapsFile = file.getMapsAndSubscribe(this);
+            maps = cachedMapsFile.getMaps();
+            delay = cachedMapsFile.getDelay();
+        }
         numOfSteps = maps[0][0].length;
-        delay = container.getDelay();
 
         // Generate frames
         FakeItemFrame[] newFrames = new FakeItemFrame[width*height];
@@ -375,14 +386,16 @@ public class FakeImage extends FakeEntity {
         frames = newFrames;
 
         // Start animation task (if needed)
-        if (animateImages && task == null && hasFlag(FLAG_ANIMATABLE) && numOfSteps > 1) {
+        YamipaPlugin plugin = YamipaPlugin.getInstance();
+        boolean isAnimationEnabled = plugin.getRenderer().isAnimationEnabled();
+        if (isAnimationEnabled && task == null && hasFlag(FLAG_ANIMATABLE) && numOfSteps > 1) {
             task = plugin.getScheduler().scheduleAtFixedRate(
                 this::nextStep,
                 0,
                 delay*50L,
                 TimeUnit.MILLISECONDS
             );
-            plugin.fine("Spawned animation task for FakeImage#(" + location + "," + face + ")");
+            LOGGER.fine("Spawned animation task for FakeImage#(" + location + "," + face + ")");
         }
 
         // Notify listener
@@ -397,7 +410,7 @@ public class FakeImage extends FakeEntity {
      * @param player Player instance
      */
     public void spawn(@NotNull Player player) {
-        plugin.fine("Received request to spawn FakeImage#(" + location + "," + face + ") for Player#" + player.getName());
+        LOGGER.fine("Received request to spawn FakeImage#(" + location + "," + face + ") for Player#" + player.getName());
 
         // Send pixels if instance is already loaded
         if (frames != null) {
@@ -439,7 +452,7 @@ public class FakeImage extends FakeEntity {
         for (FakeItemFrame frame : frames) {
             packets.add(frame.getSpawnPacket());
             packets.addAll(frame.getRenderPackets(player, 0));
-            plugin.fine("Spawned FakeItemFrame#" + frame.getId() + " for Player#" + playerName);
+            LOGGER.fine("Spawned FakeItemFrame#" + frame.getId() + " for Player#" + playerName);
         }
 
         // Send packets
@@ -460,7 +473,7 @@ public class FakeImage extends FakeEntity {
      * @param player Player instance or NULL for all observing players
      */
     public void destroy(@Nullable Player player) {
-        plugin.fine(
+        LOGGER.fine(
             "Received request to destroy FakeImage#(" + location + "," + face + ") for " +
             (player == null ? "all players" : "Player#" + player.getName())
         );
@@ -473,7 +486,7 @@ public class FakeImage extends FakeEntity {
                 List<PacketContainer> packets = new ArrayList<>();
                 for (FakeItemFrame frame : frames) {
                     packets.add(frame.getDestroyPacket());
-                    plugin.fine("Destroyed FakeItemFrame#" + frame.getId() + " for Player#" + targetName);
+                    LOGGER.fine("Destroyed FakeItemFrame#" + frame.getId() + " for Player#" + targetName);
                 }
                 tryToSendPackets(target, packets);
             }
@@ -514,12 +527,13 @@ public class FakeImage extends FakeEntity {
             task.cancel(true);
             task = null;
             currentStep = -1;
-            plugin.fine("Destroyed animation task for FakeImage#(" + location + "," + face + ")");
+            LOGGER.fine("Destroyed animation task for FakeImage#(" + location + "," + face + ")");
         }
 
         // Free array of fake item frames
         frames = null;
-        plugin.fine("Invalidated FakeImage#(" + location + "," + face + ")");
+        loading = false;
+        LOGGER.fine("Invalidated FakeImage#(" + location + "," + face + ")");
 
         // Notify invalidation to source ImageFile
         ImageFile file = getFile();

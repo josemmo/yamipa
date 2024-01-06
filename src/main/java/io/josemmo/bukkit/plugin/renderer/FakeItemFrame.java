@@ -8,6 +8,7 @@ import io.josemmo.bukkit.plugin.packets.DestroyEntityPacket;
 import io.josemmo.bukkit.plugin.packets.EntityMetadataPacket;
 import io.josemmo.bukkit.plugin.packets.SpawnEntityPacket;
 import io.josemmo.bukkit.plugin.utils.Internals;
+import io.josemmo.bukkit.plugin.utils.Logger;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Rotation;
@@ -24,7 +25,8 @@ public class FakeItemFrame extends FakeEntity {
     public static final int MIN_FRAME_ID = Integer.MAX_VALUE / 4;
     public static final int MAX_FRAME_ID = Integer.MAX_VALUE;
     private static final boolean SUPPORTS_GLOWING = Internals.MINECRAFT_VERSION >= 17;
-    private static final AtomicInteger lastFrameId = new AtomicInteger(MAX_FRAME_ID);
+    private static final Logger LOGGER = Logger.getLogger("FakeItemFrame");
+    private static final AtomicInteger LAST_FRAME_ID = new AtomicInteger(MAX_FRAME_ID);
     private final int id;
     private final Location location;
     private final BlockFace face;
@@ -37,8 +39,8 @@ public class FakeItemFrame extends FakeEntity {
      * @return Next unused item frame ID
      */
     private static int getNextId() {
-        return lastFrameId.updateAndGet(lastId -> {
-            if (lastId >= MAX_FRAME_ID) {
+        return LAST_FRAME_ID.updateAndGet(lastId -> {
+            if (lastId == MAX_FRAME_ID) {
                 return MIN_FRAME_ID;
             }
             return lastId + 1;
@@ -66,7 +68,7 @@ public class FakeItemFrame extends FakeEntity {
         this.rotation = rotation;
         this.glowing = glowing;
         this.maps = maps;
-        plugin.fine("Created FakeItemFrame#" + this.id + " using " + this.maps.length + " FakeMap(s)");
+        LOGGER.fine("Created FakeItemFrame#" + this.id + " using " + this.maps.length + " FakeMap(s)");
     }
 
     /**

@@ -2,6 +2,7 @@ package io.josemmo.bukkit.plugin.renderer;
 
 import io.josemmo.bukkit.plugin.YamipaPlugin;
 import io.josemmo.bukkit.plugin.utils.CsvConfiguration;
+import io.josemmo.bukkit.plugin.utils.Logger;
 import org.bukkit.*;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Entity;
@@ -17,18 +18,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 public class ImageRenderer implements Listener {
-    public static final long SAVE_INTERVAL = 20L * 90; // In server ticks
-    private static final YamipaPlugin plugin = YamipaPlugin.getInstance();
-    private final String configPath;
+    private static final long SAVE_INTERVAL = 20L * 90; // In server ticks
+    private static final Logger LOGGER = Logger.getLogger("ImageRenderer");
+    private final Path configPath;
+    private final boolean animateImages;
+    private final int maxImageDimension;
     private BukkitTask saveTask;
     private final AtomicBoolean hasConfigChanged = new AtomicBoolean(false);
     private final ConcurrentMap<WorldAreaId, Set<FakeImage>> images = new ConcurrentHashMap<>();
@@ -37,10 +39,30 @@ public class ImageRenderer implements Listener {
 
     /**
      * Class constructor
-     * @param configPath Path to configuration file
+     * @param configPath        Path to configuration file
+     * @param animateImages     Whether to animate images or not
+     * @param maxImageDimension Maximum image dimension in blocks
      */
-    public ImageRenderer(@NotNull String configPath) {
+    public ImageRenderer(@NotNull Path configPath, boolean animateImages, int maxImageDimension) {
         this.configPath = configPath;
+        this.animateImages = animateImages;
+        this.maxImageDimension = maxImageDimension;
+    }
+
+    /**
+     * Is animation enabled
+     * @return Is animation enabled
+     */
+    public boolean isAnimationEnabled() {
+        return animateImages;
+    }
+
+    /**
+     * Get maximum image dimension
+     * @return Maximum image dimension in blocks
+     */
+    public int getMaxImageDimension() {
+        return maxImageDimension;
     }
 
     /**
@@ -48,6 +70,7 @@ public class ImageRenderer implements Listener {
      */
     public void start() {
         loadConfig();
+        YamipaPlugin plugin = YamipaPlugin.getInstance();
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
         saveTask = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, this::saveConfig, SAVE_INTERVAL, SAVE_INTERVAL);
     }
@@ -81,8 +104,8 @@ public class ImageRenderer implements Listener {
      * Load configuration from disk
      */
     private void loadConfig() {
-        if (!Files.isRegularFile(Paths.get(configPath))) {
-            plugin.info("No placed fake images configuration file found");
+        if (!Files.isRegularFile(configPath)) {
+            LOGGER.info("No placed fake images configuration file found");
             return;
         }
 
@@ -91,7 +114,7 @@ public class ImageRenderer implements Listener {
         try {
             config.load(configPath);
         } catch (IOException e) {
-            plugin.log(Level.SEVERE, "Failed to load placed fake images from disk", e);
+            LOGGER.severe("Failed to load placed fake images from disk", e);
             return;
         }
 
@@ -99,19 +122,19 @@ public class ImageRenderer implements Listener {
         for (String[] row : config.getRows()) {
             try {
                 String filename = row[0];
-                World world = Objects.requireNonNull(plugin.getServer().getWorld(row[1]));
+                World world = Objects.requireNonNull(YamipaPlugin.getInstance().getServer().getWorld(row[1]));
                 double x = Integer.parseInt(row[2]);
                 double y = Integer.parseInt(row[3]);
                 double z = Integer.parseInt(row[4]);
                 Location location = new Location(world, x, y, z);
                 BlockFace face = BlockFace.valueOf(row[5]);
                 Rotation rotation = Rotation.valueOf(row[6]);
-                int width = Math.min(FakeImage.MAX_DIMENSION, Math.abs(Integer.parseInt(row[7])));
-                int height = Math.min(FakeImage.MAX_DIMENSION, Math.abs(Integer.parseInt(row[8])));
-                Date placedAt = (row.length > 9 && !row[9].equals("")) ?
+                int width = Math.abs(Integer.parseInt(row[7]));
+                int height = Math.abs(Integer.parseInt(row[8]));
+                Date placedAt = (row.length > 9 && !row[9].isEmpty()) ?
                     new Date(Long.parseLong(row[9])*1000L) :
                     null;
-                UUID placedById = (row.length > 10 && !row[10].equals("")) ?
+                UUID placedById = (row.length > 10 && !row[10].isEmpty()) ?
                     UUID.fromString(row[10]) :
                     FakeImage.UNKNOWN_PLAYER_ID;
                 OfflinePlayer placedBy = Bukkit.getOfflinePlayer(placedById);
@@ -122,7 +145,7 @@ public class ImageRenderer implements Listener {
                     placedAt, placedBy, flags);
                 addImage(fakeImage, true);
             } catch (Exception e) {
-                plugin.log(Level.SEVERE, "Invalid fake image properties: " + String.join(";", row), e);
+                LOGGER.severe("Invalid fake image properties: " + String.join(";", row), e);
             }
         }
     }
@@ -130,6 +153,7 @@ public class ImageRenderer implements Listener {
     /**
      * Save configuration to disk
      */
+    @SuppressWarnings("ExtractMethodRecommender")
     private void saveConfig() {
         if (!hasConfigChanged.get()) return;
 
@@ -167,9 +191,9 @@ public class ImageRenderer implements Listener {
         // Write to disk
         try {
             config.save(configPath);
-            plugin.info("Saved placed fake images to disk");
+            LOGGER.info("Saved placed fake images to disk");
         } catch (IOException e) {
-            plugin.log(Level.SEVERE, "Failed to save placed fake images to disk", e);
+            LOGGER.severe("Failed to save placed fake images to disk", e);
         }
     }
 
@@ -184,7 +208,7 @@ public class ImageRenderer implements Listener {
         // Add image to renderer
         for (WorldAreaId worldAreaId : imageWorldAreaIds) {
             images.computeIfAbsent(worldAreaId, __ -> {
-                plugin.fine("Created WorldArea#(" + worldAreaId + ")");
+                LOGGER.fine("Created WorldArea#(" + worldAreaId + ")");
                 return ConcurrentHashMap.newKeySet();
             }).add(image);
         }
@@ -243,7 +267,7 @@ public class ImageRenderer implements Listener {
      * @param  maxX  Maximum X coordinate
      * @param  minZ  Minimum Z coordinate
      * @param  maxZ  Maximum Z coordinate
-     * @return       List of found images
+     * @return       Set of found images
      */
     public @NotNull Set<FakeImage> getImages(@NotNull World world, int minX, int maxX, int minZ, int maxZ) {
         Set<FakeImage> response = new HashSet<>();
@@ -274,7 +298,7 @@ public class ImageRenderer implements Listener {
             Set<FakeImage> worldAreaImages = images.get(worldAreaId);
             worldAreaImages.remove(image);
             if (worldAreaImages.isEmpty()) {
-                plugin.fine("Destroyed WorldArea#(" + worldAreaId + ")");
+                LOGGER.fine("Destroyed WorldArea#(" + worldAreaId + ")");
                 images.remove(worldAreaId);
             }
         }
@@ -366,7 +390,7 @@ public class ImageRenderer implements Listener {
     private void onPlayerLocationChange(@NotNull Player player, @NotNull Location location) {
         // Ignore NPC events from other plugins
         if (player.hasMetadata("NPC")) {
-            plugin.fine("Ignored NPC event from Player#" + player.getName());
+            LOGGER.fine("Ignored NPC event from Player#" + player.getName());
             return;
         }
 
@@ -377,7 +401,7 @@ public class ImageRenderer implements Listener {
             return;
         }
         playersLocation.put(player, worldAreaId);
-        plugin.fine("Player#" + player.getName() + " moved to WorldArea#(" + worldAreaId + ")");
+        LOGGER.fine("Player#" + player.getName() + " moved to WorldArea#(" + worldAreaId + ")");
 
         // Get images that should be spawned/destroyed
         Set<FakeImage> desiredState = getImagesInViewDistance(worldAreaId);
@@ -428,9 +452,8 @@ public class ImageRenderer implements Listener {
 
         // Wait until next server tick before handling location change
         // This is necessary as teleport events get fired *before* teleporting the player
-        Bukkit.getScheduler().runTask(plugin, () -> {
-            onPlayerLocationChange(event.getPlayer(), event.getTo());
-        });
+        YamipaPlugin plugin = YamipaPlugin.getInstance();
+        Bukkit.getScheduler().runTask(plugin, () -> onPlayerLocationChange(event.getPlayer(), event.getTo()));
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)

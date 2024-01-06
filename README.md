@@ -45,15 +45,50 @@ Yamipa is ready-to-go right out of the box. By default, it creates the following
 - `images.dat`: A file holding the list and properties (e.g. coordinates) of all placed images in your server. You
 shouldn't modify its contents.
 
-You can change the default path of these files by creating a `config.yml` file in the plugin configuration directory:
+You can change the path of these files by creating a `config.yml` file in the plugin configuration directory.
+Here are the default configuration values if you don't specify them:
 ```yaml
-verbose: false         # Set to "true" to enable more verbose logging
-animate-images: true   # Set to "false" to disable GIF support
-images-path: images    # Path to images directory
-cache-path: cache      # Path to cache directory
-data-path: images.dat  # Path to placed images database file
+verbose: false           # Set to "true" to enable more verbose logging
+animate-images: true     # Set to "false" to disable GIF support
+images-path: images      # Path to images directory
+cache-path: cache        # Path to cache directory
+data-path: images.dat    # Path to placed images database file
+allowed-paths: null      # Set to a RegExp to limit accessible images to players
+max-image-dimension: 30  # Maximum width or height in blocks allowed in images
 ```
 
+For more information on how to set a different `allowed-paths` or `max-image-dimension` value per player, see the
+[Player variables](#player-variables) section.
+
+### Allowed paths
+The variable `allowed-paths` is a regular expression that determines whether a player is allowed to see or download
+an image file. If the desired path relative to the images directory matches this expression, then the player is allowed
+to continue.
+
+If `allowed-paths` is an empty string ("") or null, then the player can read any image file or download to any path
+inside the images directory.
+
+This regular expression must follow
+[the syntax used by Java](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html). You can test your
+expression beforehand using an online tool like [regex101](https://regex101.com/).
+In addition, you can make use of the following special tokens:
+
+- `#player#`: Player name
+- `#uuid#`: Player UUID (with hyphens)
+
+For example, if you want every player in your server to have their own subdirectory for storing files that only they
+can access, plus a shared public directory, you can use the following `allowed-paths` value:
+```regexp
+^(private/#player#|public)/
+```
+
+That way, the player "john" can see the image file at "private/john/something.jpg", but "jane" cannot.
+
+> **IMPORTANT!**\
+> Note that these restrictions **also apply to other entities** like NPCs, command blocks or the server console.
+> However, special tokens will always match in non-player contexts (e.g., "#player#" will be interpreted as ".+").
+
+### bStats
 This library uses bStats to anonymously report the number of installs. If you don't like this, feel free to
 disable it at any time by adding `enabled: false` to the
 [bStats configuration file](https://bstats.org/getting-started#:~:text=Disabling%20bStats) (it's ok, no hard feelings).
@@ -75,17 +110,17 @@ This plugin adds the following commands:
 - Show help\
   `/image`
 - Download an image from a URL and save it with another name\
-  `/image download "https://www.example.com/a/b/c/1234.jpg" imagename.jpg`
+  `/image download "https://www.example.com/a/b/c/1234.jpg" "imagename.jpg"`
 - Give 10 image items to "TestPlayer" for the "test.jpg" image (3x5 blocks)\
-  `/image give TestPlayer test.jpg 10 3 5`
+  `/image give TestPlayer "test.jpg" 10 3 5`
 - Give 10 image items to "TestPlayer" that will not drop an image item when removed\
-  `/image give TestPlayer test.jpg 10 3 5 -DROP`
+  `/image give TestPlayer "test.jpg" 10 3 5 -DROP`
 - Start the dialog to place an image with a width of 3 blocks and auto height\
-  `/image place imagename.jpg 3`
+  `/image place "imagename.jpg" 3`
 - Start the dialog to place a 3-blocks wide and 2-blocks high image\
-  `/image place imagename.jpg 3 2`
+  `/image place "imagename.jpg" 3 2`
 - Start the dialog to place an image that glows in the dark\
-  `/image place imagename.jpg 3 2 +GLOW`
+  `/image place "imagename.jpg" 3 2 +GLOW`
 - Start the dialog to remove a placed image while keeping the original file\
   `/image remove`
 - Remove all placed images in a radius of 5 blocks around the spawn\
@@ -122,6 +157,28 @@ Similarly, if you grant the `yamipa.command.remove`, the permission `yamipa.comm
 You can change which roles or players are granted these commands by using a permission plugin,
 such as [LuckPerms](https://luckperms.net/) or [GroupManager](https://elgarl.github.io/GroupManager/).
 Both these plugins have been tested to work with Yamipa, although any similar one should work just fine.
+
+## Player variables
+Some permission plugins like LuckPerms allow server operators to assign
+[key-value pairs](https://luckperms.net/wiki/Meta-Commands) to entities as if they were permissions.
+This is useful for granting different capabilities to different players or groups.
+
+Yamipa looks for the following variables which, if found, override the default configuration value that applies to all
+players:
+
+| Variable (key)               | Overrides             | Description                                                                       |
+|:-----------------------------|:----------------------|:----------------------------------------------------------------------------------|
+| `yamipa-allowed-paths`       | `allowed-paths`       | Regular expression that limits which paths in the images directory are accessible |
+| `yamipa-max-image-dimension` | `max-image-dimension` | Maximum width or height of images and image items issued by this player or group  |
+
+For example, if you want to limit the image size to 5x5 blocks just for the "test" player, you can run this command:
+```sh
+# Using LuckPerms
+/lp user test meta set yamipa-max-image-dimension 5
+
+# Using GroupManager
+/manuaddv test yamipa-max-image-dimension 5
+```
 
 ## Protecting areas
 In large servers, letting your players place and remove images wherever they want might not be the most sensible idea.

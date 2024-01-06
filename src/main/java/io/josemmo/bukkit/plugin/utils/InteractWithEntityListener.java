@@ -14,10 +14,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 import java.util.List;
-import java.util.logging.Level;
 
 public abstract class InteractWithEntityListener implements PacketListener {
     public static final int MAX_BLOCK_DISTANCE = 5; // Server should only accept entities within a 4-block radius
+    private static final Logger LOGGER = Logger.getLogger("InteractWithEntityListener");
 
     /**
      * On player attack listener
@@ -91,7 +91,7 @@ public abstract class InteractWithEntityListener implements PacketListener {
                 allowEvent = onInteract(player, targetBlock, targetBlockFace);
             }
         } catch (Exception e) {
-            YamipaPlugin.getInstance().log(Level.SEVERE, "Failed to notify entity listener handler", e);
+            LOGGER.severe("Failed to notify entity listener handler", e);
         }
 
         // Cancel event (if needed)

@@ -5,6 +5,8 @@ import io.josemmo.bukkit.plugin.renderer.FakeImage;
 import io.josemmo.bukkit.plugin.renderer.ImageRenderer;
 import io.josemmo.bukkit.plugin.renderer.ItemService;
 import io.josemmo.bukkit.plugin.storage.ImageFile;
+import io.josemmo.bukkit.plugin.storage.ImageStorage;
+import io.josemmo.bukkit.plugin.utils.Logger;
 import io.josemmo.bukkit.plugin.utils.Permissions;
 import io.josemmo.bukkit.plugin.utils.SelectBlockTask;
 import io.josemmo.bukkit.plugin.utils.ActionBar;
@@ -23,13 +25,15 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class ImageCommand {
-    public static final int ITEMS_PER_PAGE = 9;
+    private static final int ITEMS_PER_PAGE = 9;
+    private static final int MAX_PATH_DEPTH = 10;
+    private static final Logger LOGGER = Logger.getLogger("ImageCommand");
 
     public static void showHelp(@NotNull CommandSender s, @NotNull String commandName) {
         String cmd = "/" + commandName;
@@ -62,8 +66,9 @@ public class ImageCommand {
     }
 
     public static void listImages(@NotNull CommandSender sender, int page) {
-        String[] filenames = YamipaPlugin.getInstance().getStorage().getAllFilenames();
-        int numOfImages = filenames.length;
+        ImageStorage storage = YamipaPlugin.getInstance().getStorage();
+        List<String> filenames = storage.getFilenames(sender);
+        int numOfImages = filenames.size();
 
         // Are there any images available?
         if (numOfImages == 0) {
@@ -85,22 +90,40 @@ public class ImageCommand {
             sender.sendMessage("=== Page " + page + " out of " + maxPage + " ===");
         }
         for (int i=firstImageIndex; i<stopImageIndex; ++i) {
-            sender.sendMessage("" + ChatColor.GOLD + filenames[i]);
+            sender.sendMessage(ChatColor.GOLD + filenames.get(i));
         }
     }
 
     public static void downloadImage(@NotNull CommandSender sender, @NotNull String rawUrl, @NotNull String filename) {
         YamipaPlugin plugin = YamipaPlugin.getInstance();
+        ImageStorage storage = plugin.getStorage();
+        Path basePath = storage.getBasePath();
+
+        // Resolve destination path
+        Path destPath;
+        try {
+            destPath = basePath.resolve(filename).normalize();
+        } catch (InvalidPathException e) {
+            sender.sendMessage(ChatColor.RED + "Malformed destination path");
+            return;
+        }
 
         // Validate destination file
-        Path basePath = Paths.get(plugin.getStorage().getBasePath());
-        Path destPath = basePath.resolve(filename);
-        if (!destPath.getParent().equals(basePath)) {
+        if (!destPath.startsWith(basePath)) {
             sender.sendMessage(ChatColor.RED + "Not a valid destination filename");
+            return;
+        }
+        if (!storage.isPathAllowed(destPath, sender)) {
+            sender.sendMessage(ChatColor.RED + "Not allowed to download a file here");
             return;
         }
         if (destPath.toFile().exists()) {
             sender.sendMessage(ChatColor.RED + "There's already a file with that name");
+            return;
+        }
+        int depth = destPath.getNameCount() - basePath.getNameCount();
+        if (depth > MAX_PATH_DEPTH) {
+            sender.sendMessage(ChatColor.RED + "Destination path has too many directories");
             return;
         }
 
@@ -149,6 +172,7 @@ public class ImageCommand {
 
                 // Download file
                 sender.sendMessage("Downloading file...");
+                Files.createDirectories(destPath.getParent());
                 Files.copy(conn.getInputStream(), destPath);
 
                 // Validate downloaded file
@@ -160,10 +184,10 @@ public class ImageCommand {
                 sender.sendMessage(ChatColor.GREEN + "Done!");
             } catch (IOException e) {
                 sender.sendMessage(ChatColor.RED + "An error occurred trying to download the remote file");
-                plugin.warning("Failed to download file from \"" + finalUrl + "\": " + e.getClass().getName());
+                LOGGER.warning("Failed to download file from \"" + finalUrl + "\": " + e.getClass().getName());
             } catch (IllegalArgumentException e) {
                 if (Files.exists(destPath) && !destPath.toFile().delete()) {
-                    plugin.warning("Failed to delete corrupted file \"" + destPath + "\"");
+                    LOGGER.warning("Failed to delete corrupted file \"" + destPath + "\"");
                 }
                 sender.sendMessage(ChatColor.RED + e.getMessage());
             }
@@ -183,13 +207,11 @@ public class ImageCommand {
             player.sendMessage(ChatColor.RED + "The requested file is not a valid image");
             return;
         }
-        final int finalHeight = (height == 0) ? FakeImage.getProportionalHeight(sizeInPixels, width) : height;
+        final int finalHeight = (height == 0) ? FakeImage.getProportionalHeight(sizeInPixels, player, width) : height;
 
         // Ask player where to place image
         SelectBlockTask task = new SelectBlockTask(player);
-        task.onSuccess((location, face) -> {
-            placeImage(player, image, width, finalHeight, flags, location, face);
-        });
+        task.onSuccess((location, face) -> placeImage(player, image, width, finalHeight, flags, location, face));
         task.onFailure(() -> ActionBar.send(player, ChatColor.RED + "Image placing canceled"));
         task.run("Right click a block to continue");
     }
@@ -207,7 +229,7 @@ public class ImageCommand {
 
         // Create new fake image instance
         Rotation rotation = FakeImage.getRotationFromPlayerEyesight(face, player.getEyeLocation());
-        FakeImage fakeImage = new FakeImage(image.getName(), location, face, rotation,
+        FakeImage fakeImage = new FakeImage(image.getFilename(), location, face, rotation,
             width, height, new Date(), player, flags);
 
         // Make sure image can be placed
@@ -281,7 +303,7 @@ public class ImageCommand {
 
         // Get images in area
         Set<FakeImage> images = renderer.getImages(
-            origin.getWorld(),
+            Objects.requireNonNull(origin.getWorld()),
             origin.getBlockX()-radius+1,
             origin.getBlockX()+radius-1,
             origin.getBlockZ()-radius+1,
@@ -446,7 +468,7 @@ public class ImageCommand {
             return;
         }
         if (height == 0) {
-            height = FakeImage.getProportionalHeight(sizeInPixels, width);
+            height = FakeImage.getProportionalHeight(sizeInPixels, sender, width);
         }
 
         // Create item stack
