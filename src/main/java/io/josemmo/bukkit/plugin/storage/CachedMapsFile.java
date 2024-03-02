@@ -114,6 +114,7 @@ public class CachedMapsFile extends SynchronizedFile {
     private void load() {
         // Try to load maps from disk
         if (exists() && getLastModified() > imageFile.getLastModified()) {
+            LOGGER.fine("Found warm cache file \"" + path + "\"");
             try {
                 loadFromDisk();
                 return;
@@ -125,6 +126,7 @@ public class CachedMapsFile extends SynchronizedFile {
         }
 
         // Generate maps from image file
+        LOGGER.fine("Missed cache file \"" + path + "\"");
         try {
             generateFromImage();
             tryToWriteToDisk();

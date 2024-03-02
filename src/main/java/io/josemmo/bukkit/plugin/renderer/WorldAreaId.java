@@ -76,16 +76,127 @@ public class WorldAreaId {
             return distance / 4;
         });
 
-        // Size 3 (16-chunks radius)
-        // ···XXX···
-        // ·XXXXXXX·
-        // ·XXXXXXX·
-        // XXXXXXXXX
+        // Size 0 (1+1+1=3)
+        // ·|·
+        // XOX
+        // ·|·
+        if (size == 0) {
+            neighborhood = new WorldAreaId[]{
+                new WorldAreaId(world, x, z-1),
+
+                new WorldAreaId(world, x-1, z),
+                this,
+                new WorldAreaId(world, x+1, z),
+
+                new WorldAreaId(world, x, z+1),
+            };
+            return neighborhood;
+        }
+
+        // Size 1 (2+1+2=5)
+        // ·X|X·
+        // XX|XX
+        // XXOXX
+        // XX|XX
+        // ·X|X·
+        if (size == 1) {
+            neighborhood = new WorldAreaId[]{
+                new WorldAreaId(world, x-1, z-2),
+                new WorldAreaId(world, x, z-2),
+                new WorldAreaId(world, x+1, z-2),
+
+                new WorldAreaId(world, x-2, z-1),
+                new WorldAreaId(world, x-1, z-1),
+                new WorldAreaId(world, x, z-1),
+                new WorldAreaId(world, x+1, z-1),
+                new WorldAreaId(world, x+2, z-1),
+
+                new WorldAreaId(world, x-2, z),
+                new WorldAreaId(world, x-1, z),
+                this,
+                new WorldAreaId(world, x+1, z),
+                new WorldAreaId(world, x+2, z),
+
+                new WorldAreaId(world, x-2, z+1),
+                new WorldAreaId(world, x-1, z+1),
+                new WorldAreaId(world, x, z+1),
+                new WorldAreaId(world, x+1, z+1),
+                new WorldAreaId(world, x+2, z+1),
+
+                new WorldAreaId(world, x-1, z+2),
+                new WorldAreaId(world, x, z+2),
+                new WorldAreaId(world, x+1, z+2),
+            };
+            return neighborhood;
+        }
+
+        // Size 2 (3+1+3=7)
+        // ··X|X··
+        // ·XX|XX·
+        // XXX|XXX
+        // XXXOXXX
+        // XXX|XXX
+        // ·XX|XX·
+        // ··X|X··
+        if (size == 2) {
+            neighborhood = new WorldAreaId[]{
+                new WorldAreaId(world, x-1, z-3),
+                new WorldAreaId(world, x, z-3),
+                new WorldAreaId(world, x+1, z-3),
+
+                new WorldAreaId(world, x-2, z-2),
+                new WorldAreaId(world, x-1, z-2),
+                new WorldAreaId(world, x, z-2),
+                new WorldAreaId(world, x+1, z-2),
+                new WorldAreaId(world, x+2, z-2),
+
+                new WorldAreaId(world, x-3, z-1),
+                new WorldAreaId(world, x-2, z-1),
+                new WorldAreaId(world, x-1, z-1),
+                new WorldAreaId(world, x, z-1),
+                new WorldAreaId(world, x+1, z-1),
+                new WorldAreaId(world, x+2, z-1),
+                new WorldAreaId(world, x+3, z-1),
+
+                new WorldAreaId(world, x-3, z),
+                new WorldAreaId(world, x-2, z),
+                new WorldAreaId(world, x-1, z),
+                this,
+                new WorldAreaId(world, x+1, z),
+                new WorldAreaId(world, x+2, z),
+                new WorldAreaId(world, x+3, z),
+
+                new WorldAreaId(world, x-3, z+1),
+                new WorldAreaId(world, x-2, z+1),
+                new WorldAreaId(world, x-1, z+1),
+                new WorldAreaId(world, x, z+1),
+                new WorldAreaId(world, x+1, z+1),
+                new WorldAreaId(world, x+2, z+1),
+                new WorldAreaId(world, x+3, z+1),
+
+                new WorldAreaId(world, x-2, z+2),
+                new WorldAreaId(world, x-1, z+2),
+                new WorldAreaId(world, x, z+2),
+                new WorldAreaId(world, x+1, z+2),
+                new WorldAreaId(world, x+2, z+2),
+
+                new WorldAreaId(world, x-1, z+3),
+                new WorldAreaId(world, x, z+3),
+                new WorldAreaId(world, x+1, z+3),
+            };
+            return neighborhood;
+        }
+
+        // Size 3 (4+1+4=9)
+        // ···X|X···
+        // ·XXX|XXX·
+        // ·XXX|XXX·
+        // XXXX|XXXX
         // XXXXOXXXX
-        // XXXXXXXXX
-        // ·XXXXXXX·
-        // ·XXXXXXX·
-        // ···XXX···
+        // XXXX|XXXX
+        // ·XXX|XXX·
+        // ·XXX|XXX·
+        // ···X|X···
         if (size == 3) {
             neighborhood = new WorldAreaId[]{
                 new WorldAreaId(world, x-1, z-4),
@@ -161,112 +272,126 @@ public class WorldAreaId {
             return neighborhood;
         }
 
-        // Size 2 (12-chunks radius)
-        // ··XXX··
-        // ·XXXXX·
-        // XXXXXXX
-        // XXXOXXX
-        // XXXXXXX
-        // ·XXXXX·
-        // ··XXX··
-        if (size == 2) {
-            neighborhood = new WorldAreaId[]{
-                new WorldAreaId(world, x-1, z-3),
-                new WorldAreaId(world, x, z-3),
-                new WorldAreaId(world, x+1, z-3),
-
-                new WorldAreaId(world, x-2, z-2),
-                new WorldAreaId(world, x-1, z-2),
-                new WorldAreaId(world, x, z-2),
-                new WorldAreaId(world, x+1, z-2),
-                new WorldAreaId(world, x+2, z-2),
-
-                new WorldAreaId(world, x-3, z-1),
-                new WorldAreaId(world, x-2, z-1),
-                new WorldAreaId(world, x-1, z-1),
-                new WorldAreaId(world, x, z-1),
-                new WorldAreaId(world, x+1, z-1),
-                new WorldAreaId(world, x+2, z-1),
-                new WorldAreaId(world, x+3, z-1),
-
-                new WorldAreaId(world, x-3, z),
-                new WorldAreaId(world, x-2, z),
-                new WorldAreaId(world, x-1, z),
-                this,
-                new WorldAreaId(world, x+1, z),
-                new WorldAreaId(world, x+2, z),
-                new WorldAreaId(world, x+3, z),
-
-                new WorldAreaId(world, x-3, z+1),
-                new WorldAreaId(world, x-2, z+1),
-                new WorldAreaId(world, x-1, z+1),
-                new WorldAreaId(world, x, z+1),
-                new WorldAreaId(world, x+1, z+1),
-                new WorldAreaId(world, x+2, z+1),
-                new WorldAreaId(world, x+3, z+1),
-
-                new WorldAreaId(world, x-2, z+2),
-                new WorldAreaId(world, x-1, z+2),
-                new WorldAreaId(world, x, z+2),
-                new WorldAreaId(world, x+1, z+2),
-                new WorldAreaId(world, x+2, z+2),
-
-                new WorldAreaId(world, x-1, z+3),
-                new WorldAreaId(world, x, z+3),
-                new WorldAreaId(world, x+1, z+3),
-            };
-            return neighborhood;
-        }
-
-        //// Size 1 (8-chunks radius)
-        // ·XXX·
-        // XXXXX
-        // XXOXX
-        // XXXXX
-        // ·XXX·
-        if (size == 1) {
-            neighborhood = new WorldAreaId[]{
-                new WorldAreaId(world, x-1, z-2),
-                new WorldAreaId(world, x, z-2),
-                new WorldAreaId(world, x+1, z-2),
-
-                new WorldAreaId(world, x-2, z-1),
-                new WorldAreaId(world, x-1, z-1),
-                new WorldAreaId(world, x, z-1),
-                new WorldAreaId(world, x+1, z-1),
-                new WorldAreaId(world, x+2, z-1),
-
-                new WorldAreaId(world, x-2, z),
-                new WorldAreaId(world, x-1, z),
-                this,
-                new WorldAreaId(world, x+1, z),
-                new WorldAreaId(world, x+2, z),
-
-                new WorldAreaId(world, x-2, z+1),
-                new WorldAreaId(world, x-1, z+1),
-                new WorldAreaId(world, x, z+1),
-                new WorldAreaId(world, x+1, z+1),
-                new WorldAreaId(world, x+2, z+1),
-
-                new WorldAreaId(world, x-1, z+2),
-                new WorldAreaId(world, x, z+2),
-                new WorldAreaId(world, x+1, z+2),
-            };
-            return neighborhood;
-        }
-
-        //// Size 0 (4x4 chunks)
-        // ·X·
-        // XOX
-        // ·X·
+        // Size ≥4 (5+1+5=11)
+        // ···XX|XX···
+        // ··XXX|XXX··
+        // ·XXXX|XXXX·
+        // XXXXX|XXXXX
+        // XXXXX|XXXXX
+        // XXXXXOXXXXX
+        // XXXXX|XXXXX
+        // XXXXX|XXXXX
+        // ·XXXX|XXXX·
+        // ··XXX|XXX··
+        // ···XX|XX···
         neighborhood = new WorldAreaId[]{
-            new WorldAreaId(world, x, z-1),
+            new WorldAreaId(world, x-2, z-5),
+            new WorldAreaId(world, x-1, z-5),
+            new WorldAreaId(world, x, z-5),
+            new WorldAreaId(world, x+1, z-5),
+            new WorldAreaId(world, x+2, z-5),
 
+            new WorldAreaId(world, x-3, z-4),
+            new WorldAreaId(world, x-2, z-4),
+            new WorldAreaId(world, x-1, z-4),
+            new WorldAreaId(world, x, z-4),
+            new WorldAreaId(world, x+1, z-4),
+            new WorldAreaId(world, x+2, z-4),
+            new WorldAreaId(world, x+3, z-4),
+
+            new WorldAreaId(world, x-4, z-3),
+            new WorldAreaId(world, x-3, z-3),
+            new WorldAreaId(world, x-2, z-3),
+            new WorldAreaId(world, x-1, z-3),
+            new WorldAreaId(world, x, z-3),
+            new WorldAreaId(world, x+1, z-3),
+            new WorldAreaId(world, x+2, z-3),
+            new WorldAreaId(world, x+3, z-3),
+            new WorldAreaId(world, x+4, z-3),
+
+            new WorldAreaId(world, x-5, z-2),
+            new WorldAreaId(world, x-4, z-2),
+            new WorldAreaId(world, x-3, z-2),
+            new WorldAreaId(world, x-2, z-2),
+            new WorldAreaId(world, x-1, z-2),
+            new WorldAreaId(world, x, z-2),
+            new WorldAreaId(world, x+1, z-2),
+            new WorldAreaId(world, x+2, z-2),
+            new WorldAreaId(world, x+3, z-2),
+            new WorldAreaId(world, x+4, z-2),
+            new WorldAreaId(world, x+5, z-2),
+
+            new WorldAreaId(world, x-5, z-1),
+            new WorldAreaId(world, x-4, z-1),
+            new WorldAreaId(world, x-3, z-1),
+            new WorldAreaId(world, x-2, z-1),
+            new WorldAreaId(world, x-1, z-1),
+            new WorldAreaId(world, x, z-1),
+            new WorldAreaId(world, x+1, z-1),
+            new WorldAreaId(world, x+2, z-1),
+            new WorldAreaId(world, x+3, z-1),
+            new WorldAreaId(world, x+4, z-1),
+            new WorldAreaId(world, x+5, z-1),
+
+            new WorldAreaId(world, x-5, z),
+            new WorldAreaId(world, x-4, z),
+            new WorldAreaId(world, x-3, z),
+            new WorldAreaId(world, x-2, z),
             new WorldAreaId(world, x-1, z),
             this,
             new WorldAreaId(world, x+1, z),
+            new WorldAreaId(world, x+2, z),
+            new WorldAreaId(world, x+3, z),
+            new WorldAreaId(world, x+4, z),
+            new WorldAreaId(world, x+5, z),
 
+            new WorldAreaId(world, x-5, z+1),
+            new WorldAreaId(world, x-4, z+1),
+            new WorldAreaId(world, x-3, z+1),
+            new WorldAreaId(world, x-2, z+1),
+            new WorldAreaId(world, x-1, z+1),
             new WorldAreaId(world, x, z+1),
+            new WorldAreaId(world, x+1, z+1),
+            new WorldAreaId(world, x+2, z+1),
+            new WorldAreaId(world, x+3, z+1),
+            new WorldAreaId(world, x+4, z+1),
+            new WorldAreaId(world, x+5, z+1),
+
+            new WorldAreaId(world, x-5, z+2),
+            new WorldAreaId(world, x-4, z+2),
+            new WorldAreaId(world, x-3, z+2),
+            new WorldAreaId(world, x-2, z+2),
+            new WorldAreaId(world, x-1, z+2),
+            new WorldAreaId(world, x, z+2),
+            new WorldAreaId(world, x+1, z+2),
+            new WorldAreaId(world, x+2, z+2),
+            new WorldAreaId(world, x+3, z+2),
+            new WorldAreaId(world, x+4, z+2),
+            new WorldAreaId(world, x+5, z+2),
+
+            new WorldAreaId(world, x-4, z+3),
+            new WorldAreaId(world, x-3, z+3),
+            new WorldAreaId(world, x-2, z+3),
+            new WorldAreaId(world, x-1, z+3),
+            new WorldAreaId(world, x, z+3),
+            new WorldAreaId(world, x+1, z+3),
+            new WorldAreaId(world, x+2, z+3),
+            new WorldAreaId(world, x+3, z+3),
+            new WorldAreaId(world, x+4, z+3),
+
+            new WorldAreaId(world, x-3, z+4),
+            new WorldAreaId(world, x-2, z+4),
+            new WorldAreaId(world, x-1, z+4),
+            new WorldAreaId(world, x, z+4),
+            new WorldAreaId(world, x+1, z+4),
+            new WorldAreaId(world, x+2, z+4),
+            new WorldAreaId(world, x+3, z+4),
+
+            new WorldAreaId(world, x-2, z+5),
+            new WorldAreaId(world, x-1, z+5),
+            new WorldAreaId(world, x, z+5),
+            new WorldAreaId(world, x+1, z+5),
+            new WorldAreaId(world, x+2, z+5),
         };
         return neighborhood;
     }
