@@ -97,7 +97,7 @@
         <dependency>
             <groupId>com.github.TechFortress</groupId>
             <artifactId>GriefPrevention</artifactId>
-            <version>16.18.1</version>
+            <version>16.18.2</version>
             <scope>provided</scope>
         </dependency>
 
@@ -105,7 +105,7 @@
         <dependency>
             <groupId>com.github.TownyAdvanced</groupId>
             <artifactId>towny</artifactId>
-            <version>0.100.0.9</version>
+            <version>0.100.1.17</version>
             <scope>provided</scope>
         </dependency>
 
@@ -113,7 +113,7 @@
         <dependency>
             <groupId>com.github.angeschossen</groupId>
             <artifactId>LandsAPI</artifactId>
-            <version>6.42.0</version>
+            <version>6.44.10</version>
             <scope>provided</scope>
         </dependency>
 
