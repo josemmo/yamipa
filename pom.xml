@@ -42,7 +42,7 @@
         <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
-            <version>1.20.4-R0.1-SNAPSHOT</version>
+            <version>1.20.6-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
 
@@ -97,7 +97,7 @@
         <dependency>
             <groupId>com.github.TechFortress</groupId>
             <artifactId>GriefPrevention</artifactId>
-            <version>16.18.2</version>
+            <version>16.18.3</version>
             <scope>provided</scope>
         </dependency>
 
@@ -105,7 +105,7 @@
         <dependency>
             <groupId>com.github.TownyAdvanced</groupId>
             <artifactId>towny</artifactId>
-            <version>0.100.1.17</version>
+            <version>0.100.2.11</version>
             <scope>provided</scope>
         </dependency>
 
@@ -113,7 +113,7 @@
         <dependency>
             <groupId>com.github.angeschossen</groupId>
             <artifactId>LandsAPI</artifactId>
-            <version>6.44.10</version>
+            <version>7.1.12</version>
             <scope>provided</scope>
         </dependency>
 
