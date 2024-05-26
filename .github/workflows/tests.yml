@@ -22,7 +22,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
 
       # Build plugin
       - name: Build with Maven
@@ -33,7 +33,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: ${{ startsWith(matrix.version, '1.16') && '11' || (startsWith(matrix.version, '1.17') && '16' || '17') }}
+          java-version: ${{ startsWith(matrix.version, '1.16') && '11' || (startsWith(matrix.version, '1.17') && '16' || '21') }}
 
       # Setup Node.js
       - name: Setup Node.js
