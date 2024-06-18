@@ -12,6 +12,7 @@ import io.josemmo.bukkit.plugin.utils.Logger;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import java.lang.reflect.Field;
 
 public abstract class FakeEntity {
@@ -22,8 +23,9 @@ public abstract class FakeEntity {
 
     static {
         try {
+            Class<?> clazz = Class.forName("com.comphenix.protocol.injector.player.PlayerInjectionHandler");
             for (Field field : CONNECTION.getClass().getDeclaredFields()) {
-                if (field.getType().equals(PlayerInjectionHandler.class)) {
+                if (field.getType().equals(clazz)) {
                     field.setAccessible(true);
                     PLAYER_INJECTION_HANDLER = (PlayerInjectionHandler) field.get(CONNECTION);
                     break;
@@ -32,6 +34,8 @@ public abstract class FakeEntity {
             if (PLAYER_INJECTION_HANDLER == null) {
                 throw new RuntimeException("No valid candidate field found in ProtocolManager");
             }
+        } catch (ClassNotFoundException | IllegalAccessException e) {
+            LOGGER.warning("PlayerInjectionHandler is not present in ProtocolLib", e);
         } catch (Exception e) {
             LOGGER.severe("Failed to get PlayerInjectionHandler from ProtocolLib", e);
         }
@@ -68,6 +72,7 @@ public abstract class FakeEntity {
      * Try to sleep
      * <p>
      * NOTE: Will wait synchronously, blocking the invoker thread
+     *
      * @param ms Delay in milliseconds
      */
     protected static void tryToSleep(long ms) {
@@ -80,6 +85,7 @@ public abstract class FakeEntity {
 
     /**
      * Try to send packet
+     *
      * @param player Player who will receive the packet
      * @param packet Packet to send
      */
@@ -99,6 +105,7 @@ public abstract class FakeEntity {
 
     /**
      * Try to send several packets
+     *
      * @param player  Player who will receive the packets
      * @param packets Packets to send
      */
@@ -116,6 +123,7 @@ public abstract class FakeEntity {
 
     /**
      * Try to run asynchronous task
+     *
      * @param callback Callback to execute
      */
     protected static void tryToRunAsyncTask(@NotNull Runnable callback) {
