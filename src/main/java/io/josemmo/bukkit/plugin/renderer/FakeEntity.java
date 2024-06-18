@@ -12,7 +12,6 @@ import io.josemmo.bukkit.plugin.utils.Logger;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import java.lang.reflect.Field;
 
 public abstract class FakeEntity {
@@ -72,7 +71,6 @@ public abstract class FakeEntity {
      * Try to sleep
      * <p>
      * NOTE: Will wait synchronously, blocking the invoker thread
-     *
      * @param ms Delay in milliseconds
      */
     protected static void tryToSleep(long ms) {
@@ -85,7 +83,6 @@ public abstract class FakeEntity {
 
     /**
      * Try to send packet
-     *
      * @param player Player who will receive the packet
      * @param packet Packet to send
      */
@@ -105,7 +102,6 @@ public abstract class FakeEntity {
 
     /**
      * Try to send several packets
-     *
      * @param player  Player who will receive the packets
      * @param packets Packets to send
      */
@@ -123,7 +119,6 @@ public abstract class FakeEntity {
 
     /**
      * Try to run asynchronous task
-     *
      * @param callback Callback to execute
      */
     protected static void tryToRunAsyncTask(@NotNull Runnable callback) {
