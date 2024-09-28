@@ -31,7 +31,7 @@ public class Internals {
             Object nmsInstance = obcClass.getDeclaredMethod("getServer").invoke(obcInstance);
             Class<?> nmsClass = nmsInstance.getClass().getSuperclass();
 
-            if (MINECRAFT_VERSION >= 20.6) {
+            if (MINECRAFT_VERSION >= 20.5) {
                 // Get "net.minecraft.commands.Commands" references
                 Object nmsCommandsInstance = nmsClass.getDeclaredMethod("getCommands").invoke(nmsInstance);
                 Class<?> nmsCommandsClass = nmsCommandsInstance.getClass();
