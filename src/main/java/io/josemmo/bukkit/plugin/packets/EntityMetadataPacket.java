@@ -20,7 +20,7 @@ public class EntityMetadataPacket extends PacketContainer {
     private final List<WrappedDataValue> values = new ArrayList<>(); // For >= 1.19.3
 
     static {
-        USE_DATA_WATCHER = (Internals.MINECRAFT_VERSION < 19.3f);
+        USE_DATA_WATCHER = (Internals.MINECRAFT_VERSION < 19.3);
         ITEM_INDEX = (Internals.MINECRAFT_VERSION < 17) ? 7 : 8;
         ROTATION_INDEX = ITEM_INDEX + 1;
     }

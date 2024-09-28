@@ -103,7 +103,7 @@ public abstract class FakeEntity {
      * @param packets Packets to send
      */
     protected static void tryToSendPackets(@NotNull Player player, @NotNull Iterable<PacketContainer> packets) {
-        if (Internals.MINECRAFT_VERSION < 19.4f) {
+        if (Internals.MINECRAFT_VERSION < 19.4) {
             for (PacketContainer packet : packets) {
                 tryToSendPacket(player, packet);
             }
