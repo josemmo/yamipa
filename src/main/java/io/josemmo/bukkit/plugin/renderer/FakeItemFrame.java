@@ -1,9 +1,6 @@
 package io.josemmo.bukkit.plugin.renderer;
 
 import com.comphenix.protocol.events.PacketContainer;
-import com.comphenix.protocol.utility.MinecraftReflection;
-import com.comphenix.protocol.wrappers.nbt.NbtCompound;
-import com.comphenix.protocol.wrappers.nbt.NbtFactory;
 import io.josemmo.bukkit.plugin.packets.DestroyEntityPacket;
 import io.josemmo.bukkit.plugin.packets.EntityMetadataPacket;
 import io.josemmo.bukkit.plugin.packets.SpawnEntityPacket;
@@ -16,9 +13,11 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.MapMeta;
 import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class FakeItemFrame extends FakeEntity {
@@ -137,6 +136,7 @@ public class FakeItemFrame extends FakeEntity {
      * @param player Player who is expected to receive packets (for caching reasons)
      * @param step   Map step
      */
+    @SuppressWarnings("deprecation")
     public @NotNull List<PacketContainer> getRenderPackets(@NotNull Player player, int step) {
         List<PacketContainer> packets = new ArrayList<>(2);
 
@@ -147,10 +147,10 @@ public class FakeItemFrame extends FakeEntity {
         }
 
         // Create and attach filled map
-        ItemStack itemStack = MinecraftReflection.getBukkitItemStack(new ItemStack(Material.FILLED_MAP));
-        NbtCompound itemStackNbt = NbtFactory.ofCompound("tag");
-        itemStackNbt.put("map", maps[step].getId());
-        NbtFactory.setItemTag(itemStack, itemStackNbt);
+        ItemStack itemStack = new ItemStack(Material.FILLED_MAP);
+        MapMeta itemStackMeta = Objects.requireNonNull((MapMeta) itemStack.getItemMeta());
+        itemStackMeta.setMapId(maps[step].getId());
+        itemStack.setItemMeta(itemStackMeta);
 
         // Build entity metadata packet
         EntityMetadataPacket metadataPacket = new EntityMetadataPacket();
