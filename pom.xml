@@ -46,11 +46,11 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- https://repo.dmulloy2.net/service/rest/repository/browse/public/com/comphenix/protocol/ProtocolLib/ -->
+        <!-- https://jitpack.io/com/github/dmulloy2/ProtocolLib/ -->
         <dependency>
-            <groupId>com.comphenix.protocol</groupId>
+            <groupId>com.github.dmulloy2</groupId>
             <artifactId>ProtocolLib</artifactId>
-            <version>5.2.0-SNAPSHOT</version>
+            <version>1e3fa2d36e</version>
             <scope>provided</scope>
         </dependency>
 
