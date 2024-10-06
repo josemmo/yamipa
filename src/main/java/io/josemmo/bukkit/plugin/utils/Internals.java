@@ -35,7 +35,10 @@ public class Internals {
             Object nmsServerInstance = obcClass.getDeclaredMethod("getServer").invoke(obcInstance);
 
             // Get "net.minecraft.server.CommandDispatcher" references
-            Class<?> nmsDispatcherClass = MinecraftReflection.getMinecraftClass("commands.CommandDispatcher");
+            Class<?> nmsDispatcherClass = MinecraftReflection.getMinecraftClass(
+            	/*spigot (1.16.x)*/"CommandDispatcher",
+            	/*spigot*/"commands.CommandDispatcher",
+            	/*mojang/paper*/"commands.Commands");
             Object nmsDispatcherInstance = FuzzyReflection.fromObject(nmsServerInstance, true)
             	.getMethodByReturnTypeAndParameters("getDispatcher", nmsDispatcherClass)
             	.invoke(nmsServerInstance);
