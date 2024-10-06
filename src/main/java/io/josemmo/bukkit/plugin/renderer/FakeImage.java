@@ -1,6 +1,6 @@
 package io.josemmo.bukkit.plugin.renderer;
 
-import com.comphenix.protocol.events.PacketContainer;
+import com.github.retrooper.packetevents.wrapper.PacketWrapper;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
 import io.josemmo.bukkit.plugin.storage.CachedMapsFile;
 import io.josemmo.bukkit.plugin.storage.ImageFile;
@@ -432,7 +432,6 @@ public class FakeImage extends FakeEntity {
         // Instance needs to be loaded
         loading = true;
         tryToRunAsyncTask(() -> {
-            waitForProtocolLib();
             load();
             loading = false;
             spawnOnceLoaded(player);
@@ -448,7 +447,7 @@ public class FakeImage extends FakeEntity {
         observingPlayers.add(player);
 
         // Prepare packets to send
-        List<PacketContainer> packets = new ArrayList<>();
+        List<PacketWrapper<?>> packets = new ArrayList<>();
         for (FakeItemFrame frame : frames) {
             packets.add(frame.getSpawnPacket());
             packets.addAll(frame.getRenderPackets(player, 0));
@@ -483,7 +482,7 @@ public class FakeImage extends FakeEntity {
             Set<Player> targets = (player == null) ? observingPlayers : Collections.singleton(player);
             for (Player target : targets) {
                 String targetName = target.getName();
-                List<PacketContainer> packets = new ArrayList<>();
+                List<PacketWrapper<?>> packets = new ArrayList<>();
                 for (FakeItemFrame frame : frames) {
                     packets.add(frame.getDestroyPacket());
                     LOGGER.fine("Destroyed FakeItemFrame#" + frame.getId() + " for Player#" + targetName);
@@ -549,7 +548,7 @@ public class FakeImage extends FakeEntity {
         currentStep = (currentStep + 1) % numOfSteps;
         try {
             for (Player player : observingPlayers) {
-                List<PacketContainer> packets = new ArrayList<>();
+                List<PacketWrapper<?>> packets = new ArrayList<>();
                 for (FakeItemFrame frame : frames) {
                     packets.addAll(frame.getRenderPackets(player, currentStep));
                 }

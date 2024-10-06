@@ -1,8 +1,11 @@
 package io.josemmo.bukkit.plugin.utils;
 
-import com.comphenix.protocol.ProtocolLibrary;
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerActionBar;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
-import io.josemmo.bukkit.plugin.packets.ActionBarPacket;
+import net.kyori.adventure.text.Component;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
@@ -67,10 +70,12 @@ public class ActionBar {
      * @return This instance
      */
     public ActionBar sendOnce() {
-        ActionBarPacket actionBarPacket = new ActionBarPacket();
-        actionBarPacket.setText(message);
+        player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(message));
+        WrapperPlayServerActionBar actionBarPacket = new WrapperPlayServerActionBar(
+            Component.text(message)
+        );
         try {
-            ProtocolLibrary.getProtocolManager().sendServerPacket(player, actionBarPacket);
+            //PacketEvents.getAPI().getPlayerManager().sendPacket(player, actionBarPacket);
         } catch (Exception e) {
             LOGGER.severe("Failed to send ActionBar to " + player.getName(), e);
         }
@@ -83,7 +88,7 @@ public class ActionBar {
      */
     public ActionBar start() {
         if (task == null) {
-            task = Bukkit.getScheduler().runTaskTimer(plugin, this::sendOnce, 0L, 40L);
+            task = Bukkit.getScheduler().runTaskTimer(plugin, this::sendOnce, 0L, 20L);
         }
         return this;
     }

@@ -123,11 +123,6 @@ public class YamipaPlugin extends JavaPlugin {
         scheduler = Executors.newScheduledThreadPool(6);
 
         // Warm-up plugin dependencies
-        LOGGER.fine("Waiting for ProtocolLib to be ready...");
-        scheduler.execute(() -> {
-            FakeEntity.waitForProtocolLib();
-            LOGGER.fine("ProtocolLib is now ready");
-        });
         LOGGER.fine("Triggered map color cache warm-up");
         FakeMap.pixelToIndex(Color.RED.getRGB()); // Ask for a color index to force cache generation
 
@@ -140,11 +135,14 @@ public class YamipaPlugin extends JavaPlugin {
             if (number >= 10) return "10-49";
             return "0-9";
         };
+        /*
         metrics = new Metrics(this, BSTATS_PLUGIN_ID);
         metrics.addCustomChart(new SimplePie("animate_images", () -> animateImages ? "true" : "false"));
         metrics.addCustomChart(new SimplePie("number_of_image_files", () -> toStats.apply(storage.size())));
         metrics.addCustomChart(new SimplePie("number_of_placed_images", () -> toStats.apply(renderer.size())));
+        */
     }
+
 
     @Override
     public void onDisable() {

@@ -1,68 +1,25 @@
 package io.josemmo.bukkit.plugin.renderer;
 
-import com.comphenix.protocol.PacketType;
-import com.comphenix.protocol.ProtocolLibrary;
-import com.comphenix.protocol.ProtocolManager;
-import com.comphenix.protocol.events.PacketContainer;
-import com.comphenix.protocol.injector.netty.manager.NetworkManagerInjector;
-import com.comphenix.protocol.wrappers.WrappedDataWatcher;
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.manager.server.ServerVersion;
+import com.github.retrooper.packetevents.protocol.player.User;
+import com.github.retrooper.packetevents.wrapper.PacketWrapper;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerBundle;
+import com.google.common.io.ByteArrayDataOutput;
+import com.google.common.io.ByteStreams;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
 import io.josemmo.bukkit.plugin.utils.Internals;
 import io.josemmo.bukkit.plugin.utils.Logger;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import java.lang.reflect.Field;
+
+import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
 
 public abstract class FakeEntity {
     private static final Logger LOGGER = Logger.getLogger("FakeEntity");
-    private static final ProtocolManager CONNECTION = ProtocolLibrary.getProtocolManager();
-    private static @Nullable NetworkManagerInjector NETWORK_MANAGER_INJECTOR;
     private static boolean READY = false;
 
-    static {
-        try {
-            for (Field field : CONNECTION.getClass().getDeclaredFields()) {
-                if (field.getType().equals(NetworkManagerInjector.class)) {
-                    field.setAccessible(true);
-                    NETWORK_MANAGER_INJECTOR = (NetworkManagerInjector) field.get(CONNECTION);
-                    break;
-                }
-            }
-            if (NETWORK_MANAGER_INJECTOR == null) {
-                throw new RuntimeException("No valid candidate field found in ProtocolManager");
-            }
-        } catch (Exception e) {
-            LOGGER.severe("Failed to get NetworkManagerInjector from ProtocolLib", e);
-        }
-    }
-
-    /**
-     * Wait for ProtocolLib to be ready
-     * <p>
-     * NOTE: Will wait synchronously, blocking the invoker thread
-     */
-    public static synchronized void waitForProtocolLib() {
-        if (READY) {
-            // ProtocolLib is ready
-            return;
-        }
-
-        int retry = 0;
-        while (true) {
-            try {
-                WrappedDataWatcher.Registry.get(Byte.class);
-                READY = true;
-                break;
-            } catch (Exception e) {
-                if (++retry > 20) {
-                    // Exhausted max. retries
-                    throw e;
-                }
-                tryToSleep(200);
-            }
-        }
-    }
 
     /**
      * Try to sleep
@@ -83,13 +40,9 @@ public abstract class FakeEntity {
      * @param player Player who will receive the packet
      * @param packet Packet to send
      */
-    protected static void tryToSendPacket(@NotNull Player player, @NotNull PacketContainer packet) {
+    protected static void tryToSendPacket(@NotNull Player player, @NotNull PacketWrapper<?> packet) {
         try {
-            if (NETWORK_MANAGER_INJECTOR == null) { // Use single-threaded packet sending if reflection failed
-                CONNECTION.sendServerPacket(player, packet);
-            } else { // Use non-blocking packet sending if available (faster, the expected case)
-                NETWORK_MANAGER_INJECTOR.getInjector(player).sendClientboundPacket(packet, null, false);
-            }
+            PacketEvents.getAPI().getPlayerManager().sendPacket(player, packet);
         } catch (IllegalStateException e) {
             // Server is shutting down and cannot send the packet, ignore
         } catch (Exception e) {
@@ -102,15 +55,18 @@ public abstract class FakeEntity {
      * @param player  Player who will receive the packets
      * @param packets Packets to send
      */
-    protected static void tryToSendPackets(@NotNull Player player, @NotNull Iterable<PacketContainer> packets) {
-        if (Internals.MINECRAFT_VERSION < 19.4) {
-            for (PacketContainer packet : packets) {
+    protected static void tryToSendPackets(@NotNull Player player, @NotNull Iterable<PacketWrapper<?>> packets) {
+        if (Internals.MINECRAFT_VERSION.isOlderThan(ServerVersion.V_1_19_4)) {
+            System.out.println("Version older than 1.19");
+            for (PacketWrapper<?> packet : packets) {
                 tryToSendPacket(player, packet);
             }
         } else {
-            PacketContainer container = new PacketContainer(PacketType.Play.Server.BUNDLE);
-            container.getPacketBundles().write(0, packets);
-            tryToSendPacket(player, container);
+            User user = PacketEvents.getAPI().getPlayerManager().getUser(player);
+            for (PacketWrapper<?> packet : packets) {
+                user.writePacket(packet);
+            }
+            user.flushPackets();
         }
     }
 

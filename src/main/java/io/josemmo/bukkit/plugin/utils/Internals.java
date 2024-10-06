@@ -1,5 +1,9 @@
 package io.josemmo.bukkit.plugin.utils;
 
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.manager.server.ServerVersion;
+import com.github.retrooper.packetevents.protocol.ProtocolVersion;
+import com.github.retrooper.packetevents.util.PEVersion;
 import com.mojang.brigadier.CommandDispatcher;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
@@ -11,7 +15,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 public class Internals {
-    public static final float MINECRAFT_VERSION;
+    public static final ServerVersion MINECRAFT_VERSION;
     private static final CommandDispatcher<?> DISPATCHER;
     private static final CommandMap COMMAND_MAP;
     private static @Nullable Method GET_BUKKIT_SENDER_METHOD = null;
@@ -19,9 +23,7 @@ public class Internals {
     static {
         try {
             // Get Minecraft version
-            String version = Bukkit.getVersion();
-            version = version.substring(version.lastIndexOf("(MC: 1.")+7, version.length()-1);
-            MINECRAFT_VERSION = Float.parseFloat(version);
+            MINECRAFT_VERSION = PacketEvents.getAPI().getServerManager().getVersion();
 
             // Get "org.bukkit.craftbukkit.CraftServer" references
             Server obcInstance = Bukkit.getServer();
@@ -31,7 +33,7 @@ public class Internals {
             Object nmsInstance = obcClass.getDeclaredMethod("getServer").invoke(obcInstance);
             Class<?> nmsClass = nmsInstance.getClass().getSuperclass();
 
-            if (MINECRAFT_VERSION >= 20.5) {
+            if (MINECRAFT_VERSION.isNewerThanOrEquals(ServerVersion.V_1_20_5)) {
                 // Get "net.minecraft.commands.Commands" references
                 Object nmsCommandsInstance = nmsClass.getDeclaredMethod("getCommands").invoke(nmsInstance);
                 Class<?> nmsCommandsClass = nmsCommandsInstance.getClass();

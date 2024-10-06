@@ -1,6 +1,6 @@
 package io.josemmo.bukkit.plugin.renderer;
 
-import io.josemmo.bukkit.plugin.packets.MapDataPacket;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerMapData;
 import io.josemmo.bukkit.plugin.utils.Logger;
 import org.bukkit.entity.Player;
 import org.bukkit.map.MapPalette;
@@ -8,7 +8,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -147,13 +149,10 @@ public class FakeMap extends FakeEntity {
      * Get map pixels packet
      * @return Map pixels packet
      */
-    public @NotNull MapDataPacket getPixelsPacket() {
-        MapDataPacket mapDataPacket = new MapDataPacket();
-        mapDataPacket.setId(id)
-            .setScale(0) // Fully zoomed-in
-            .setLocked(true)
-            .setArea(DIMENSION, DIMENSION, 0, 0)
-            .setPixels(pixels);
-        return mapDataPacket;
+    public @NotNull WrapperPlayServerMapData getPixelsPacket() {
+        WrapperPlayServerMapData data = new WrapperPlayServerMapData(
+            id, (byte) 0, false, false, new ArrayList<>(), DIMENSION, DIMENSION, 0, 0, pixels
+        );
+        return data;
     }
 }
