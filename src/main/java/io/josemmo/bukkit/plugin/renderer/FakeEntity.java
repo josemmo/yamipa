@@ -88,7 +88,7 @@ public abstract class FakeEntity {
             if (NETWORK_MANAGER_INJECTOR == null) { // Use single-threaded packet sending if reflection failed
                 CONNECTION.sendServerPacket(player, packet);
             } else { // Use non-blocking packet sending if available (faster, the expected case)
-                NETWORK_MANAGER_INJECTOR.getInjector(player).sendClientboundPacket(packet, null, false);
+                NETWORK_MANAGER_INJECTOR.getInjector(player).sendClientboundPacket(packet.getHandle(), null, false);
             }
         } catch (IllegalStateException e) {
             // Server is shutting down and cannot send the packet, ignore

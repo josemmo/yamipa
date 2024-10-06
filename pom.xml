@@ -103,9 +103,9 @@
 
         <!-- https://jitpack.io/com/github/TownyAdvanced/towny/ -->
         <dependency>
-            <groupId>com.github.TownyAdvanced</groupId>
-            <artifactId>towny</artifactId>
-            <version>0.100.2.11</version>
+            <groupId>com.github.TownyAdvanced.towny</groupId>
+			<artifactId>towny</artifactId>
+			<version>0.100.1.17</version>
             <scope>provided</scope>
         </dependency>
 
