@@ -1,30 +1,31 @@
 package io.josemmo.bukkit.plugin.renderer;
 
-import com.comphenix.protocol.events.PacketContainer;
-import com.comphenix.protocol.utility.MinecraftReflection;
-import com.comphenix.protocol.wrappers.nbt.NbtCompound;
-import com.comphenix.protocol.wrappers.nbt.NbtFactory;
-import io.josemmo.bukkit.plugin.packets.DestroyEntityPacket;
-import io.josemmo.bukkit.plugin.packets.EntityMetadataPacket;
-import io.josemmo.bukkit.plugin.packets.SpawnEntityPacket;
+import com.github.retrooper.packetevents.manager.server.ServerVersion;
+import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
+import com.github.retrooper.packetevents.util.Vector3d;
+import com.github.retrooper.packetevents.wrapper.PacketWrapper;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityMetadata;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnEntity;
+import io.josemmo.bukkit.plugin.packets.FakeImageEntityMetadataProvider;
 import io.josemmo.bukkit.plugin.utils.Internals;
 import io.josemmo.bukkit.plugin.utils.Logger;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Rotation;
 import org.bukkit.block.BlockFace;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.MapMeta;
 import org.jetbrains.annotations.NotNull;
-import java.util.ArrayList;
-import java.util.List;
+
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class FakeItemFrame extends FakeEntity {
     public static final int MIN_FRAME_ID = Integer.MAX_VALUE / 4;
     public static final int MAX_FRAME_ID = Integer.MAX_VALUE;
-    private static final boolean SUPPORTS_GLOWING = Internals.MINECRAFT_VERSION >= 17;
+    private static final boolean SUPPORTS_GLOWING = Internals.MINECRAFT_VERSION.isNewerThanOrEquals(ServerVersion.V_1_17);
     private static final Logger LOGGER = Logger.getLogger("FakeItemFrame");
     private static final AtomicInteger LAST_FRAME_ID = new AtomicInteger(MAX_FRAME_ID);
     private final int id;
@@ -83,7 +84,7 @@ public class FakeItemFrame extends FakeEntity {
      * Get entity spawn packet
      * @return Spawn packet
      */
-    public @NotNull SpawnEntityPacket getSpawnPacket() {
+    public @NotNull WrapperPlayServerSpawnEntity getSpawnPacket() {
         // Calculate frame position in relation to target block
         double x = location.getBlockX();
         double y = location.getBlockY();
@@ -122,14 +123,19 @@ public class FakeItemFrame extends FakeEntity {
         }
 
         // Create item frame entity
-        SpawnEntityPacket framePacket = new SpawnEntityPacket();
-        framePacket.setId(id)
-            .setEntityType((glowing && SUPPORTS_GLOWING) ? EntityType.GLOW_ITEM_FRAME : EntityType.ITEM_FRAME)
-            .setPosition(x, y, z)
-            .setRotation(pitch, yaw)
-            .setData(orientation);
+        WrapperPlayServerSpawnEntity framePacketWrapper = new WrapperPlayServerSpawnEntity(
+            id,
+            Optional.of(UUID.randomUUID()),
+            (glowing && SUPPORTS_GLOWING) ? EntityTypes.GLOW_ITEM_FRAME : EntityTypes.ITEM_FRAME,
+            new Vector3d(x, y, z),
+            pitch,
+            yaw,
+            0,
+            orientation,
+            Optional.empty()
+        );
 
-        return framePacket;
+        return framePacketWrapper;
     }
 
     /**
@@ -137,8 +143,9 @@ public class FakeItemFrame extends FakeEntity {
      * @param player Player who is expected to receive packets (for caching reasons)
      * @param step   Map step
      */
-    public @NotNull List<PacketContainer> getRenderPackets(@NotNull Player player, int step) {
-        List<PacketContainer> packets = new ArrayList<>(2);
+    @SuppressWarnings("deprecation")
+    public @NotNull List<PacketWrapper<?>> getRenderPackets(@NotNull Player player, int step) {
+        List<PacketWrapper<?>> packets = new ArrayList<>(2);
 
         // Enqueue map pixels packet (if needed)
         boolean mustSendPixels = maps[step].requestResend(player);
@@ -147,19 +154,17 @@ public class FakeItemFrame extends FakeEntity {
         }
 
         // Create and attach filled map
-        ItemStack itemStack = MinecraftReflection.getBukkitItemStack(new ItemStack(Material.FILLED_MAP));
-        NbtCompound itemStackNbt = NbtFactory.ofCompound("tag");
-        itemStackNbt.put("map", maps[step].getId());
-        NbtFactory.setItemTag(itemStack, itemStackNbt);
+        ItemStack itemStack = new ItemStack(Material.FILLED_MAP);
+        MapMeta itemStackMeta = Objects.requireNonNull((MapMeta) itemStack.getItemMeta());
+        itemStackMeta.setMapId(maps[step].getId());
+        itemStack.setItemMeta(itemStackMeta);
 
         // Build entity metadata packet
-        EntityMetadataPacket metadataPacket = new EntityMetadataPacket();
-        metadataPacket.setId(id)
-            .setInvisible(true)
-            .setItem(itemStack)
-            .setRotation(rotation)
-            .build();
-        packets.add(metadataPacket);
+        WrapperPlayServerEntityMetadata metadataPacketWrapper = new WrapperPlayServerEntityMetadata(
+            id,
+            new FakeImageEntityMetadataProvider(true, itemStack, rotation)
+        );
+        packets.add(metadataPacketWrapper);
 
         return packets;
     }
@@ -168,9 +173,9 @@ public class FakeItemFrame extends FakeEntity {
      * Get destroy item frame packet
      * @return Destroy packet
      */
-    public @NotNull DestroyEntityPacket getDestroyPacket() {
-        DestroyEntityPacket destroyPacket = new DestroyEntityPacket();
-        destroyPacket.setId(id);
+    public @NotNull WrapperPlayServerDestroyEntities getDestroyPacket() {
+        WrapperPlayServerDestroyEntities destroyPacket = new WrapperPlayServerDestroyEntities();
+        destroyPacket.setEntityIds(new int[]{id});
         return destroyPacket;
     }
 }

@@ -6,7 +6,7 @@
 
     <groupId>io.josemmo.bukkit.plugin</groupId>
     <artifactId>YamipaPlugin</artifactId>
-    <version>1.3.1</version>
+    <version>1.3.2-SNAPSHOT-b2</version>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
@@ -35,6 +35,10 @@
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
         </repository>
+        <repository>
+            <id>codemc-releases</id>
+            <url>https://repo.codemc.io/repository/maven-releases/</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -42,15 +46,7 @@
         <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
-            <version>1.20.4-R0.1-SNAPSHOT</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <!-- https://repo.dmulloy2.net/service/rest/repository/browse/public/com/comphenix/protocol/ProtocolLib/ -->
-        <dependency>
-            <groupId>com.comphenix.protocol</groupId>
-            <artifactId>ProtocolLib</artifactId>
-            <version>5.2.0-SNAPSHOT</version>
+            <version>1.21.1-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
 
@@ -93,11 +89,11 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- https://jitpack.io/com/github/TechFortress/GriefPrevention/ -->
+        <!-- https://jitpack.io/com/github/GriefPrevention/GriefPrevention/ -->
         <dependency>
-            <groupId>com.github.TechFortress</groupId>
+            <groupId>com.github.GriefPrevention</groupId>
             <artifactId>GriefPrevention</artifactId>
-            <version>16.18.2</version>
+            <version>16.18.4</version>
             <scope>provided</scope>
         </dependency>
 
@@ -105,7 +101,7 @@
         <dependency>
             <groupId>com.github.TownyAdvanced</groupId>
             <artifactId>towny</artifactId>
-            <version>0.100.1.17</version>
+            <version>0.100.2.11</version>
             <scope>provided</scope>
         </dependency>
 
@@ -113,7 +109,7 @@
         <dependency>
             <groupId>com.github.angeschossen</groupId>
             <artifactId>LandsAPI</artifactId>
-            <version>6.44.10</version>
+            <version>7.1.12</version>
             <scope>provided</scope>
         </dependency>
 
@@ -122,6 +118,14 @@
             <groupId>org.jetbrains</groupId>
             <artifactId>annotations</artifactId>
             <version>24.1.0</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- https://docs.packetevents.com/getting-started -->
+        <dependency>
+            <groupId>com.github.retrooper</groupId>
+            <artifactId>packetevents-spigot</artifactId>
+            <version>2.5.0</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

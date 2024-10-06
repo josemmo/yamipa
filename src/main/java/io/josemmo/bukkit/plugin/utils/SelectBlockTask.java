@@ -1,6 +1,6 @@
 package io.josemmo.bukkit.plugin.utils;
 
-import com.comphenix.protocol.events.ListenerPriority;
+import com.github.retrooper.packetevents.event.PacketListenerPriority;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -104,7 +104,7 @@ public class SelectBlockTask {
     private static class SelectBlockTaskListener extends InteractWithEntityListener implements Listener {
         @Override
         public void register() {
-            super.register();
+            super.register(PacketListenerPriority.LOW);
             YamipaPlugin plugin = YamipaPlugin.getInstance();
             plugin.getServer().getPluginManager().registerEvents(this, plugin);
         }
@@ -115,10 +115,6 @@ public class SelectBlockTask {
             HandlerList.unregisterAll(this);
         }
 
-        @Override
-        public @NotNull ListenerPriority getPriority() {
-            return ListenerPriority.LOW;
-        }
 
         @EventHandler(ignoreCancelled = true, priority = EventPriority.LOW)
         public void onBlockInteraction(@NotNull PlayerInteractEvent event) {
@@ -162,6 +158,7 @@ public class SelectBlockTask {
         }
 
         private boolean handle(@NotNull Player player, @Nullable Block block, @Nullable BlockFace face) {
+            System.out.println("Handle Interact/attack");
             // Get task responsible for handling this event
             UUID uuid = player.getUniqueId();
             SelectBlockTask task = instances.get(uuid);
