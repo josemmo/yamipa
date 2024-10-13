@@ -1,14 +1,16 @@
 package io.josemmo.bukkit.plugin.utils;
 
-import com.mojang.brigadier.CommandDispatcher;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import com.comphenix.protocol.reflect.FuzzyReflection;
+import com.comphenix.protocol.utility.MinecraftReflection;
+import com.mojang.brigadier.CommandDispatcher;
 
 public class Internals {
     public static final float MINECRAFT_VERSION;
@@ -28,28 +30,22 @@ public class Internals {
             Class<?> obcClass = obcInstance.getClass();
 
             // Get "net.minecraft.server.MinecraftServer" references
-            Object nmsInstance = obcClass.getDeclaredMethod("getServer").invoke(obcInstance);
-            Class<?> nmsClass = nmsInstance.getClass().getSuperclass();
+            Object nmsServerInstance = obcClass.getDeclaredMethod("getServer").invoke(obcInstance);
 
-            if (MINECRAFT_VERSION >= 20.5) {
-                // Get "net.minecraft.commands.Commands" references
-                Object nmsCommandsInstance = nmsClass.getDeclaredMethod("getCommands").invoke(nmsInstance);
-                Class<?> nmsCommandsClass = nmsCommandsInstance.getClass();
+            // Get "net.minecraft.server.CommandDispatcher" references
+            Class<?> nmsDispatcherClass = MinecraftReflection.getMinecraftClass(
+            	"CommandDispatcher", // Spigot <1.17
+            	"commands.CommandDispatcher", // Spigot >=1.17
+            	"commands.Commands" // PaperMC
+            );
+            Object nmsDispatcherInstance = FuzzyReflection.fromObject(nmsServerInstance, true)
+            	.getMethodByReturnTypeAndParameters("getDispatcher", nmsDispatcherClass)
+            	.invoke(nmsServerInstance);
 
-                // Get "com.mojang.brigadier.CommandDispatcher" instance
-                Field nmsDispatcherField = nmsCommandsClass.getDeclaredField("dispatcher");
-                nmsDispatcherField.setAccessible(true);
-                DISPATCHER = (CommandDispatcher<?>) nmsDispatcherField.get(nmsCommandsInstance);
-            } else {
-                // Get "net.minecraft.server.CommandDispatcher" references
-                Object nmsDispatcherInstance = nmsClass.getDeclaredField("vanillaCommandDispatcher").get(nmsInstance);
-                Class<?> nmsDispatcherClass = nmsDispatcherInstance.getClass();
-
-                // Get "com.mojang.brigadier.CommandDispatcher" instance
-                Method getDispatcherMethod = nmsDispatcherClass.getDeclaredMethod("a");
-                getDispatcherMethod.setAccessible(true);
-                DISPATCHER = (CommandDispatcher<?>) getDispatcherMethod.invoke(nmsDispatcherInstance);
-            }
+            // Get "com.mojang.brigadier.CommandDispatcher" instance
+            DISPATCHER = (CommandDispatcher<?>) FuzzyReflection.fromObject(nmsDispatcherInstance, true)
+            	.getMethodByReturnTypeAndParameters("getDispatcher", CommandDispatcher.class)
+            	.invoke(nmsDispatcherInstance);
 
             // Get command map instance
             Field commandMapField = obcClass.getDeclaredField("commandMap");
