@@ -42,7 +42,7 @@
         <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
-            <version>1.20.6-R0.1-SNAPSHOT</version>
+            <version>1.21.1-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
 
@@ -66,7 +66,7 @@
         <dependency>
             <groupId>org.bstats</groupId>
             <artifactId>bstats-bukkit</artifactId>
-            <version>3.0.2</version>
+            <version>3.1.0</version>
         </dependency>
 
         <!-- https://central.sonatype.com/artifact/net.luckperms/api -->
@@ -103,17 +103,17 @@
 
         <!-- https://jitpack.io/com/github/TownyAdvanced/towny/ -->
         <dependency>
-            <groupId>com.github.TownyAdvanced.towny</groupId>
-			<artifactId>towny</artifactId>
-			<version>0.100.1.17</version>
+            <groupId>com.github.TownyAdvanced.Towny</groupId>
+            <artifactId>towny</artifactId>
+            <version>0.100.4.4</version>
             <scope>provided</scope>
         </dependency>
 
         <!-- https://jitpack.io/com/github/Angeschossen/LandsAPI/ -->
         <dependency>
-            <groupId>com.github.angeschossen</groupId>
+            <groupId>com.github.Angeschossen</groupId>
             <artifactId>LandsAPI</artifactId>
-            <version>7.1.12</version>
+            <version>7.9.17</version>
             <scope>provided</scope>
         </dependency>
 
@@ -121,7 +121,7 @@
         <dependency>
             <groupId>org.jetbrains</groupId>
             <artifactId>annotations</artifactId>
-            <version>24.1.0</version>
+            <version>26.0.0</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
