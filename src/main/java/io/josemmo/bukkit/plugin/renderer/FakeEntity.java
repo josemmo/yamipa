@@ -4,7 +4,7 @@ import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.PacketContainer;
-import com.comphenix.protocol.injector.player.PlayerInjectionHandler;
+import com.comphenix.protocol.injector.netty.manager.NetworkManagerInjector;
 import com.comphenix.protocol.wrappers.WrappedDataWatcher;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
 import io.josemmo.bukkit.plugin.utils.Internals;
@@ -17,23 +17,23 @@ import java.lang.reflect.Field;
 public abstract class FakeEntity {
     private static final Logger LOGGER = Logger.getLogger("FakeEntity");
     private static final ProtocolManager CONNECTION = ProtocolLibrary.getProtocolManager();
-    private static @Nullable PlayerInjectionHandler PLAYER_INJECTION_HANDLER;
+    private static @Nullable NetworkManagerInjector NETWORK_MANAGER_INJECTOR;
     private static boolean READY = false;
 
     static {
         try {
             for (Field field : CONNECTION.getClass().getDeclaredFields()) {
-                if (field.getType().equals(PlayerInjectionHandler.class)) {
+                if (field.getType().equals(NetworkManagerInjector.class)) {
                     field.setAccessible(true);
-                    PLAYER_INJECTION_HANDLER = (PlayerInjectionHandler) field.get(CONNECTION);
+                    NETWORK_MANAGER_INJECTOR = (NetworkManagerInjector) field.get(CONNECTION);
                     break;
                 }
             }
-            if (PLAYER_INJECTION_HANDLER == null) {
+            if (NETWORK_MANAGER_INJECTOR == null) {
                 throw new RuntimeException("No valid candidate field found in ProtocolManager");
             }
         } catch (Exception e) {
-            LOGGER.severe("Failed to get PlayerInjectionHandler from ProtocolLib", e);
+            LOGGER.severe("Failed to get NetworkManagerInjector from ProtocolLib", e);
         }
     }
 
@@ -85,10 +85,14 @@ public abstract class FakeEntity {
      */
     protected static void tryToSendPacket(@NotNull Player player, @NotNull PacketContainer packet) {
         try {
-            if (PLAYER_INJECTION_HANDLER == null) { // Use single-threaded packet sending if reflection failed
+            if (NETWORK_MANAGER_INJECTOR == null) { // Use single-threaded packet sending if reflection failed
                 CONNECTION.sendServerPacket(player, packet);
             } else { // Use non-blocking packet sending if available (faster, the expected case)
-                PLAYER_INJECTION_HANDLER.sendServerPacket(player, packet, null, false);
+                NETWORK_MANAGER_INJECTOR.getInjector(player).sendClientboundPacket(
+                    packet.getHandle(),
+                    null,
+                    false
+                );
             }
         } catch (IllegalStateException e) {
             // Server is shutting down and cannot send the packet, ignore
@@ -103,7 +107,7 @@ public abstract class FakeEntity {
      * @param packets Packets to send
      */
     protected static void tryToSendPackets(@NotNull Player player, @NotNull Iterable<PacketContainer> packets) {
-        if (Internals.MINECRAFT_VERSION < 19.4f) {
+        if (Internals.MINECRAFT_VERSION < 19.4) {
             for (PacketContainer packet : packets) {
                 tryToSendPacket(player, packet);
             }

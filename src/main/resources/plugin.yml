@@ -4,12 +4,14 @@ main: io.josemmo.bukkit.plugin.YamipaPlugin
 api-version: 1.16
 depend: [ProtocolLib]
 softdepend:
+  - BentoBox
   - GriefPrevention
   - GroupManager
   - Hyperverse
   - LuckPerms
   - Multiverse-Core
   - My_Worlds
+  - PhantomWorlds
   - Towny
   - WorldGuard
 

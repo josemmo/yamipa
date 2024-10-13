@@ -1,14 +1,11 @@
 package io.josemmo.bukkit.plugin.storage;
 
-import com.sun.nio.file.ExtendedWatchEventModifier;
 import io.josemmo.bukkit.plugin.utils.Logger;
 import io.josemmo.bukkit.plugin.utils.Permissions;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import java.io.File;
-import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -16,23 +13,18 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 /**
- * A service whose purpose is to keep track of all available image files in a given directory.
- * It supports recursive storage (<i>e.g.</i>, nested directories) and watches for file system changes in realtime.
+ * Service for keeping track of image images.
  * <p>
  * All files are indexed based on their <b>filename</b>.
- * Due to recursion, filenames can contain forward slashes (<i>i.e.</i>, "/") and act as relative paths to the base
+ * Due to recursion, filenames can contain forward slashes (<i>i.e.,</i> "/") and act as relative paths to the base
  * directory.
  */
-public class ImageStorage {
-    private static final boolean IS_WINDOWS = System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win");
+public class ImageStorage extends FileSystemWatcher {
     private static final Logger LOGGER = Logger.getLogger("ImageStorage");
     /** Map of registered files indexed by filename */
     private final SortedMap<String, ImageFile> files = new TreeMap<>();
-    private final Path basePath;
     private final Path cachePath;
     private final String allowedPaths;
-    private @Nullable WatchService watchService;
-    private @Nullable Thread watchServiceThread;
 
     /**
      * Class constructor
@@ -41,7 +33,7 @@ public class ImageStorage {
      * @param allowedPaths Allowed paths pattern
      */
     public ImageStorage(@NotNull Path basePath, @NotNull Path cachePath, @NotNull String allowedPaths) {
-        this.basePath = basePath;
+        super(basePath);
         this.cachePath = cachePath;
         this.allowedPaths = allowedPaths;
     }
@@ -64,15 +56,10 @@ public class ImageStorage {
 
     /**
      * Start service
-     * @throws IOException if failed to start watch service
-     * @throws RuntimeException if already running
+     * @throws RuntimeException if failed to start watch service
      */
-    public void start() throws IOException, RuntimeException {
-        // Prevent initializing more than once
-        if (watchService != null || watchServiceThread != null) {
-            throw new RuntimeException("Service is already running");
-        }
-
+    @Override
+    public void start() throws RuntimeException {
         // Create base directories if necessary
         if (basePath.toFile().mkdirs()) {
             LOGGER.info("Created images directory as it did not exist");
@@ -81,33 +68,17 @@ public class ImageStorage {
             LOGGER.info("Created cache directory as it did not exist");
         }
 
-        // Start watching files
-        watchService = FileSystems.getDefault().newWatchService();
-        watchServiceThread = new WatcherThread();
-        watchServiceThread.start();
-        registerDirectory(basePath, true);
+        // Start file system watcher
+        super.start();
         LOGGER.fine("Found " + files.size() + " file(s) in images directory");
     }
 
     /**
      * Stop service
      */
+    @Override
     public void stop() {
-        // Interrupt watch service thread
-        if (watchServiceThread != null) {
-            watchServiceThread.interrupt();
-            watchServiceThread = null;
-        }
-
-        // Close watch service
-        if (watchService != null) {
-            try {
-                watchService.close();
-            } catch (IOException e) {
-                LOGGER.warning("Failed to close watch service", e);
-            }
-            watchService = null;
-        }
+        super.stop();
     }
 
     /**
@@ -140,7 +111,7 @@ public class ImageStorage {
      * @return        Whether sender is allowed to access path
      */
     public boolean isPathAllowed(@NotNull Path path, @NotNull CommandSender sender) {
-        return isPathAllowed(getFilename(path), sender);
+        return isPathAllowed(pathToFilename(path), sender);
     }
 
     /**
@@ -191,58 +162,20 @@ public class ImageStorage {
     }
 
     /**
-     * Register directory
-     * @param path   Path to directory
-     * @param isBase Whether is base directory or not
+     * Convert path to filename
+     * @param  path File path
+     * @return      Relative path used for indexing
      */
-    private synchronized void registerDirectory(@NotNull Path path, boolean isBase) {
-        // Validate path
-        if (!Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS)) {
-            LOGGER.warning("Cannot list files in \"" + path + "\" as it is not a valid directory");
-            return;
-        }
-
-        // Do initial directory listing
-        for (File child : Objects.requireNonNull(path.toFile().listFiles())) {
-            if (child.isDirectory()) {
-                registerDirectory(child.toPath(), false);
-            } else {
-                registerFile(child.toPath());
-            }
-        }
-
-        // Start watching for files changes
-        if (!IS_WINDOWS || isBase) {
-            try {
-                WatchEvent.Kind<?>[] events = new WatchEvent.Kind[]{
-                    StandardWatchEventKinds.ENTRY_CREATE,
-                    StandardWatchEventKinds.ENTRY_DELETE,
-                    StandardWatchEventKinds.ENTRY_MODIFY
-                };
-                WatchEvent.Modifier[] modifiers = IS_WINDOWS ?
-                    new WatchEvent.Modifier[]{ExtendedWatchEventModifier.FILE_TREE} :
-                    new WatchEvent.Modifier[0];
-                path.register(Objects.requireNonNull(watchService), events, modifiers);
-                LOGGER.fine("Started watching directory at \"" + path + "\"");
-            } catch (IOException | NullPointerException e) {
-                LOGGER.severe("Failed to register directory", e);
-            }
-        }
+    private @NotNull String pathToFilename(@NotNull Path path) {
+        return basePath.relativize(path).toString().replaceAll("\\\\", "/");
     }
 
     /**
-     * Register file
-     * @param path Path to file
+     * On file created
+     * @param path File path
      */
-    private synchronized void registerFile(@NotNull Path path) {
-        // Validate path
-        if (!Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS)) {
-            LOGGER.warning("Cannot register \"" + path + "\" as it is not a valid file");
-            return;
-        }
-
-        // Add file to map
-        String filename = getFilename(path);
+    protected synchronized void onFileCreated(@NotNull Path path) {
+        String filename = pathToFilename(path);
         ImageFile imageFile = new ImageFile(filename, path);
         if (files.putIfAbsent(filename, imageFile) == null) {
             LOGGER.fine("Registered file \"" + filename + "\"");
@@ -250,113 +183,28 @@ public class ImageStorage {
     }
 
     /**
-     * Unregister directory
-     * @param filename Filename to directory
+     * On file modified
+     * @param path File path
      */
-    private synchronized void unregisterDirectory(@NotNull String filename) {
-        boolean foundFirst = false;
-        Iterator<Map.Entry<String, ImageFile>> iter = files.entrySet().iterator();
-        while (iter.hasNext()) {
-            String entryKey = iter.next().getKey();
-            if (entryKey.startsWith(filename+"/")) {
-                foundFirst = true;
-                iter.remove();
-                LOGGER.fine("Unregistered file \"" + entryKey + "\"");
-            } else if (foundFirst) {
-                // We can break early because set is alphabetically sorted by key
-                break;
-            }
+    protected synchronized void onFileModified(@NotNull Path path) {
+        String filename = pathToFilename(path);
+        ImageFile imageFile = files.get(filename);
+        if (imageFile != null) {
+            imageFile.invalidate();
+            LOGGER.fine("Invalidated file \"" + filename + "\"");
         }
     }
 
     /**
-     * Unregister file
-     * @param filename Filename to file
+     * On file deleted
+     * @param path File path
      */
-    private synchronized void unregisterFile(@NotNull String filename) {
+    protected synchronized void onFileDeleted(@NotNull Path path) {
+        String filename = pathToFilename(path);
         ImageFile imageFile = files.remove(filename);
         if (imageFile != null) {
             imageFile.invalidate();
             LOGGER.fine("Unregistered file \"" + filename + "\"");
-        }
-    }
-
-    /**
-     * Invalidate file
-     * @param filename Filename to file
-     */
-    private synchronized void invalidateFile(@NotNull String filename) {
-        ImageFile imageFile = files.get(filename);
-        if (imageFile != null) {
-            imageFile.invalidate();
-        }
-    }
-
-    /**
-     * Handle watch event
-     * @param path Path to file or directory
-     * @param kind Event kind
-     */
-    private synchronized void handleWatchEvent(@NotNull Path path, WatchEvent.Kind<?> kind) {
-        // Check whether file currently exists in file system (for CREATE and UPDATE events)
-        // or is registered in the file list (for DELETE event)
-        String filename = getFilename(path);
-        boolean isFile = path.toFile().isFile() || files.containsKey(filename);
-
-        // Handle creation event
-        if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
-            if (isFile) {
-                registerFile(path);
-            } else {
-                registerDirectory(path, false);
-            }
-            return;
-        }
-
-        // Handle deletion event
-        if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
-            if (isFile) {
-                unregisterFile(filename);
-            } else {
-                unregisterDirectory(filename);
-            }
-            return;
-        }
-
-        // Handle modification event
-        if (kind == StandardWatchEventKinds.ENTRY_MODIFY && isFile) {
-            invalidateFile(filename);
-        }
-    }
-
-    /**
-     * Get filename from path
-     * @param  path Path to file
-     * @return      Relative path used for indexing
-     */
-    private @NotNull String getFilename(@NotNull Path path) {
-        return basePath.relativize(path).toString().replaceAll("\\\\", "/");
-    }
-
-    private class WatcherThread extends Thread {
-        @Override
-        public void run() {
-            try {
-                WatchKey key;
-                while ((key = Objects.requireNonNull(watchService).take()) != null) {
-                    for (WatchEvent<?> event : key.pollEvents()) {
-                        WatchEvent.Kind<?> kind = event.kind();
-                        Path keyPath = (Path) key.watchable();
-                        Path path = keyPath.resolve((Path) event.context());
-                        handleWatchEvent(path, kind);
-                    }
-                    key.reset();
-                }
-            } catch (ClosedWatchServiceException | InterruptedException __) {
-                // Silently ignore exception, this is expected when service shuts down
-            } catch (NullPointerException e) {
-                LOGGER.severe("Watch service was stopped before watcher thread", e);
-            }
         }
     }
 }
