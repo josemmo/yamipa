@@ -444,24 +444,19 @@ public class FakeImage extends FakeEntity {
      * @param player Player instance
      */
     private void spawnOnceLoaded(@NotNull Player player) {
-    	try {
-            String playerName = player.getName();
-            observingPlayers.add(player);
+        String playerName = player.getName();
+        observingPlayers.add(player);
 
-            // Prepare packets to send
-            List<PacketContainer> packets = new ArrayList<>();
-            for (FakeItemFrame frame : frames) {
-                packets.add(frame.getSpawnPacket());
-                packets.addAll(frame.getRenderPackets(player, 0));
-                LOGGER.fine("Spawned FakeItemFrame#" + frame.getId() + " for Player#" + playerName);
-            }
+        // Prepare packets to send
+        List<PacketContainer> packets = new ArrayList<>();
+        for (FakeItemFrame frame : frames) {
+            packets.add(frame.getSpawnPacket());
+            packets.addAll(frame.getRenderPackets(player, 0));
+            LOGGER.fine("Spawned FakeItemFrame#" + frame.getId() + " for Player#" + playerName);
+        }
 
-            // Send packets
-            tryToSendPackets(player, packets);
-		} catch (Exception e) {
-            // We should log errors and don't just let the default thread exception handler silence them
-			e.printStackTrace();
-		}
+        // Send packets
+        tryToSendPackets(player, packets);
     }
 
     /**

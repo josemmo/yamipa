@@ -2,14 +2,12 @@ package io.josemmo.bukkit.plugin.utils;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import com.comphenix.protocol.reflect.FuzzyReflection;
 import com.comphenix.protocol.utility.MinecraftReflection;
 import com.mojang.brigadier.CommandDispatcher;
@@ -36,9 +34,10 @@ public class Internals {
 
             // Get "net.minecraft.server.CommandDispatcher" references
             Class<?> nmsDispatcherClass = MinecraftReflection.getMinecraftClass(
-            	/*spigot (1.16.x)*/"CommandDispatcher",
-            	/*spigot*/"commands.CommandDispatcher",
-            	/*mojang/paper*/"commands.Commands");
+            	"CommandDispatcher", // Spigot <1.17
+            	"commands.CommandDispatcher", // Spigot >=1.17
+            	"commands.Commands" // PaperMC
+            );
             Object nmsDispatcherInstance = FuzzyReflection.fromObject(nmsServerInstance, true)
             	.getMethodByReturnTypeAndParameters("getDispatcher", nmsDispatcherClass)
             	.invoke(nmsServerInstance);
