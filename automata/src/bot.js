@@ -7,7 +7,7 @@ export function startBot() {
     return new Promise(resolve => {
         const bot = mineflayer.createBot({
             host: '127.0.0.1',
-            username: 'test'
+            username: 'test',
         })
         bot.once('spawn', () => resolve(bot))
     })
@@ -23,6 +23,6 @@ export function placeBlockOnTheFloor(bot) {
         hand: 0,
         cursorX: 0,
         cursorY: 0,
-        cursorZ: 0
+        cursorZ: 0,
     })
 }
