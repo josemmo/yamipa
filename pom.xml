@@ -50,7 +50,7 @@
         <dependency>
             <groupId>com.github.dmulloy2</groupId>
             <artifactId>ProtocolLib</artifactId>
-            <version>1e3fa2d36e</version>
+            <version>596e5e4246</version>
             <scope>provided</scope>
         </dependency>
 

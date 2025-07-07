@@ -21,7 +21,7 @@ public class EntityMetadataPacket extends PacketContainer {
 
     static {
         USE_DATA_WATCHER = (Internals.MINECRAFT_VERSION < 19.3);
-        ITEM_INDEX = (Internals.MINECRAFT_VERSION < 17) ? 7 : 8;
+        ITEM_INDEX = Internals.MINECRAFT_VERSION < 21.6 ? (Internals.MINECRAFT_VERSION < 17 ? 7 : 8) : 9;
         ROTATION_INDEX = ITEM_INDEX + 1;
     }
 
