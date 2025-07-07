@@ -67,6 +67,7 @@ jobs:
             url=$(curl "https://fill.papermc.io/v3/projects/paper/versions/$VERSION/builds" | jq -r 'first(.[] | select(.channel == "STABLE") | .downloads."server:default".url)')
           elif [ $FLAVOR == "purpur" ]; then
             url="https://api.purpurmc.org/v2/purpur/$VERSION/latest/download"
+          fi
           mkdir ./server && cd ./server
           wget -nv "$url" -O server.jar
           java -jar server.jar || true
