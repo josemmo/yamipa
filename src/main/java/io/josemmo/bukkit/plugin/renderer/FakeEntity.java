@@ -13,6 +13,7 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Field;
+import java.lang.reflect.Type;
 
 public abstract class FakeEntity {
     private static final Logger LOGGER = Logger.getLogger("FakeEntity");
@@ -51,7 +52,7 @@ public abstract class FakeEntity {
         int retry = 0;
         while (true) {
             try {
-                WrappedDataWatcher.Registry.get(Byte.class);
+                WrappedDataWatcher.Registry.get((Type) Byte.class);
                 READY = true;
                 break;
             } catch (Exception e) {

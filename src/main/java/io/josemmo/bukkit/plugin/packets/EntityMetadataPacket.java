@@ -9,6 +9,7 @@ import io.josemmo.bukkit.plugin.utils.Internals;
 import org.bukkit.Rotation;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,7 +42,7 @@ public class EntityMetadataPacket extends PacketContainer {
     }
 
     public @NotNull EntityMetadataPacket setFlags(byte flags) {
-        WrappedDataWatcher.Serializer serializer = WrappedDataWatcher.Registry.get(Byte.class);
+        WrappedDataWatcher.Serializer serializer = WrappedDataWatcher.Registry.get((Type) Byte.class);
         if (USE_DATA_WATCHER) {
             dataWatcher.setObject(new WrappedDataWatcher.WrappedDataWatcherObject(0, serializer), flags);
         } else {
@@ -70,7 +71,7 @@ public class EntityMetadataPacket extends PacketContainer {
     }
 
     public @NotNull EntityMetadataPacket setRotation(@NotNull Rotation rotation) {
-        WrappedDataWatcher.Serializer serializer = WrappedDataWatcher.Registry.get(Integer.class);
+        WrappedDataWatcher.Serializer serializer = WrappedDataWatcher.Registry.get((Type) Integer.class);
         if (USE_DATA_WATCHER) {
             dataWatcher.setObject(
                 new WrappedDataWatcher.WrappedDataWatcherObject(ROTATION_INDEX, serializer),
