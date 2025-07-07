@@ -6,12 +6,12 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 8
-    continue-on-error: ${{ matrix.version == '1.21.1' }}
+    continue-on-error: ${{ matrix.version == '1.21.7' }}
     strategy:
       fail-fast: false
       matrix:
         flavor: ['bukkit', 'spigot', 'paper', 'purpur']
-        version: ['1.21.1', '1.20.6', '1.19.4', '1.18.2', '1.17.1', '1.16.5']
+        version: ['1.21.7', '1.20.6', '1.19.4', '1.18.2', '1.17.1', '1.16.5']
     steps:
       # Download code from repository
       - name: Checkout code
