@@ -11,7 +11,7 @@ jobs:
       fail-fast: false
       matrix:
         flavor: ['bukkit', 'spigot', 'paper', 'purpur']
-        version: ['1.21.7', '1.20.6', '1.19.4', '1.18.2', '1.17.1', '1.16.5']
+        version: ['1.21.7', '1.21.5', '1.20.6', '1.19.4', '1.18.2', '1.17.1', '1.16.5']
     steps:
       # Download code from repository
       - name: Checkout code
@@ -46,7 +46,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       # Setup automata
       - name: Setup automata
@@ -58,18 +58,15 @@ jobs:
         env:
           FLAVOR: ${{ matrix.flavor }}
           VERSION: ${{ matrix.version }}
-          GETBUKKIT_SUBDOMAIN: ${{ startsWith(matrix.version, '1.16') && 'cdn' || 'download' }}
         run: |
           if [ $FLAVOR == "bukkit" ]; then
-            url="https://$GETBUKKIT_SUBDOMAIN.getbukkit.org/craftbukkit/craftbukkit-$VERSION.jar"
+            url="https://cdn.getbukkit.org/craftbukkit/craftbukkit-$VERSION.jar"
           elif [ $FLAVOR == "spigot" ]; then
-            url="https://$GETBUKKIT_SUBDOMAIN.getbukkit.org/spigot/spigot-$VERSION.jar"
+            url="https://cdn.getbukkit.org/spigot/spigot-$VERSION.jar"
           elif [ $FLAVOR == "paper" ]; then
-            build=$(curl "https://papermc.io/api/v2/projects/paper/versions/$VERSION" | jq '.builds[-1]')
-            url="https://papermc.io/api/v2/projects/paper/versions/$VERSION/builds/$build/downloads/paper-$VERSION-$build.jar"
+            url=$(curl "https://fill.papermc.io/v3/projects/paper/versions/$VERSION/builds" | jq -r 'first(.[] | select(.channel == "STABLE") | .downloads."server:default".url)')
           elif [ $FLAVOR == "purpur" ]; then
             url="https://api.purpurmc.org/v2/purpur/$VERSION/latest/download"
-          fi
           mkdir ./server && cd ./server
           wget -nv "$url" -O server.jar
           java -jar server.jar || true
@@ -84,8 +81,17 @@ jobs:
 
       # Install dependencies
       - name: Install plugin dependencies
+        env:
+          VERSION: ${{ matrix.version }}
         run: |
-          url="https://ci.dmulloy2.net/job/ProtocolLib/lastSuccessfulBuild/artifact/build/libs/ProtocolLib.jar"
+          case "$VERSION" in
+            1.16.5|1.17.1|1.18.2|1.19.4|1.20.6|1.21.5)
+              url="https://github.com/dmulloy2/ProtocolLib/releases/download/5.3.0/ProtocolLib.jar"
+              ;;
+            *)
+              url="https://ci.dmulloy2.net/job/ProtocolLib/lastSuccessfulBuild/artifact/build/libs/ProtocolLib.jar"
+              ;;
+          esac
           mkdir -p ./server/plugins/ProtocolLib
           wget -q "$url" -O ./server/plugins/ProtocolLib.jar
           echo -e "global:\n  auto updater:\n    notify: false\n    download: false" > ./server/plugins/ProtocolLib/config.yml
