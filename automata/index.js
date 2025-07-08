@@ -1,4 +1,4 @@
-import { placeBlockOnTheFloor, startBot } from './src/bot.js'
+import { clickBlockOnTheFloor, startBot } from './src/bot.js'
 import { wait } from './src/common.js'
 import { getRconClient, waitForServer } from './src/rcon.js'
 
@@ -25,13 +25,13 @@ import { getRconClient, waitForServer } from './src/rcon.js'
     console.log('[AUTOMATA] Placing image on the floor...')
     bot.chat('/image place pic-1.jpg 4 4')
     await wait(2000)
-    placeBlockOnTheFloor(bot)
+    await clickBlockOnTheFloor(bot)
     await wait(2000)
 
     console.log('[AUTOMATA] Removing image from floor...')
     bot.chat('/image remove')
     await wait(2000)
-    placeBlockOnTheFloor(bot)
+    await clickBlockOnTheFloor(bot)
     await wait(2000)
 
     console.log('[AUTOMATA] Logging off...')

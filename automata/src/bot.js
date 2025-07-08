@@ -1,4 +1,5 @@
 import mineflayer from 'mineflayer'
+import { Vec3 } from 'vec3'
 
 /**
  * @return {Promise<mineflayer.Bot>} Bot instance
@@ -16,13 +17,7 @@ export function startBot() {
 /**
  * @param {mineflayer.Bot} bot Bot instance
  */
-export function placeBlockOnTheFloor(bot) {
-    bot._client.write('block_place', {
-        location: bot.entity.position.offset(0, -1, 0),
-        direction: 1,
-        hand: 0,
-        cursorX: 0,
-        cursorY: 0,
-        cursorZ: 0,
-    })
+export async function clickBlockOnTheFloor(bot) {
+    const targetBlock = bot.blockAt(bot.entity.position.offset(0, -1, 0))
+    await bot.activateBlock(targetBlock, null, new Vec3(0, 1, 0))
 }
