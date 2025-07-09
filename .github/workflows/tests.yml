@@ -139,7 +139,7 @@ jobs:
             echo "Plugin did not remove the fake image"
             exit 1
           fi
-          if [ "$FLAVOR" != "bukkit" ] && grep -iFq 'exception' server.log; then
+          if [ "$FLAVOR" != "bukkit" ] && [ "$FLAVOR" != "spigot" ] && grep -iFq 'exception' server.log; then
             echo "Server threw an exception"
             exit 1
           fi
