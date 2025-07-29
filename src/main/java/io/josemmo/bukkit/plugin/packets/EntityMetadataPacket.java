@@ -9,6 +9,7 @@ import io.josemmo.bukkit.plugin.utils.Internals;
 import org.bukkit.Rotation;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +18,7 @@ public class EntityMetadataPacket extends PacketContainer {
     private static final boolean USE_DATA_WATCHER;
     private static final int ITEM_INDEX;
     private static final int ROTATION_INDEX;
-    private WrappedDataWatcher dataWatcher; // For <= 1.19.2 - lazy initialization
+    private @Nullable WrappedDataWatcher dataWatcher; // For <= 1.19.2
     private final List<WrappedDataValue> values = new ArrayList<>(); // For >= 1.19.3
 
     static {
@@ -37,9 +38,12 @@ public class EntityMetadataPacket extends PacketContainer {
     }
 
     /**
-     * Get or create WrappedDataWatcher instance safely
+     * Get or create data watcher
+     * <p>
+     * Needed to avoid race condition in ProtocolLib, see <a href="https://github.com/josemmo/yamipa/pull/153">#153</a>
+     * @return Data watcher instance
      */
-    private WrappedDataWatcher getDataWatcher() {
+    private @NotNull WrappedDataWatcher getDataWatcher() {
         if (dataWatcher == null) {
             dataWatcher = new WrappedDataWatcher();
         }
