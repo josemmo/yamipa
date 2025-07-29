@@ -11,7 +11,7 @@ jobs:
       fail-fast: false
       matrix:
         flavor: ['bukkit', 'spigot', 'paper', 'purpur']
-        version: ['1.21.8', '1.21.5', '1.20.6', '1.19.4', '1.18.2', '1.17.1', '1.16.5']
+        version: ['1.21.8', '1.20.6', '1.19.4', '1.18.2', '1.17.1', '1.16.5']
     steps:
       # Download code from repository
       - name: Checkout code
@@ -59,7 +59,11 @@ jobs:
           FLAVOR: ${{ matrix.flavor }}
           VERSION: ${{ matrix.version }}
         run: |
-          if [ $FLAVOR == "bukkit" ]; then
+          if [ $FLAVOR == "bukkit" ] && [ $VERSION == "1.17.1" ]; then
+            url="https://static.knarcraft.net/archive/downloads/minecraftserverjars/Bukkit/craftbukkit-1.17.1.jar"
+          elif [ $FLAVOR == "spigot" ] && [ $VERSION == "1.17.1" ]; then
+            url="https://s3.mcjars.app/spigot/1.17.1/3284/server.jar"
+          elif [ $FLAVOR == "bukkit" ]; then
             url="https://cdn.getbukkit.org/craftbukkit/craftbukkit-$VERSION.jar"
           elif [ $FLAVOR == "spigot" ]; then
             url="https://cdn.getbukkit.org/spigot/spigot-$VERSION.jar"
@@ -103,8 +107,9 @@ jobs:
           mkdir -p ./server/plugins/YamipaPlugin/images
           cp ./target/YamipaPlugin-*.jar ./server/plugins/
           echo "verbose: true" > ./server/plugins/YamipaPlugin/config.yml
-          for i in {1..5}; do
-            wget -q "https://picsum.photos/400" -O "./server/plugins/YamipaPlugin/images/pic-$i.jpg"
+          wget -q "https://picsum.photos/400" -O ./server/plugins/YamipaPlugin/images/pic-1.jpg
+          for i in {2..5}; do
+            cp ./server/plugins/YamipaPlugin/images/pic-1.jpg "./server/plugins/YamipaPlugin/images/pic-$i.jpg"
           done
 
       # Test plugin
