@@ -50,7 +50,7 @@
         <dependency>
             <groupId>com.github.dmulloy2</groupId>
             <artifactId>ProtocolLib</artifactId>
-            <version>596e5e4246</version>
+            <version>e56bcf624d</version>
             <scope>provided</scope>
         </dependency>
 
@@ -105,7 +105,7 @@
         <dependency>
             <groupId>com.github.TownyAdvanced.Towny</groupId>
             <artifactId>towny</artifactId>
-            <version>0.101.1.15</version>
+            <version>0.101.2.0</version>
             <scope>provided</scope>
         </dependency>
 
