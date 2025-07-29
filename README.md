@@ -25,7 +25,7 @@ Download the JAR file for the [latest release](https://github.com/josemmo/yamipa
 Before installing Yamipa make sure you meet the following requirements:
 
 - CraftBukkit, Spigot or PaperMC 1.16 or higher
-- [ProtocolLib](https://www.spigotmc.org/resources/protocollib.1997/) v5.4.0 or higher
+- [ProtocolLib](https://www.spigotmc.org/resources/protocollib.1997/) v5.3.0 or higher
 
 Here are the Minecraft distributions where Yamipa should be able to run:
 | Minecraft version | CraftBukkit | Spigot | PaperMC |

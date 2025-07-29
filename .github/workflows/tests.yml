@@ -86,7 +86,7 @@ jobs:
           VERSION: ${{ matrix.version }}
         run: |
           case "$VERSION" in
-            1.16.5|1.17.1|1.18.2|1.19.4|1.20.6|1.21.5)
+            1.16.5|1.17.1|1.18.2|1.19.4|1.20.6)
               url="https://github.com/dmulloy2/ProtocolLib/releases/download/5.3.0/ProtocolLib.jar"
               ;;
             *)
