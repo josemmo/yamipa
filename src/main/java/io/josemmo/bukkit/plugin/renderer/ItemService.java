@@ -105,33 +105,10 @@ public class ItemService extends InteractWithEntityListener implements Listener 
 
     // Dirty helper function to "subtract" 1 from "behind" a block face
     private Location subtractFromLocation(Location original, BlockFace face) {
-        Location modified = original.clone();
+        Location behind = original.clone();
+        behind.add(face.getOppositeFace().getDirection());
 
-        switch (face) {
-            case UP:
-                modified.setY(modified.getY() - 1);
-                break;
-            case DOWN:
-                modified.setY(modified.getY() + 1);
-                break;
-            case NORTH:
-                modified.setZ(modified.getZ() + 1);
-                break;
-            case SOUTH:
-                modified.setZ(modified.getZ() - 1);
-                break;
-            case EAST:
-                modified.setX(modified.getX() - 1);
-                break;
-            case WEST:
-                modified.setX(modified.getX() + 1);
-                break;
-            default:
-                // Unknown face, do nothing.
-                break;
-        }
-
-        return modified;
+        return behind;
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
