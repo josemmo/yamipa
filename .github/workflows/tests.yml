@@ -94,7 +94,7 @@ jobs:
               url="https://github.com/dmulloy2/ProtocolLib/releases/download/5.3.0/ProtocolLib.jar"
               ;;
             *)
-              url="https://ci.dmulloy2.net/job/ProtocolLib/lastSuccessfulBuild/artifact/build/libs/ProtocolLib.jar"
+              url="https://github.com/dmulloy2/ProtocolLib/releases/download/5.4.0/ProtocolLib.jar"
               ;;
           esac
           mkdir -p ./server/plugins/ProtocolLib

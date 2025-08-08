@@ -20,10 +20,6 @@
             <url>https://hub.spigotmc.org/nexus/content/groups/public/</url>
         </repository>
         <repository>
-            <id>dmulloy2-repo</id>
-            <url>https://repo.dmulloy2.net/nexus/repository/public/</url>
-        </repository>
-        <repository>
             <id>minecraft-libraries</id>
             <url>https://libraries.minecraft.net</url>
         </repository>
@@ -46,11 +42,11 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- https://jitpack.io/com/github/dmulloy2/ProtocolLib/ -->
+        <!-- https://central.sonatype.com/artifact/net.dmulloy2/ProtocolLib -->
         <dependency>
-            <groupId>com.github.dmulloy2</groupId>
+            <groupId>net.dmulloy2</groupId>
             <artifactId>ProtocolLib</artifactId>
-            <version>e56bcf624d</version>
+            <version>5.4.0</version>
             <scope>provided</scope>
         </dependency>
 
