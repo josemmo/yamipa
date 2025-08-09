@@ -5,7 +5,6 @@ import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.injector.netty.manager.NetworkManagerInjector;
-import com.comphenix.protocol.wrappers.WrappedDataWatcher;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
 import io.josemmo.bukkit.plugin.utils.Internals;
 import io.josemmo.bukkit.plugin.utils.Logger;
@@ -18,7 +17,6 @@ public abstract class FakeEntity {
     private static final Logger LOGGER = Logger.getLogger("FakeEntity");
     private static final ProtocolManager CONNECTION = ProtocolLibrary.getProtocolManager();
     private static @Nullable NetworkManagerInjector NETWORK_MANAGER_INJECTOR;
-    private static boolean READY = false;
 
     static {
         try {
@@ -38,38 +36,12 @@ public abstract class FakeEntity {
     }
 
     /**
-     * Wait for ProtocolLib to be ready
-     * <p>
-     * NOTE: Will wait synchronously, blocking the invoker thread
-     */
-    public static synchronized void waitForProtocolLib() {
-        if (READY) {
-            // ProtocolLib is ready
-            return;
-        }
-
-        int retry = 0;
-        while (true) {
-            try {
-                WrappedDataWatcher.Registry.get(Byte.class);
-                READY = true;
-                break;
-            } catch (Exception e) {
-                if (++retry > 20) {
-                    // Exhausted max. retries
-                    throw e;
-                }
-                tryToSleep(200);
-            }
-        }
-    }
-
-    /**
      * Try to sleep
      * <p>
      * NOTE: Will wait synchronously, blocking the invoker thread
      * @param ms Delay in milliseconds
      */
+    @SuppressWarnings("SameParameterValue")
     protected static void tryToSleep(long ms) {
         try {
             Thread.sleep(ms);

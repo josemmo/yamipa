@@ -432,7 +432,6 @@ public class FakeImage extends FakeEntity {
         // Instance needs to be loaded
         loading = true;
         tryToRunAsyncTask(() -> {
-            waitForProtocolLib();
             load();
             loading = false;
             spawnOnceLoaded(player);

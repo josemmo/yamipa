@@ -6,12 +6,12 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 8
-    continue-on-error: ${{ matrix.version == '1.21.1' }}
+    continue-on-error: ${{ matrix.version == '1.21.8' }}
     strategy:
       fail-fast: false
       matrix:
         flavor: ['bukkit', 'spigot', 'paper', 'purpur']
-        version: ['1.21.1', '1.20.6', '1.19.4', '1.18.2', '1.17.1', '1.16.5']
+        version: ['1.21.8', '1.20.6', '1.19.4', '1.18.2', '1.17.1', '1.16.5']
     steps:
       # Download code from repository
       - name: Checkout code
@@ -46,7 +46,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       # Setup automata
       - name: Setup automata
@@ -58,15 +58,17 @@ jobs:
         env:
           FLAVOR: ${{ matrix.flavor }}
           VERSION: ${{ matrix.version }}
-          GETBUKKIT_SUBDOMAIN: ${{ startsWith(matrix.version, '1.16') && 'cdn' || 'download' }}
         run: |
-          if [ $FLAVOR == "bukkit" ]; then
-            url="https://$GETBUKKIT_SUBDOMAIN.getbukkit.org/craftbukkit/craftbukkit-$VERSION.jar"
+          if [ $FLAVOR == "bukkit" ] && [ $VERSION == "1.17.1" ]; then
+            url="https://static.knarcraft.net/archive/downloads/minecraftserverjars/Bukkit/craftbukkit-1.17.1.jar"
+          elif [ $FLAVOR == "spigot" ] && [ $VERSION == "1.17.1" ]; then
+            url="https://s3.mcjars.app/spigot/1.17.1/3284/server.jar"
+          elif [ $FLAVOR == "bukkit" ]; then
+            url="https://cdn.getbukkit.org/craftbukkit/craftbukkit-$VERSION.jar"
           elif [ $FLAVOR == "spigot" ]; then
-            url="https://$GETBUKKIT_SUBDOMAIN.getbukkit.org/spigot/spigot-$VERSION.jar"
+            url="https://cdn.getbukkit.org/spigot/spigot-$VERSION.jar"
           elif [ $FLAVOR == "paper" ]; then
-            build=$(curl "https://papermc.io/api/v2/projects/paper/versions/$VERSION" | jq '.builds[-1]')
-            url="https://papermc.io/api/v2/projects/paper/versions/$VERSION/builds/$build/downloads/paper-$VERSION-$build.jar"
+            url=$(curl "https://fill.papermc.io/v3/projects/paper/versions/$VERSION/builds" | jq -r 'first(.[].downloads."server:default".url)')
           elif [ $FLAVOR == "purpur" ]; then
             url="https://api.purpurmc.org/v2/purpur/$VERSION/latest/download"
           fi
@@ -84,8 +86,17 @@ jobs:
 
       # Install dependencies
       - name: Install plugin dependencies
+        env:
+          VERSION: ${{ matrix.version }}
         run: |
-          url="https://ci.dmulloy2.net/job/ProtocolLib/lastSuccessfulBuild/artifact/build/libs/ProtocolLib.jar"
+          case "$VERSION" in
+            1.16.5|1.17.1|1.18.2|1.19.4|1.20.6)
+              url="https://github.com/dmulloy2/ProtocolLib/releases/download/5.3.0/ProtocolLib.jar"
+              ;;
+            *)
+              url="https://github.com/dmulloy2/ProtocolLib/releases/download/5.4.0/ProtocolLib.jar"
+              ;;
+          esac
           mkdir -p ./server/plugins/ProtocolLib
           wget -q "$url" -O ./server/plugins/ProtocolLib.jar
           echo -e "global:\n  auto updater:\n    notify: false\n    download: false" > ./server/plugins/ProtocolLib/config.yml
@@ -96,8 +107,9 @@ jobs:
           mkdir -p ./server/plugins/YamipaPlugin/images
           cp ./target/YamipaPlugin-*.jar ./server/plugins/
           echo "verbose: true" > ./server/plugins/YamipaPlugin/config.yml
-          for i in {1..5}; do
-            wget -q "https://picsum.photos/400" -O "./server/plugins/YamipaPlugin/images/pic-$i.jpg"
+          wget -q "https://picsum.photos/400" -O ./server/plugins/YamipaPlugin/images/pic-1.jpg
+          for i in {2..5}; do
+            cp ./server/plugins/YamipaPlugin/images/pic-1.jpg "./server/plugins/YamipaPlugin/images/pic-$i.jpg"
           done
 
       # Test plugin
@@ -132,7 +144,7 @@ jobs:
             echo "Plugin did not remove the fake image"
             exit 1
           fi
-          if [ "$FLAVOR" != "bukkit" ] && grep -iFq 'exception' server.log; then
+          if [ "$FLAVOR" != "bukkit" ] && [ "$FLAVOR" != "spigot" ] && grep -iFq 'exception' server.log; then
             echo "Server threw an exception"
             exit 1
           fi

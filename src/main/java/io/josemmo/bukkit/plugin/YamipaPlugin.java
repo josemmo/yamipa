@@ -123,11 +123,6 @@ public class YamipaPlugin extends JavaPlugin {
         scheduler = Executors.newScheduledThreadPool(6);
 
         // Warm-up plugin dependencies
-        LOGGER.fine("Waiting for ProtocolLib to be ready...");
-        scheduler.execute(() -> {
-            FakeEntity.waitForProtocolLib();
-            LOGGER.fine("ProtocolLib is now ready");
-        });
         LOGGER.fine("Triggered map color cache warm-up");
         FakeMap.pixelToIndex(Color.RED.getRGB()); // Ask for a color index to force cache generation
 
