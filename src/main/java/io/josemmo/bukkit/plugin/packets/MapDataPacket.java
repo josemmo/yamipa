@@ -19,8 +19,8 @@ public class MapDataPacket extends PacketContainer {
     private @Nullable StructureModifier<?> mapDataModifier;
 
     static {
-        LOCKED_INDEX = (Internals.MINECRAFT_VERSION < 17) ? 1 : 0;
-        if (Internals.MINECRAFT_VERSION < 20.5) {
+        LOCKED_INDEX = (Internals.MINECRAFT_VERSION < 1700) ? 1 : 0;
+        if (Internals.MINECRAFT_VERSION < 2005) {
             MAP_ID_CONSTRUCTOR = null;
         } else {
             Class<?> mapIdClass = MinecraftReflection.getNullableNMS("world.level.saveddata.maps.MapId");
@@ -32,9 +32,9 @@ public class MapDataPacket extends PacketContainer {
         super(PacketType.Play.Server.MAP);
         getModifier().writeDefaults();
 
-        if (Internals.MINECRAFT_VERSION < 17) {
+        if (Internals.MINECRAFT_VERSION < 1700) {
             getBooleans().write(0, false); // Disable tracking position
-        } else if (Internals.MINECRAFT_VERSION < 20.5) {
+        } else if (Internals.MINECRAFT_VERSION < 2005) {
             Class<?> mapDataType = getModifier().getField(4).getType();
             Object mapDataInstance = getModifier().read(4);
             mapDataModifier = new StructureModifier<>(mapDataType).withTarget(mapDataInstance);
@@ -66,11 +66,11 @@ public class MapDataPacket extends PacketContainer {
 
     public @NotNull MapDataPacket setArea(int columns, int rows, int x, int z) {
         if (mapDataModifier == null) {
-            getIntegers()
-                .write(1, x)
-                .write(2, z)
-                .write(3, columns)
-                .write (4, rows);
+                getIntegers()
+                    .write(1, x)
+                    .write(2, z)
+                    .write(3, columns)
+                    .write (4, rows);
         } else {
             mapDataModifier.withType(Integer.TYPE)
                 .write(0, x)

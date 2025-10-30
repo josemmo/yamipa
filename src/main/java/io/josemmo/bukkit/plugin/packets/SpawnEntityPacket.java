@@ -12,7 +12,7 @@ public class SpawnEntityPacket extends PacketContainer {
     private static final int DATA_INDEX;
 
     static {
-        if (Internals.MINECRAFT_VERSION < 19) {
+        if (Internals.MINECRAFT_VERSION < 1900) {
             ROTATION_AS_BYTES = false;
             DATA_INDEX = 6;
         } else {

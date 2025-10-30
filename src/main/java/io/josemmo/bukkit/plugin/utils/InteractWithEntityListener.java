@@ -76,7 +76,7 @@ public abstract class InteractWithEntityListener implements PacketListener {
 
         // Get action
         EnumWrappers.EntityUseAction action;
-        if (Internals.MINECRAFT_VERSION < 17) {
+        if (Internals.MINECRAFT_VERSION < 1700) {
             action = event.getPacket().getEntityUseActions().read(0);
         } else {
             action = event.getPacket().getEnumEntityUseActions().read(0).getAction();

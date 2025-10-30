@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class FakeItemFrame extends FakeEntity {
     public static final int MIN_FRAME_ID = Integer.MAX_VALUE / 4;
     public static final int MAX_FRAME_ID = Integer.MAX_VALUE;
-    private static final boolean SUPPORTS_GLOWING = Internals.MINECRAFT_VERSION >= 17;
+    private static final boolean SUPPORTS_GLOWING = Internals.MINECRAFT_VERSION >= 1700;
     private static final Logger LOGGER = Logger.getLogger("FakeItemFrame");
     private static final AtomicInteger LAST_FRAME_ID = new AtomicInteger(MAX_FRAME_ID);
     private final int id;
@@ -67,7 +67,7 @@ public class FakeItemFrame extends FakeEntity {
         this.rotation = rotation;
         this.glowing = glowing;
         this.maps = maps;
-        LOGGER.fine("Created FakeItemFrame#" + this.id + " using " + this.maps.length + " FakeMap(s)");
+    LOGGER.fine("Created FakeItemFrame#" + this.id + " using " + this.maps.length + " FakeMap(s)");
     }
 
     /**

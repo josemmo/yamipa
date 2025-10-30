@@ -13,7 +13,7 @@ import com.comphenix.protocol.utility.MinecraftReflection;
 import com.mojang.brigadier.CommandDispatcher;
 
 public class Internals {
-    public static final float MINECRAFT_VERSION;
+    public static final int MINECRAFT_VERSION;
     private static final CommandDispatcher<?> DISPATCHER;
     private static final CommandMap COMMAND_MAP;
     private static @Nullable Method GET_BUKKIT_SENDER_METHOD = null;
@@ -23,7 +23,9 @@ public class Internals {
             // Get Minecraft version
             String version = Bukkit.getVersion();
             version = version.substring(version.lastIndexOf("(MC: 1.")+7, version.length()-1);
-            MINECRAFT_VERSION = Float.parseFloat(version);
+            String major = version.contains(".") ? version.substring(0, version.indexOf(".")) : version;
+            String minor = version.contains(".") ? version.substring(version.indexOf(".")+1) : "0";
+            MINECRAFT_VERSION = Integer.parseInt(major) * 100 + Integer.parseInt(minor);
 
             // Get "org.bukkit.craftbukkit.CraftServer" references
             Server obcInstance = Bukkit.getServer();
