@@ -4,6 +4,7 @@ import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.PacketContainer;
 import io.josemmo.bukkit.plugin.utils.Internals;
 import org.bukkit.entity.EntityType;
+import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import java.util.UUID;
 
@@ -16,17 +17,25 @@ public class SpawnEntityPacket extends PacketContainer {
             ROTATION_AS_BYTES = false;
             DATA_INDEX = 6;
         } else {
-            DATA_INDEX = 4;
             ROTATION_AS_BYTES = true;
+            if (Internals.MINECRAFT_VERSION < 2109) {
+                DATA_INDEX = 4;
+            } else {
+                DATA_INDEX = 1;
+            }
         }
     }
 
     public SpawnEntityPacket() {
         super(PacketType.Play.Server.SPAWN_ENTITY);
-        getIntegers()
-            .write(1, 0)
-            .write(2, 0)
-            .write(3, 0);
+        if (Internals.MINECRAFT_VERSION < 2109) {
+            getIntegers()
+                .write(1, 0)
+                .write(2, 0)
+                .write(3, 0);
+        } else {
+            getVectors().write(0, new Vector(0, 0, 0)); // movement Vec3 = 0
+        }
         getUUIDs()
             .write(0, UUID.randomUUID());
     }
