@@ -66,11 +66,11 @@ public class MapDataPacket extends PacketContainer {
 
     public @NotNull MapDataPacket setArea(int columns, int rows, int x, int z) {
         if (mapDataModifier == null) {
-                getIntegers()
-                    .write(1, x)
-                    .write(2, z)
-                    .write(3, columns)
-                    .write (4, rows);
+            getIntegers()
+                .write(1, x)
+                .write(2, z)
+                .write(3, columns)
+                .write (4, rows);
         } else {
             mapDataModifier.withType(Integer.TYPE)
                 .write(0, x)

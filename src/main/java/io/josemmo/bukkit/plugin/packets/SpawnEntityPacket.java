@@ -18,11 +18,7 @@ public class SpawnEntityPacket extends PacketContainer {
             DATA_INDEX = 6;
         } else {
             ROTATION_AS_BYTES = true;
-            if (Internals.MINECRAFT_VERSION < 2109) {
-                DATA_INDEX = 4;
-            } else {
-                DATA_INDEX = 1;
-            }
+            DATA_INDEX = (Internals.MINECRAFT_VERSION < 2109) ? 4 : 1;
         }
     }
 
@@ -34,7 +30,7 @@ public class SpawnEntityPacket extends PacketContainer {
                 .write(2, 0)
                 .write(3, 0);
         } else {
-            getVectors().write(0, new Vector(0, 0, 0)); // movement Vec3 = 0
+            getVectors().write(0, new Vector(0, 0, 0));
         }
         getUUIDs()
             .write(0, UUID.randomUUID());

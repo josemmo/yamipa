@@ -13,6 +13,14 @@ import com.comphenix.protocol.utility.MinecraftReflection;
 import com.mojang.brigadier.CommandDispatcher;
 
 public class Internals {
+    /**
+     * Minecraft version in the form of mmpp (mm is 2-digit minor, pp is 2-digit patch), major number is always ignored.
+     * <p>
+     * Examples:
+     * <li> "1.16" becomes 1600
+     * <li> "1.20.3" becomes 2003
+     * <li> "1.21.10" becomes 2110
+     * */
     public static final int MINECRAFT_VERSION;
     private static final CommandDispatcher<?> DISPATCHER;
     private static final CommandMap COMMAND_MAP;
@@ -21,11 +29,11 @@ public class Internals {
     static {
         try {
             // Get Minecraft version
-            String version = Bukkit.getVersion();
-            version = version.substring(version.lastIndexOf("(MC: 1.")+7, version.length()-1);
-            String major = version.contains(".") ? version.substring(0, version.indexOf(".")) : version;
-            String minor = version.contains(".") ? version.substring(version.indexOf(".")+1) : "0";
-            MINECRAFT_VERSION = Integer.parseInt(major) * 100 + Integer.parseInt(minor);
+            String rawVersion = Bukkit.getVersion();
+            String version = rawVersion.substring(rawVersion.lastIndexOf("(MC: 1.")+7, rawVersion.length()-1);
+            String minorNumber = version.contains(".") ? version.substring(0, version.indexOf(".")) : version;
+            String patchNumber = version.contains(".") ? version.substring(version.indexOf(".")+1) : "0";
+            MINECRAFT_VERSION = Integer.parseInt(minorNumber) * 100 + Integer.parseInt(patchNumber);
 
             // Get "org.bukkit.craftbukkit.CraftServer" references
             Server obcInstance = Bukkit.getServer();
