@@ -22,10 +22,10 @@ public class EntityMetadataPacket extends PacketContainer {
     private final List<WrappedDataValue> values = new ArrayList<>(); // For >= 1.19.3
 
     static {
-        USE_DATA_WATCHER = (Internals.MINECRAFT_VERSION < 19.3);
-        if (Internals.MINECRAFT_VERSION < 17) { // Minecraft 1.16.x
+        USE_DATA_WATCHER = (Internals.MINECRAFT_VERSION < 1903);
+        if (Internals.MINECRAFT_VERSION < 1700) { // Minecraft 1.16.x
             ITEM_INDEX = 7;
-        } else if (Internals.MINECRAFT_VERSION < 21.6) { // Minecraft 1.17.x to 1.21.5
+        } else if (Internals.MINECRAFT_VERSION < 2106) { // Minecraft 1.17.x to 1.21.5
             ITEM_INDEX = 8;
         } else { // Minecraft 1.21.6 and upwards
             ITEM_INDEX = 9;
