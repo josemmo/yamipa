@@ -103,6 +103,14 @@ public class ItemService extends InteractWithEntityListener implements Listener 
         }
     }
 
+    // Dirty helper function to "subtract" 1 from "behind" a block face
+    private Location subtractFromLocation(Location original, BlockFace face) {
+        Location behind = original.clone();
+        behind.add(face.getOppositeFace().getDirection());
+
+        return behind;
+    }
+
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onPlaceItem(@NotNull HangingPlaceEvent event) {
         Player player = event.getPlayer();
@@ -164,8 +172,9 @@ public class ItemService extends InteractWithEntityListener implements Listener 
         }
 
         // Try to place image in world
-        Location location = event.getBlock().getLocation();
-        boolean success = ImageCommand.placeImage(player, image, width, height, flags, location, event.getBlockFace());
+        BlockFace face = event.getBlockFace();
+        Location location = subtractFromLocation(event.getBlock().getLocation(), face);
+        boolean success = ImageCommand.placeImage(player, image, width, height, flags, location, face);
         if (!success) return;
 
         // Decrement item from player's inventory
