@@ -1,7 +1,6 @@
 package io.josemmo.bukkit.plugin.renderer;
 
 import org.bukkit.Bukkit;
-import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.jetbrains.annotations.NotNull;
@@ -15,8 +14,8 @@ import java.util.Objects;
  */
 public class WorldAreaId {
     private static boolean USE_WORLD_VIEW_DISTANCE = true;
-    private static final Map<String, Integer> SIZES_PER_WORLD = new HashMap<>();
-    private final World world;
+    private static final @NotNull Map<String, Integer> SIZES_PER_WORLD = new HashMap<>();
+    private final @NotNull World world;
     private final int x;
     private final int z;
     private WorldAreaId[] neighborhood = null;
@@ -35,8 +34,7 @@ public class WorldAreaId {
      * @return          World area ID
      */
     public static @NotNull WorldAreaId fromLocation(@NotNull Location location) {
-        Chunk chunk = location.getChunk();
-        return new WorldAreaId(chunk.getWorld(), chunk.getX() >> 2, chunk.getZ() >> 2);
+        return new WorldAreaId(location.getWorld(), location.getBlockX() >> 6, location.getBlockZ() >> 6);
     }
 
     /**
@@ -71,7 +69,7 @@ public class WorldAreaId {
 
         // Calculate neighborhood size from world's view distance
         // NOTE: World size is cached to prevent issues with plugins that modify it at runtime
-        int size = SIZES_PER_WORLD.computeIfAbsent(world.getName(), (__) -> {
+        int size = SIZES_PER_WORLD.computeIfAbsent(world.getName(), __ -> {
             int distance = USE_WORLD_VIEW_DISTANCE ? world.getViewDistance() : Bukkit.getServer().getViewDistance();
             return distance / 4;
         });

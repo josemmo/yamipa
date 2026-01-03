@@ -3,17 +3,16 @@ package io.josemmo.bukkit.plugin.utils;
 import com.comphenix.protocol.ProtocolLibrary;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
 import io.josemmo.bukkit.plugin.packets.ActionBarPacket;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import java.util.concurrent.ScheduledFuture;
 
 public class ActionBar {
     private static final Logger LOGGER = Logger.getLogger("ActionBar");
-    private static final YamipaPlugin plugin = YamipaPlugin.getInstance();
     private final Player player;
     private String message;
-    private BukkitTask task = null;
+    private @Nullable ScheduledFuture<?> task = null;
 
     private ActionBar(@NotNull Player player, @NotNull String message) {
         this.player = player;
@@ -83,7 +82,7 @@ public class ActionBar {
      */
     public ActionBar start() {
         if (task == null) {
-            task = Bukkit.getScheduler().runTaskTimer(plugin, this::sendOnce, 0L, 40L);
+            task = YamipaPlugin.getInstance().getScheduler().runInterval(this::sendOnce, 0, 2000);
         }
         return this;
     }
@@ -94,7 +93,7 @@ public class ActionBar {
      */
     public ActionBar stop() {
         if (task != null) {
-            task.cancel();
+            task.cancel(true);
             task = null;
         }
         return this;

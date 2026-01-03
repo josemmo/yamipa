@@ -51,6 +51,7 @@ public class ItemService extends InteractWithEntityListener implements Listener 
      * @param  flags  Image flags
      * @return        Image item
      */
+    @SuppressWarnings("deprecation")
     public static @NotNull ItemStack getImageItem(@NotNull ImageFile image, int amount, int width, int height, int flags) {
         ItemStack itemStack = new ItemStack(Material.ITEM_FRAME, amount);
         ItemMeta itemMeta = Objects.requireNonNull(itemStack.getItemMeta());
@@ -112,6 +113,7 @@ public class ItemService extends InteractWithEntityListener implements Listener 
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
+    @SuppressWarnings("deprecation")
     public void onPlaceItem(@NotNull HangingPlaceEvent event) {
         Player player = event.getPlayer();
         if (player == null) return;
@@ -194,6 +196,7 @@ public class ItemService extends InteractWithEntityListener implements Listener 
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public boolean onAttack(@NotNull Player player, @NotNull Block block, @NotNull BlockFace face) {
         ImageRenderer renderer = YamipaPlugin.getInstance().getRenderer();
         Location location = block.getLocation();
@@ -226,8 +229,11 @@ public class ItemService extends InteractWithEntityListener implements Listener 
             ImageFile imageFile = Objects.requireNonNull(image.getFile());
             ItemStack imageItem = getImageItem(imageFile, 1, image.getWidth(), image.getHeight(), image.getFlags());
             Location dropLocation = location.clone().add(0.5, -0.5, 0.5).add(face.getDirection());
-            YamipaPlugin plugin = YamipaPlugin.getInstance();
-            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> block.getWorld().dropItem(dropLocation, imageItem));
+            YamipaPlugin.getInstance().getScheduler().runInGame(
+                () -> block.getWorld().dropItem(dropLocation, imageItem),
+                dropLocation,
+                0
+            );
         }
 
         return false;

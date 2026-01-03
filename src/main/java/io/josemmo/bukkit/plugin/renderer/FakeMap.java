@@ -44,7 +44,7 @@ public class FakeMap extends FakeEntity {
      * @param  pixel RGBA pixel value
      * @return       Closest Minecraft color index
      */
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings("removal")
     public static byte pixelToIndex(int pixel) {
         return MapPalette.matchColor(new Color(pixel, true));
     }
@@ -127,6 +127,7 @@ public class FakeMap extends FakeEntity {
      * @param  player Player who is expected to receive pixels
      * @return        Whether re-send authorization was granted or not
      */
+    @SuppressWarnings("deprecation")
     public boolean requestResend(@NotNull Player player) {
         UUID uuid = player.getUniqueId();
         long now = Instant.now().getEpochSecond();

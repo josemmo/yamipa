@@ -6,20 +6,29 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 8
-    continue-on-error: ${{ matrix.version == '1.21.7' }}
+    continue-on-error: ${{ matrix.version == '1.21.11' }}
     strategy:
       fail-fast: false
       matrix:
-        flavor: ['bukkit', 'spigot', 'paper', 'purpur']
-        version: ['1.21.7', '1.21.5', '1.20.6', '1.19.4', '1.18.2', '1.17.1', '1.16.5']
+        flavor: ['spigot', 'paper', 'purpur', 'folia']
+        version: ['1.21.11', '1.21.8', '1.20.6', '1.19.4', '1.18.2', '1.17.1', '1.16.5']
+        exclude:
+          - flavor: folia
+            version: 1.16.5
+          - flavor: folia
+            version: 1.17.1
+          - flavor: folia
+            version: 1.18.2
+          - flavor: folia
+            version: 1.19.4
     steps:
       # Download code from repository
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       # Setup Java (for building)
       - name: Setup JDK (for building)
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '21'
@@ -30,7 +39,7 @@ jobs:
 
       # Setup Java (for testing)
       - name: Setup JDK (for testing)
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: |
@@ -44,9 +53,9 @@ jobs:
 
       # Setup Node.js
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: '22'
+          node-version: '24'
 
       # Setup automata
       - name: Setup automata
@@ -59,14 +68,16 @@ jobs:
           FLAVOR: ${{ matrix.flavor }}
           VERSION: ${{ matrix.version }}
         run: |
-          if [ $FLAVOR == "bukkit" ]; then
-            url="https://cdn.getbukkit.org/craftbukkit/craftbukkit-$VERSION.jar"
+          if [ $FLAVOR == "spigot" ] && [ $VERSION == "1.17.1" ]; then
+            url="https://files.mcjars.app/spigot/1.17.1/3284/server.jar"
           elif [ $FLAVOR == "spigot" ]; then
             url="https://cdn.getbukkit.org/spigot/spigot-$VERSION.jar"
           elif [ $FLAVOR == "paper" ]; then
             url=$(curl "https://fill.papermc.io/v3/projects/paper/versions/$VERSION/builds" | jq -r 'first(.[].downloads."server:default".url)')
           elif [ $FLAVOR == "purpur" ]; then
             url="https://api.purpurmc.org/v2/purpur/$VERSION/latest/download"
+          elif [ $FLAVOR == "folia" ]; then
+            url=$(curl "https://fill.papermc.io/v3/projects/folia/versions/$VERSION/builds" | jq -r 'first(.[].downloads."server:default".url)')
           fi
           mkdir ./server && cd ./server
           wget -nv "$url" -O server.jar
@@ -86,11 +97,11 @@ jobs:
           VERSION: ${{ matrix.version }}
         run: |
           case "$VERSION" in
-            1.16.5|1.17.1|1.18.2|1.19.4|1.20.6|1.21.5)
+            1.16.5|1.17.1|1.18.2|1.19.4|1.20.6)
               url="https://github.com/dmulloy2/ProtocolLib/releases/download/5.3.0/ProtocolLib.jar"
               ;;
             *)
-              url="https://ci.dmulloy2.net/job/ProtocolLib/lastSuccessfulBuild/artifact/build/libs/ProtocolLib.jar"
+              url="https://github.com/dmulloy2/ProtocolLib/releases/download/5.4.0/ProtocolLib.jar"
               ;;
           esac
           mkdir -p ./server/plugins/ProtocolLib
@@ -103,8 +114,9 @@ jobs:
           mkdir -p ./server/plugins/YamipaPlugin/images
           cp ./target/YamipaPlugin-*.jar ./server/plugins/
           echo "verbose: true" > ./server/plugins/YamipaPlugin/config.yml
-          for i in {1..5}; do
-            wget -q "https://picsum.photos/400" -O "./server/plugins/YamipaPlugin/images/pic-$i.jpg"
+          wget -q "https://picsum.photos/400" -O ./server/plugins/YamipaPlugin/images/pic-1.jpg
+          for i in {2..5}; do
+            cp ./server/plugins/YamipaPlugin/images/pic-1.jpg "./server/plugins/YamipaPlugin/images/pic-$i.jpg"
           done
 
       # Test plugin
@@ -139,7 +151,7 @@ jobs:
             echo "Plugin did not remove the fake image"
             exit 1
           fi
-          if [ "$FLAVOR" != "bukkit" ] && [ "$FLAVOR" != "spigot" ] && grep -iFq 'exception' server.log; then
+          if [ "$FLAVOR" != "spigot" ] && grep -iFq 'exception' server.log; then
             echo "Server threw an exception"
             exit 1
           fi

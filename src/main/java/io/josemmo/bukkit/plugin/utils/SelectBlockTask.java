@@ -58,6 +58,7 @@ public class SelectBlockTask {
      * Run task
      * @param helpMessage Help message for the player
      */
+    @SuppressWarnings("deprecation")
     public void run(@NotNull String helpMessage) {
         UUID uuid = player.getUniqueId();
 

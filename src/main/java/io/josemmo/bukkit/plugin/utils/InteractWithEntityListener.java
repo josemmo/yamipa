@@ -2,10 +2,7 @@ package io.josemmo.bukkit.plugin.utils;
 
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
-import com.comphenix.protocol.events.ListenerPriority;
-import com.comphenix.protocol.events.ListeningWhitelist;
-import com.comphenix.protocol.events.PacketEvent;
-import com.comphenix.protocol.events.PacketListener;
+import com.comphenix.protocol.events.*;
 import com.comphenix.protocol.wrappers.EnumWrappers;
 import io.josemmo.bukkit.plugin.YamipaPlugin;
 import org.bukkit.block.Block;
@@ -49,18 +46,35 @@ public abstract class InteractWithEntityListener implements PacketListener {
      * Register listener
      */
     public void register() {
-        ProtocolLibrary.getProtocolManager().addPacketListener(this);
+        ProtocolLibrary.getProtocolManager().getAsynchronousManager().registerAsyncHandler(this).start();
     }
 
     /**
      * Unregister listener
      */
     public void unregister() {
-        ProtocolLibrary.getProtocolManager().removePacketListener(this);
+        ProtocolLibrary.getProtocolManager().getAsynchronousManager().unregisterAsyncHandler(this);
     }
 
     @Override
     public final void onPacketReceiving(@NotNull PacketEvent event) {
+        event.getAsyncMarker().incrementProcessingDelay();
+        YamipaPlugin.getInstance().getScheduler().runInGame(() -> {
+            try {
+                handleInteraction(event);
+            } catch (Exception e) {
+                LOGGER.severe("Failed to handle entity interaction", e);
+            } finally {
+                ProtocolLibrary.getProtocolManager().getAsynchronousManager().signalPacketTransmission(event);
+            }
+        }, event.getPlayer().getLocation(), -1);
+    }
+
+    /**
+     * Handle entity interaction
+     * @param event Received packet event
+     */
+    private void handleInteraction(@NotNull PacketEvent event) {
         Player player = event.getPlayer();
 
         // Discard out-of-range packets
@@ -76,7 +90,7 @@ public abstract class InteractWithEntityListener implements PacketListener {
 
         // Get action
         EnumWrappers.EntityUseAction action;
-        if (Internals.MINECRAFT_VERSION < 17) {
+        if (Internals.MINECRAFT_VERSION < 1700) {
             action = event.getPacket().getEntityUseActions().read(0);
         } else {
             action = event.getPacket().getEnumEntityUseActions().read(0).getAction();

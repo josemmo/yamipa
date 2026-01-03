@@ -119,7 +119,7 @@ public class Command {
         return root;
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
+    @SuppressWarnings({"deprecation", "rawtypes", "unchecked"})
     private @NotNull ArgumentBuilder buildElement(@NotNull ArgumentBuilder parent, int argIndex) {
         // Attach requirement handler to each command element
         parent.requires(source -> {

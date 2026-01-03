@@ -98,14 +98,14 @@ public abstract class FileSystemWatcher {
             try {
                 Files.walkFileTree(basePath, options, MAX_DEPTH, new SimpleFileVisitor<Path>() {
                     @Override
-                    public FileVisitResult preVisitDirectory(Path path, BasicFileAttributes attrs) {
+                    public @NotNull FileVisitResult preVisitDirectory(@NotNull Path path, @NotNull BasicFileAttributes attrs) {
                         fileTree.putIfAbsent(path, new HashMap<>());
                         deletedDirectories.remove(path);
                         return FileVisitResult.CONTINUE;
                     }
 
                     @Override
-                    public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) {
+                    public @NotNull FileVisitResult visitFile(@NotNull Path path, @NotNull BasicFileAttributes attrs) {
                         Map<Path, Long> subtree = fileTree.get(path.getParent());
                         Long oldModifiedAt = subtree.get(path);
                         long newModifiedAt = attrs.lastModifiedTime().toMillis();

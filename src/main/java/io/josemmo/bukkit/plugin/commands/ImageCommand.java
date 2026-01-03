@@ -30,6 +30,7 @@ import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+@SuppressWarnings("deprecation")
 public class ImageCommand {
     private static final int ITEMS_PER_PAGE = 9;
     private static final int MAX_PATH_DEPTH = 10;
@@ -160,7 +161,7 @@ public class ImageCommand {
         // Download and validate remote file
         final URL finalUrl = url;
         final String finalReferrer = referrer;
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+        plugin.getScheduler().run(() -> {
             try {
                 URLConnection conn = finalUrl.openConnection();
                 PluginDescriptionFile desc = plugin.getDescription();
@@ -353,8 +354,7 @@ public class ImageCommand {
 
             // Basic information
             player.sendMessage(ChatColor.GOLD + "Filename: " + ChatColor.RESET + image.getFilename());
-            player.sendMessage(ChatColor.GOLD + "World: " + ChatColor.RESET +
-                image.getLocation().getChunk().getWorld().getName());
+            player.sendMessage(ChatColor.GOLD + "World: " + ChatColor.RESET + image.getLocation().getWorld().getName());
             player.sendMessage(ChatColor.GOLD + "Coordinates: " + ChatColor.RESET +
                 image.getLocation().getBlockX() + ", " +
                 image.getLocation().getBlockY() + ", " +

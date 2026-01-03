@@ -20,7 +20,6 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 
 public class FakeImage extends FakeEntity {
@@ -52,6 +51,7 @@ public class FakeImage extends FakeEntity {
     private final int flags;
     private final BiFunction<Integer, Integer, Vector> getLocationVector;
     private final Set<Player> observingPlayers = new HashSet<>();
+    private final List<Runnable> spawnCallbacks = new ArrayList<>();
     private @Nullable Runnable onLoadedListener = null;
 
     // Generated values
@@ -389,11 +389,10 @@ public class FakeImage extends FakeEntity {
         YamipaPlugin plugin = YamipaPlugin.getInstance();
         boolean isAnimationEnabled = plugin.getRenderer().isAnimationEnabled();
         if (isAnimationEnabled && task == null && hasFlag(FLAG_ANIMATABLE) && numOfSteps > 1) {
-            task = plugin.getScheduler().scheduleAtFixedRate(
+            task = plugin.getScheduler().runInterval(
                 this::nextStep,
                 0,
-                delay*50L,
-                TimeUnit.MILLISECONDS
+                delay*50L
             );
             LOGGER.fine("Spawned animation task for FakeImage#(" + location + "," + face + ")");
         }
@@ -409,7 +408,7 @@ public class FakeImage extends FakeEntity {
      * Spawn image for a player
      * @param player Player instance
      */
-    public void spawn(@NotNull Player player) {
+    public synchronized void spawn(@NotNull Player player) {
         LOGGER.fine("Received request to spawn FakeImage#(" + location + "," + face + ") for Player#" + player.getName());
 
         // Send pixels if instance is already loaded
@@ -418,25 +417,24 @@ public class FakeImage extends FakeEntity {
             return;
         }
 
-        // Wait for instance to load if loading
-        if (loading) {
-            tryToRunAsyncTask(() -> {
-                while (loading) {
-                    tryToSleep(5);
-                }
-                spawnOnceLoaded(player);
-            });
-            return;
-        }
+        // Add callback for when instance finishes loading
+        spawnCallbacks.add(() -> spawnOnceLoaded(player));
 
-        // Instance needs to be loaded
-        loading = true;
-        tryToRunAsyncTask(() -> {
-            waitForProtocolLib();
-            load();
-            loading = false;
-            spawnOnceLoaded(player);
-        });
+        // Load instance only on the first call
+        if (!loading) {
+            loading = true;
+            FakeImage thisInstance = this;
+            YamipaPlugin.getInstance().getScheduler().run(() -> {
+                load();
+                synchronized (thisInstance) {
+                    loading = false;
+                    for (Runnable callback : spawnCallbacks) {
+                        callback.run();
+                    }
+                    spawnCallbacks.clear();
+                }
+            });
+        }
     }
 
     /**
@@ -462,7 +460,7 @@ public class FakeImage extends FakeEntity {
     /**
      * Destroy image for all players
      */
-    public void destroy() {
+    public synchronized void destroy() {
         if (frames != null) {
             destroy(null);
         }
@@ -472,7 +470,7 @@ public class FakeImage extends FakeEntity {
      * Destroy image a player
      * @param player Player instance or NULL for all observing players
      */
-    public void destroy(@Nullable Player player) {
+    public synchronized void destroy(@Nullable Player player) {
         LOGGER.fine(
             "Received request to destroy FakeImage#(" + location + "," + face + ") for " +
             (player == null ? "all players" : "Player#" + player.getName())
@@ -509,7 +507,7 @@ public class FakeImage extends FakeEntity {
      * Notify player quit from server
      * @param player Player instance
      */
-    public void notifyPlayerQuit(@NotNull Player player) {
+    public synchronized void notifyPlayerQuit(@NotNull Player player) {
         observingPlayers.remove(player);
         if (observingPlayers.isEmpty()) {
             invalidate();

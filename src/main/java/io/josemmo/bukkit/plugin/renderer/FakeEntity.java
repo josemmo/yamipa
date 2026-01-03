@@ -6,20 +6,17 @@ import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.injector.netty.manager.NetworkManagerInjector;
 import com.comphenix.protocol.wrappers.WrappedDataWatcher;
-import io.josemmo.bukkit.plugin.YamipaPlugin;
 import io.josemmo.bukkit.plugin.utils.Internals;
 import io.josemmo.bukkit.plugin.utils.Logger;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Field;
-import java.lang.reflect.Type;
 
 public abstract class FakeEntity {
     private static final Logger LOGGER = Logger.getLogger("FakeEntity");
     private static final ProtocolManager CONNECTION = ProtocolLibrary.getProtocolManager();
     private static @Nullable NetworkManagerInjector NETWORK_MANAGER_INJECTOR;
-    private static boolean READY = false;
 
     static {
         try {
@@ -39,43 +36,19 @@ public abstract class FakeEntity {
     }
 
     /**
-     * Wait for ProtocolLib to be ready
+     * Initialize ProtocolLib
      * <p>
-     * NOTE: Will wait synchronously, blocking the invoker thread
+     * Fix for ProtocolLib not being ready when the first network packets are being sent by the library.
+     * Without calling this method, some packets are missed when the first player joins the server since boot,
+     * causing images to not be rendered.
      */
-    public static synchronized void waitForProtocolLib() {
-        if (READY) {
-            // ProtocolLib is ready
-            return;
-        }
-
-        int retry = 0;
-        while (true) {
-            try {
-                WrappedDataWatcher.Registry.get((Type) Byte.class);
-                READY = true;
-                break;
-            } catch (Exception e) {
-                if (++retry > 20) {
-                    // Exhausted max. retries
-                    throw e;
-                }
-                tryToSleep(200);
-            }
-        }
-    }
-
-    /**
-     * Try to sleep
-     * <p>
-     * NOTE: Will wait synchronously, blocking the invoker thread
-     * @param ms Delay in milliseconds
-     */
-    protected static void tryToSleep(long ms) {
+    public static void initialize() {
+        LOGGER.fine("Initializing ProtocolLib...");
         try {
-            Thread.sleep(ms);
-        } catch (Exception __) {
-            // Fail silently
+            WrappedDataWatcher.Registry.getVectorSerializer();
+            LOGGER.fine("ProtocolLib is now ready");
+        } catch (Exception e) {
+            LOGGER.severe("Failed to initialize ProtocolLib, images may not render for first player joining", e);
         }
     }
 
@@ -108,7 +81,7 @@ public abstract class FakeEntity {
      * @param packets Packets to send
      */
     protected static void tryToSendPackets(@NotNull Player player, @NotNull Iterable<PacketContainer> packets) {
-        if (Internals.MINECRAFT_VERSION < 19.4) {
+        if (Internals.MINECRAFT_VERSION < 1904) {
             for (PacketContainer packet : packets) {
                 tryToSendPacket(player, packet);
             }
@@ -117,13 +90,5 @@ public abstract class FakeEntity {
             container.getPacketBundles().write(0, packets);
             tryToSendPacket(player, container);
         }
-    }
-
-    /**
-     * Try to run asynchronous task
-     * @param callback Callback to execute
-     */
-    protected static void tryToRunAsyncTask(@NotNull Runnable callback) {
-        YamipaPlugin.getInstance().getScheduler().execute(callback);
     }
 }

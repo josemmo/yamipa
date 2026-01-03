@@ -24,18 +24,18 @@ Download the JAR file for the [latest release](https://github.com/josemmo/yamipa
 ### Requirements
 Before installing Yamipa make sure you meet the following requirements:
 
-- CraftBukkit, Spigot or PaperMC 1.16 or higher
-- [ProtocolLib](https://www.spigotmc.org/resources/protocollib.1997/) v5.4.0 or higher
+- Spigot/PaperMC/forks 1.16 or higher or Folia
+- [ProtocolLib](https://www.spigotmc.org/resources/protocollib.1997/) v5.3.0 or higher
 
 Here are the Minecraft distributions where Yamipa should be able to run:
-| Minecraft version | CraftBukkit | Spigot | PaperMC |
-|------------------:|:-----------:|:------:|:-------:|
-|            1.16.x |     ✅      |   ✅    |   ✅    |
-|     1.17 & 1.17.1 |     ✅      |   ✅    |   ✅    |
-|     1.18 & 1.18.x |     ✅      |   ✅    |   ✅    |
-|     1.19 & 1.19.x |     ✅      |   ✅    |   ✅    |
-|     1.20 & 1.20.x |     ✅      |   ✅    |   ✅    |
-|     1.21 & 1.21.x |     ✅      |   ✅    |   ✅    |
+| Minecraft version | Spigot | PaperMC | Purpur | Folia |
+|------------------:|:------:|:-------:|:------:|:-----:|
+|            1.16.x |   ✅    |   ✅     |   ✅    |       |
+|     1.17 & 1.17.1 |   ✅    |   ✅     |   ✅    |       |
+|     1.18 & 1.18.x |   ✅    |   ✅     |   ✅    |       |
+|     1.19 & 1.19.x |   ✅    |   ✅     |   ✅    |       |
+|     1.20 & 1.20.x |   ✅    |   ✅     |   ✅    |   ✅   |
+|     1.21 & 1.21.x |   ✅    |   ✅     |   ✅    |   ✅   |
 
 ## Configuration
 Yamipa is ready-to-go right out of the box. By default, it creates the following files and directories under the
@@ -49,13 +49,15 @@ shouldn't modify its contents.
 You can change the path of these files by creating a `config.yml` file in the plugin configuration directory.
 Here are the default configuration values if you don't specify them:
 ```yaml
-verbose: false           # Set to "true" to enable more verbose logging
-animate-images: true     # Set to "false" to disable GIF support
-images-path: images      # Path to images directory
-cache-path: cache        # Path to cache directory
-data-path: images.dat    # Path to placed images database file
-allowed-paths: null      # Set to a RegExp to limit accessible images to players
-max-image-dimension: 30  # Maximum width or height in blocks allowed in images
+command-name: yamipa              # Name of the root command
+command-aliases: [image, images]  # Aliases for the root command, can be an empty list
+verbose: false                    # Set to "true" to enable more verbose logging
+animate-images: true              # Set to "false" to disable GIF support
+images-path: images               # Path to images directory
+cache-path: cache                 # Path to cache directory
+data-path: images.dat             # Path to placed images database file
+allowed-paths: null               # Set to a RegExp to limit accessible images to players
+max-image-dimension: 30           # Maximum width or height in blocks allowed in images
 ```
 
 For more information on how to set a different `allowed-paths` or `max-image-dimension` value per player, see the

@@ -4,18 +4,19 @@ import io.josemmo.bukkit.plugin.commands.ImageCommandBridge;
 import io.josemmo.bukkit.plugin.renderer.*;
 import io.josemmo.bukkit.plugin.storage.ImageStorage;
 import io.josemmo.bukkit.plugin.utils.Logger;
+import io.josemmo.bukkit.plugin.utils.Scheduler;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.SimplePie;
-import org.bukkit.Bukkit;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import java.awt.Color;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Function;
 
 public class YamipaPlugin extends JavaPlugin {
@@ -23,10 +24,10 @@ public class YamipaPlugin extends JavaPlugin {
     private static final Logger LOGGER = Logger.getLogger();
     private static @Nullable YamipaPlugin INSTANCE;
     private boolean verbose;
+    private @Nullable Scheduler scheduler;
     private @Nullable ImageStorage storage;
     private @Nullable ImageRenderer renderer;
     private @Nullable ItemService itemService;
-    private @Nullable ScheduledExecutorService scheduler;
     private @Nullable Metrics metrics;
 
     /**
@@ -36,6 +37,15 @@ public class YamipaPlugin extends JavaPlugin {
     public static @NotNull YamipaPlugin getInstance() {
         Objects.requireNonNull(INSTANCE, "Cannot get plugin instance if plugin is not running");
         return INSTANCE;
+    }
+
+    /**
+     * Get tasks scheduler
+     * @return Tasks scheduler
+     */
+    public @NotNull Scheduler getScheduler() {
+        Objects.requireNonNull(scheduler, "Cannot get scheduler instance if plugin is not running");
+        return scheduler;
     }
 
     /**
@@ -57,15 +67,6 @@ public class YamipaPlugin extends JavaPlugin {
     }
 
     /**
-     * Get internal tasks scheduler
-     * @return Tasks scheduler
-     */
-    public @NotNull ScheduledExecutorService getScheduler() {
-        Objects.requireNonNull(scheduler, "Cannot get scheduler instance if plugin is not running");
-        return scheduler;
-    }
-
-    /**
      * Is verbose
      * @return Whether plugin is running in verbose mode
      */
@@ -80,23 +81,42 @@ public class YamipaPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        // Initialize configuration
+        FileConfiguration config = getConfig();
+        config.addDefault("command-name", "yamipa");
+        config.addDefault("command-aliases", Arrays.asList("image", "images"));
+        config.addDefault("verbose", false);
+        config.addDefault("animate-images", true);
+        config.addDefault("images-path", "images");
+        config.addDefault("cache-path", "cache");
+        config.addDefault("data-path", "images.dat");
+        config.addDefault("allowed-paths", null);
+        config.addDefault("max-image-dimension", 30);
+        config.options().copyDefaults(true);
+        saveConfig();
+
         // Initialize logger
-        verbose = getConfig().getBoolean("verbose", false);
+        verbose = config.getBoolean("verbose");
         if (verbose) {
             LOGGER.info("Running on VERBOSE mode");
         }
 
+        // Create scheduler
+        scheduler = new Scheduler();
+
         // Register plugin commands
-        ImageCommandBridge.register(this);
+        String commandName = Objects.requireNonNull(config.getString("command-name"));
+        List<String> commandAliases = config.getStringList("command-aliases");
+        ImageCommandBridge.register(commandName, commandAliases);
 
         // Read plugin configuration paths
         Path basePath = getDataFolder().toPath();
-        String imagesPath = getConfig().getString("images-path", "images");
-        String cachePath = getConfig().getString("cache-path", "cache");
-        String dataPath = getConfig().getString("data-path", "images.dat");
+        String imagesPath = Objects.requireNonNull(config.getString("images-path"));
+        String cachePath = Objects.requireNonNull(config.getString("cache-path"));
+        String dataPath = Objects.requireNonNull(config.getString("data-path"));
 
         // Create image storage
-        String allowedPaths = getConfig().getString("allowed-paths", "");
+        String allowedPaths = config.getString("allowed-paths", "");
         storage = new ImageStorage(
             basePath.resolve(imagesPath).toAbsolutePath().normalize(),
             basePath.resolve(cachePath).toAbsolutePath().normalize(),
@@ -109,9 +129,9 @@ public class YamipaPlugin extends JavaPlugin {
         }
 
         // Create image renderer
-        boolean animateImages = getConfig().getBoolean("animate-images", true);
+        boolean animateImages = config.getBoolean("animate-images");
         LOGGER.info(animateImages ? "Enabled image animation support" : "Image animation support is disabled");
-        int maxImageDimension = getConfig().getInt("max-image-dimension", 30);
+        int maxImageDimension = config.getInt("max-image-dimension");
         renderer = new ImageRenderer(basePath.resolve(dataPath), animateImages, maxImageDimension);
         renderer.start();
 
@@ -119,17 +139,10 @@ public class YamipaPlugin extends JavaPlugin {
         itemService = new ItemService();
         itemService.start();
 
-        // Create thread pool
-        scheduler = Executors.newScheduledThreadPool(6);
-
         // Warm-up plugin dependencies
-        LOGGER.fine("Waiting for ProtocolLib to be ready...");
-        scheduler.execute(() -> {
-            FakeEntity.waitForProtocolLib();
-            LOGGER.fine("ProtocolLib is now ready");
-        });
         LOGGER.fine("Triggered map color cache warm-up");
         FakeMap.pixelToIndex(Color.RED.getRGB()); // Ask for a color index to force cache generation
+        FakeEntity.initialize();
 
         // Initialize bStats
         Function<Integer, String> toStats = number -> {
@@ -172,15 +185,14 @@ public class YamipaPlugin extends JavaPlugin {
             storage = null;
         }
 
-        // Stop internal scheduler
+        // Stop scheduler
         if (scheduler != null) {
-            scheduler.shutdownNow();
+            scheduler.stop();
             scheduler = null;
         }
 
-        // Remove Bukkit listeners and tasks
+        // Remove Bukkit listeners
         HandlerList.unregisterAll(this);
-        Bukkit.getScheduler().cancelTasks(this);
 
         // Unlink reference to instance
         INSTANCE = null;

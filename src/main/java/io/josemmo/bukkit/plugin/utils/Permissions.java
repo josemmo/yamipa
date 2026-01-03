@@ -19,14 +19,13 @@ import me.ryanhamshire.GriefPrevention.GriefPrevention;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import org.anjocaido.groupmanager.GroupManager;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
-import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 
 public class Permissions {
     private static final Logger LOGGER = Logger.getLogger();
@@ -149,18 +148,23 @@ public class Permissions {
         if (griefPrevention == null) {
             return true;
         }
-        YamipaPlugin plugin = YamipaPlugin.getInstance();
-
-        // Build callable depending on permission to check
-        Callable<Boolean> canEditCallable = isBuild ?
-            () -> griefPrevention.allowBuild(player, location) == null :
-            () -> griefPrevention.allowBreak(player, location.getBlock(), location) == null;
 
         // Check permission from primary thread
+        CompletableFuture<Boolean> future = new CompletableFuture<>();
+        YamipaPlugin.getInstance().getScheduler().runInGame(() -> {
+            try {
+                boolean canEdit = isBuild ?
+                    griefPrevention.allowBuild(player, location) == null :
+                    griefPrevention.allowBreak(player, location.getBlock(), location) == null;
+                future.complete(canEdit);
+            } catch (Exception e) {
+                future.completeExceptionally(e);
+            }
+        }, location, -1);
+
+        // Get result
         try {
-            return Bukkit.isPrimaryThread() ?
-                canEditCallable.call() :
-                Bukkit.getScheduler().callSyncMethod(plugin, canEditCallable).get();
+            return future.get();
         } catch (Exception e) {
             LOGGER.severe("Failed to get player permissions from GriefPrevention", e);
             return false;

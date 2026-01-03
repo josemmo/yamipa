@@ -8,32 +8,32 @@ import io.josemmo.bukkit.plugin.renderer.FakeImage;
 import io.josemmo.bukkit.plugin.storage.ImageFile;
 import io.josemmo.bukkit.plugin.utils.Internals;
 import io.josemmo.bukkit.plugin.utils.Logger;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import java.util.List;
 
 public class ImageCommandBridge {
-    private static final String COMMAND_NAME = "yamipa";
-    private static final String[] COMMAND_ALIASES = new String[] {"image", "images"};
     private static final Logger LOGGER = Logger.getLogger("ImageCommandBridge");
 
     /**
      * Register command
-     * @param plugin Plugin instance
+     * @param commandName    Command name
+     * @param commandAliases Command aliases
      */
     @SuppressWarnings({"rawtypes", "unchecked"})
-    public static void register(@NotNull YamipaPlugin plugin) {
+    public static void register(@NotNull String commandName, @NotNull List<String> commandAliases) {
         CommandDispatcher dispatcher = Internals.getDispatcher();
 
         // Register command
-        LiteralCommandNode<?> commandNode = getRootCommand().build().build();
+        LiteralCommandNode<?> commandNode = getRootCommand(commandName).build().build();
         dispatcher.getRoot().addChild(commandNode);
+        LOGGER.fine("Registered \"" + commandName + "\" command");
 
         // Register aliases
-        for (String alias : COMMAND_ALIASES) {
+        for (String alias : commandAliases) {
             LiteralCommandNode<?> aliasNode = new LiteralCommandNode(
                 alias,
                 commandNode.getCommand(),
@@ -43,22 +43,27 @@ public class ImageCommandBridge {
                 commandNode.isFork()
             );
             dispatcher.getRoot().addChild(aliasNode);
+            LOGGER.fine("Registered \"" + alias + "\" alias");
         }
-        LOGGER.fine("Registered plugin command and aliases");
 
         // Fix "minecraft.command.*" permissions
-        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
-            fixPermissions(COMMAND_NAME);
-            for (String alias : COMMAND_ALIASES) {
+        YamipaPlugin.getInstance().getScheduler().runInGame(() -> {
+            fixPermissions(commandName);
+            for (String alias : commandAliases) {
                 fixPermissions(alias);
             }
             LOGGER.fine("Fixed command permissions");
-        });
+        }, 0);
     }
 
+    /**
+     * Get root command
+     * @param  commandName Command name
+     * @return             Root command instance
+     */
     @SuppressWarnings("CodeBlock2Expr")
-    private static @NotNull Command getRootCommand() {
-        Command root = new Command(COMMAND_NAME);
+    private static @NotNull Command getRootCommand(@NotNull String commandName) {
+        Command root = new Command(commandName);
 
         // Help command
         root.withPermission(
@@ -208,6 +213,10 @@ public class ImageCommandBridge {
         return root;
     }
 
+    /**
+     * Fix permissions
+     * @param commandName Command name
+     */
     private static void fixPermissions(@NotNull String commandName) {
         org.bukkit.command.Command command = Internals.getCommandMap().getCommand(commandName);
         if (command != null) { // Command may have been aliased to null in "commands.yml"
