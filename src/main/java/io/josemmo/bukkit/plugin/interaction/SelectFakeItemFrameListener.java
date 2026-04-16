@@ -12,6 +12,7 @@ import io.josemmo.bukkit.plugin.renderer.FakeImage;
 import io.josemmo.bukkit.plugin.renderer.FakeItemFrame;
 import io.josemmo.bukkit.plugin.renderer.ImageRenderer;
 import io.josemmo.bukkit.plugin.utils.Internals;
+import io.josemmo.bukkit.plugin.utils.Logger;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
@@ -22,6 +23,8 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class SelectFakeItemFrameListener implements PacketListener {
     private static final int MAX_BLOCK_DISTANCE = 5;
+    private static final Logger LOGGER = Logger.getLogger("SelectFakeItemFrameListener");
+    private static boolean hasWarnedActionFallback = false;
 
     /**
      * Get fake image instance for player
@@ -97,11 +100,9 @@ public abstract class SelectFakeItemFrameListener implements PacketListener {
         }
 
         // Get action
-        EnumWrappers.EntityUseAction action;
-        if (Internals.MINECRAFT_VERSION < 1700) {
-            action = event.getPacket().getEntityUseActions().read(0);
-        } else {
-            action = event.getPacket().getEnumEntityUseActions().read(0).getAction();
+        EnumWrappers.EntityUseAction action = getEntityUseAction(event);
+        if (action == null) {
+            return;
         }
 
         // Handle event
@@ -109,7 +110,7 @@ public abstract class SelectFakeItemFrameListener implements PacketListener {
         Player player =  event.getPlayer();
         if (action == EnumWrappers.EntityUseAction.ATTACK) {
             allowEvent = onLeftClick(player, entityId);
-        } else if (action == EnumWrappers.EntityUseAction.INTERACT_AT) {
+        } else if (action == EnumWrappers.EntityUseAction.INTERACT_AT || action == EnumWrappers.EntityUseAction.INTERACT) {
             allowEvent = onRightClick(player, entityId);
         }
 
@@ -140,5 +141,31 @@ public abstract class SelectFakeItemFrameListener implements PacketListener {
     @Override
     public final @NotNull Plugin getPlugin() {
         return YamipaPlugin.getInstance();
+    }
+
+    private @Nullable EnumWrappers.EntityUseAction getEntityUseAction(@NotNull PacketEvent event) {
+        if (Internals.MINECRAFT_VERSION < 1700) {
+            return event.getPacket().getEntityUseActions().read(0);
+        }
+
+        try {
+            return event.getPacket().getEnumEntityUseActions().read(0).getAction();
+        } catch (Throwable primaryError) {
+            try {
+                EnumWrappers.EntityUseAction action = event.getPacket().getEntityUseActions().read(0);
+                warnActionFallback("Failed to read USE_ENTITY action with enum wrapper, using fallback parser", primaryError);
+                return action;
+            } catch (Throwable fallbackError) {
+                warnActionFallback("Failed to read USE_ENTITY action from packet", fallbackError);
+                return null;
+            }
+        }
+    }
+
+    private void warnActionFallback(@NotNull String message, @NotNull Throwable e) {
+        if (!hasWarnedActionFallback) {
+            hasWarnedActionFallback = true;
+            LOGGER.warning(message, e);
+        }
     }
 }
