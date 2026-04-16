@@ -16,6 +16,7 @@ import com.mojang.brigadier.CommandDispatcher;
 
 public class Internals {
     private static final Pattern MC_VERSION_PATTERN = Pattern.compile("\\(MC: ([0-9]+(?:\\.[0-9]+){1,2})\\)");
+    private static final Pattern NUMERIC_VERSION_PATTERN = Pattern.compile("^[0-9]+(?:\\.[0-9]+){1,2}$");
 
     /**
      * Minecraft version in the form of mmpp (mm is the compatibility major, pp is the compatibility patch).
@@ -35,7 +36,7 @@ public class Internals {
     static {
         try {
             // Get Minecraft version
-            MINECRAFT_VERSION = parseMinecraftVersion(Bukkit.getVersion());
+            MINECRAFT_VERSION = parseMinecraftVersion(getMinecraftVersion());
 
             // Detect Folia
             boolean isFolia;
@@ -78,15 +79,30 @@ public class Internals {
         }
     }
 
-    private static int parseMinecraftVersion(@NotNull String rawVersion) {
-        Matcher matcher = MC_VERSION_PATTERN.matcher(rawVersion);
-        if (!matcher.find()) {
-            throw new IllegalArgumentException("Could not parse Minecraft version from: " + rawVersion);
+    private static @NotNull String getMinecraftVersion() {
+        try {
+            // Prefer stable API when available (Paper/modern Bukkit)
+            Method getMinecraftVersionMethod = Bukkit.getServer().getClass().getMethod("getMinecraftVersion");
+            Object version = getMinecraftVersionMethod.invoke(Bukkit.getServer());
+            if (version instanceof String && NUMERIC_VERSION_PATTERN.matcher((String) version).matches()) {
+                return (String) version;
+            }
+        } catch (Exception __) {
+            // Fallback to parsing Bukkit.getVersion() on older server APIs
         }
 
-        String[] parts = matcher.group(1).split("\\.");
+        String rawVersion = Bukkit.getVersion();
+        Matcher matcher = MC_VERSION_PATTERN.matcher(rawVersion);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        throw new IllegalArgumentException("Could not parse Minecraft version from: " + rawVersion);
+    }
+
+    private static int parseMinecraftVersion(@NotNull String version) {
+        String[] parts = version.split("\\.");
         if (parts.length < 2) {
-            throw new IllegalArgumentException("Invalid Minecraft version format: " + matcher.group(1));
+            throw new IllegalArgumentException("Invalid Minecraft version format: " + version);
         }
 
         int major = Integer.parseInt(parts[0]);
