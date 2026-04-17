@@ -25,6 +25,7 @@ public abstract class SelectFakeItemFrameListener implements PacketListener {
     private static final int MAX_BLOCK_DISTANCE = 5;
     private static final Logger LOGGER = Logger.getLogger("SelectFakeItemFrameListener");
     private static boolean hasWarnedActionFallback = false;
+    private static boolean hasWarnedEntityIdFallback = false;
 
     /**
      * Get fake image instance for player
@@ -93,25 +94,29 @@ public abstract class SelectFakeItemFrameListener implements PacketListener {
 
     @Override
     public final void onPacketReceiving(@NotNull PacketEvent event) {
+        Player player = event.getPlayer();
+
         // Ignore events for "real" in-game entities
-        int entityId = event.getPacket().getIntegers().read(0);
-        if (entityId < FakeItemFrame.MIN_FRAME_ID) {
+        Integer entityId = getEntityId(event);
+        if (entityId != null && entityId < FakeItemFrame.MIN_FRAME_ID) {
+            return;
+        }
+
+        // When entity ID cannot be read (protocol wrapper drift), only continue
+        // if player is actually aiming at one of our fake images.
+        if (entityId == null && getFakeImage(player) == null) {
             return;
         }
 
         // Get action
         EnumWrappers.EntityUseAction action = getEntityUseAction(event);
-        if (action == null) {
-            return;
-        }
 
         // Handle event
         boolean allowEvent = true;
-        Player player =  event.getPlayer();
         if (action == EnumWrappers.EntityUseAction.ATTACK) {
-            allowEvent = onLeftClick(player, entityId);
+            allowEvent = onLeftClick(player, (entityId != null) ? entityId : -1);
         } else if (action == EnumWrappers.EntityUseAction.INTERACT_AT || action == EnumWrappers.EntityUseAction.INTERACT) {
-            allowEvent = onRightClick(player, entityId);
+            allowEvent = onRightClick(player, (entityId != null) ? entityId : -1);
         }
 
         // Cancel event (if needed)
@@ -143,23 +148,70 @@ public abstract class SelectFakeItemFrameListener implements PacketListener {
         return YamipaPlugin.getInstance();
     }
 
-    private @Nullable EnumWrappers.EntityUseAction getEntityUseAction(@NotNull PacketEvent event) {
+    private @NotNull EnumWrappers.EntityUseAction getEntityUseAction(@NotNull PacketEvent event) {
         if (Internals.MINECRAFT_VERSION < 1700) {
-            return event.getPacket().getEntityUseActions().read(0);
-        }
-
-        try {
-            return event.getPacket().getEnumEntityUseActions().read(0).getAction();
-        } catch (Throwable primaryError) {
             try {
                 EnumWrappers.EntityUseAction action = event.getPacket().getEntityUseActions().read(0);
-                warnActionFallback("Failed to read USE_ENTITY action with enum wrapper, using fallback parser", primaryError);
-                return action;
-            } catch (Throwable fallbackError) {
-                warnActionFallback("Failed to read USE_ENTITY action from packet", fallbackError);
-                return null;
+                if (action != null) {
+                    return action;
+                }
+            } catch (Throwable __) {
+                // Continue with fallback parser
             }
+
+            warnActionFallback("Failed to parse legacy USE_ENTITY action directly, using inferred action");
+            return inferEntityUseAction(event);
         }
+
+        Throwable primaryError = null;
+        try {
+            // Prefer this accessor first: it's the most stable across ProtocolLib versions.
+            EnumWrappers.EntityUseAction action = event.getPacket().getEntityUseActions().read(0);
+            if (action != null) {
+                return action;
+            }
+        } catch (Throwable e) {
+            primaryError = e;
+        }
+
+        EnumWrappers.EntityUseAction inferredAction = inferEntityUseAction(event);
+        if (primaryError != null) {
+            warnActionFallback("Failed to parse USE_ENTITY action directly, using inferred action", primaryError);
+        }
+        return inferredAction;
+    }
+
+    private @Nullable Integer getEntityId(@NotNull PacketEvent event) {
+        try {
+            // Modern versions expose the target entity as a VarInt in this modifier.
+            return event.getPacket().getIntegers().read(0);
+        } catch (Throwable e) {
+            warnEntityIdFallback("Failed to read USE_ENTITY target entity ID from packet", e);
+            return null;
+        }
+    }
+
+    private @NotNull EnumWrappers.EntityUseAction inferEntityUseAction(@NotNull PacketEvent event) {
+        // 1) ATTACK packets do not carry a hand value
+        try {
+            if (event.getPacket().getHands().readSafely(0) == null) {
+                return EnumWrappers.EntityUseAction.ATTACK;
+            }
+        } catch (Throwable __) {
+            // Ignore and continue with the next heuristic
+        }
+
+        // 2) INTERACT_AT carries a target position vector
+        try {
+            if (event.getPacket().getVectors().readSafely(0) != null) {
+                return EnumWrappers.EntityUseAction.INTERACT_AT;
+            }
+        } catch (Throwable __) {
+            // Ignore and continue with the next heuristic
+        }
+
+        // 3) Remaining handled interactions are treated as INTERACT
+        return EnumWrappers.EntityUseAction.INTERACT;
     }
 
     private void warnActionFallback(@NotNull String message, @NotNull Throwable e) {
@@ -168,4 +220,19 @@ public abstract class SelectFakeItemFrameListener implements PacketListener {
             LOGGER.warning(message, e);
         }
     }
+
+    private void warnActionFallback(@NotNull String message) {
+        if (!hasWarnedActionFallback) {
+            hasWarnedActionFallback = true;
+            LOGGER.warning(message);
+        }
+    }
+
+    private void warnEntityIdFallback(@NotNull String message, @NotNull Throwable e) {
+        if (!hasWarnedEntityIdFallback) {
+            hasWarnedEntityIdFallback = true;
+            LOGGER.warning(message, e);
+        }
+    }
+
 }

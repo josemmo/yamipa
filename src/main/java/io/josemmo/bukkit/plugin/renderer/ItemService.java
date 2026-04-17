@@ -195,6 +195,13 @@ public class ItemService extends SelectFakeItemFrameListener implements Listener
     @Override
     @SuppressWarnings("deprecation")
     protected boolean onLeftClick(@NotNull Player player, int entityId) {
+        // Attack path intentionally ignored on modern versions where USE_ENTITY attack is unreliable.
+        return true;
+    }
+
+    @Override
+    @SuppressWarnings("deprecation")
+    protected boolean onRightClick(@NotNull Player player, int entityId) {
         YamipaPlugin.getInstance().getScheduler().runInGame(() -> {
             // Get image selected by player
             FakeImage image = SelectFakeItemFrameListener.getFakeImage(player);
@@ -203,8 +210,9 @@ public class ItemService extends SelectFakeItemFrameListener implements Listener
                 return;
             }
 
-            // Silently ignore non-removable images
+            // Ignore non-removable images
             if (!image.hasFlag(FakeImage.FLAG_REMOVABLE)) {
+                ActionBar.send(player, ChatColor.RED + "This image cannot be removed");
                 return;
             }
 
@@ -228,7 +236,7 @@ public class ItemService extends SelectFakeItemFrameListener implements Listener
             }
 
             // Drop image item in front of player
-            if (player.getGameMode() == GameMode.SURVIVAL && image.hasFlag(FakeImage.FLAG_DROPPABLE)) {
+            if (player.getGameMode() != GameMode.CREATIVE && image.hasFlag(FakeImage.FLAG_DROPPABLE)) {
                 ImageFile imageFile = Objects.requireNonNull(image.getFile());
                 ItemStack imageItem = getImageItem(imageFile, 1, image.getWidth(), image.getHeight(), image.getFlags());
                 Location dropLocation = player.getEyeLocation().add(player.getLocation().getDirection().normalize());
@@ -236,12 +244,6 @@ public class ItemService extends SelectFakeItemFrameListener implements Listener
             }
         }, player.getLocation(), 0);
         return false;
-    }
-
-    @Override
-    protected boolean onRightClick(@NotNull Player player, int entityId) {
-        // Intentionally left blank
-        return true;
     }
 
     @Override
