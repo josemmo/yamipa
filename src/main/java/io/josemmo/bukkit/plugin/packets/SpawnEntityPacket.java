@@ -24,6 +24,7 @@ public class SpawnEntityPacket extends PacketContainer {
 
     public SpawnEntityPacket() {
         super(PacketType.Play.Server.SPAWN_ENTITY);
+        getModifier().writeDefaults();
         if (Internals.MINECRAFT_VERSION < 2109) {
             getIntegers()
                 .write(1, 0)
@@ -51,6 +52,9 @@ public class SpawnEntityPacket extends PacketContainer {
             getBytes()
                 .write(0, (byte) pitch)
                 .write(1, (byte) yaw);
+            if (Internals.MINECRAFT_VERSION >= 2109) {
+                getBytes().write(2, (byte) yaw);
+            }
         } else {
             getIntegers()
                 .write(4, pitch)
