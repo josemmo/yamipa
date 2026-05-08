@@ -29,7 +29,7 @@ public class Internals {
     private static final CommandDispatcher<?> DISPATCHER;
     private static final CommandMap COMMAND_MAP;
     private static @Nullable Method GET_BUKKIT_SENDER_METHOD = null;
-    private static final Pattern LEGACY_VERSION_PATTERN = Pattern.compile("\\(MC: ([0-9]+(?:\\.[0-9]+){1,2})\\)");
+    private static final Pattern LEGACY_VERSION_PATTERN = Pattern.compile("\\(MC: ([0-9]+(?:\\.[0-9]+){1,2})(?:\\s+[^)]*)?\\)");
 
     static {
         try {
