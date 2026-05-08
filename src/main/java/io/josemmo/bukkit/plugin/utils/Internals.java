@@ -2,6 +2,8 @@ package io.josemmo.bukkit.plugin.utils;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.command.CommandMap;
@@ -14,27 +16,25 @@ import com.mojang.brigadier.CommandDispatcher;
 
 public class Internals {
     /**
-     * Minecraft version in the form of mmpp (mm is 2-digit minor, pp is 2-digit patch), major number is always ignored.
+     * Minecraft version in a normalized integer format suitable for range comparisons.
      * <p>
      * Examples:
      * <li> "1.16" becomes 1600
      * <li> "1.20.3" becomes 2003
      * <li> "1.21.10" becomes 2110
+     * <li> "26.1.2" becomes 2601
      * */
     public static final int MINECRAFT_VERSION;
     public static final boolean IS_FOLIA;
     private static final CommandDispatcher<?> DISPATCHER;
     private static final CommandMap COMMAND_MAP;
     private static @Nullable Method GET_BUKKIT_SENDER_METHOD = null;
+    private static final Pattern LEGACY_VERSION_PATTERN = Pattern.compile("\\(MC: ([0-9]+(?:\\.[0-9]+){1,2})\\)");
 
     static {
         try {
             // Get Minecraft version
-            String rawVersion = Bukkit.getVersion();
-            String version = rawVersion.substring(rawVersion.lastIndexOf("(MC: 1.")+7, rawVersion.length()-1);
-            String minorNumber = version.contains(".") ? version.substring(0, version.indexOf(".")) : version;
-            String patchNumber = version.contains(".") ? version.substring(version.indexOf(".")+1) : "0";
-            MINECRAFT_VERSION = Integer.parseInt(minorNumber) * 100 + Integer.parseInt(patchNumber);
+            MINECRAFT_VERSION = getNormalizedMinecraftVersion();
 
             // Detect Folia
             boolean isFolia;
@@ -75,6 +75,44 @@ public class Internals {
         } catch (Exception e) {
             throw new RuntimeException("Failed to get internal classes due to incompatible Minecraft server", e);
         }
+    }
+
+    /**
+     * Get Minecraft version in normalized integer format
+     * @return Minecraft version
+     */
+    private static int getNormalizedMinecraftVersion() throws ReflectiveOperationException {
+        String version;
+
+        // Modern Bukkit/Paper exposes the game version directly
+        try {
+            Method getMinecraftVersionMethod = Server.class.getMethod("getMinecraftVersion");
+            version = (String) getMinecraftVersionMethod.invoke(Bukkit.getServer());
+        } catch (NoSuchMethodException __) {
+            version = null;
+        }
+
+        // Fallback to parsing the implementation version string for older servers
+        if (version == null || version.isEmpty()) {
+            Matcher matcher = LEGACY_VERSION_PATTERN.matcher(Bukkit.getVersion());
+            if (!matcher.find()) {
+                throw new IllegalStateException("Could not determine Minecraft version from: " + Bukkit.getVersion());
+            }
+            version = matcher.group(1);
+        }
+
+        String[] parts = version.split("\\.");
+        if (parts.length < 2) {
+            throw new IllegalStateException("Unsupported Minecraft version format: " + version);
+        }
+
+        int major = Integer.parseInt(parts[0]);
+        int minor = Integer.parseInt(parts[1]);
+        int patch = (parts.length >= 3) ? Integer.parseInt(parts[2]) : 0;
+
+        // Legacy releases used the fixed "1.x.y" format. Newer releases use "<year>.<drop>[.<hotfix>]".
+        // Existing packet guards only care about the primary release line, so modern hotfix numbers are ignored.
+        return (major == 1) ? minor * 100 + patch : major * 100 + minor;
     }
 
     /**
