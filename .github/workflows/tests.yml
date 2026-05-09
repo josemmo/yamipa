@@ -105,14 +105,14 @@ jobs:
         run: |
           case "$VERSION" in
             1.16.5|1.17.1|1.18.2|1.19.4|1.20.6)
-              url="https://github.com/dmulloy2/ProtocolLib/releases/download/5.3.0/ProtocolLib.jar"
+              version="5.3.0"
               ;;
             *)
-              url="https://github.com/dmulloy2/ProtocolLib/releases/download/5.4.0/ProtocolLib.jar"
+              version="5.4.0"
               ;;
           esac
           mkdir -p ./server/plugins/ProtocolLib
-          wget -q "$url" -O ./server/plugins/ProtocolLib.jar
+          cp "$HOME/.m2/repository/net/dmulloy2/ProtocolLib/$version/ProtocolLib-$version.jar" ./server/plugins/ProtocolLib.jar
           echo -e "global:\n  auto updater:\n    notify: false\n    download: false" > ./server/plugins/ProtocolLib/config.yml
 
       # Install plugin
