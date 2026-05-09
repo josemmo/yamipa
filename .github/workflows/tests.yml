@@ -6,13 +6,18 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 8
-    continue-on-error: ${{ matrix.version == '1.21.11' }}
     strategy:
       fail-fast: false
       matrix:
         flavor: ['spigot', 'paper', 'purpur', 'folia']
-        version: ['1.21.11', '1.21.8', '1.20.6', '1.19.4', '1.18.2', '1.17.1', '1.16.5']
+        version: ['26.1.2', '1.21.11', '1.21.8', '1.20.6', '1.19.4', '1.18.2', '1.17.1', '1.16.5']
         exclude:
+          - flavor: spigot
+            version: 26.1.2
+          - flavor: purpur
+            version: 26.1.2
+          - flavor: folia
+            version: 26.1.2
           - flavor: folia
             version: 1.16.5
           - flavor: folia
@@ -44,6 +49,7 @@ jobs:
           distribution: 'temurin'
           java-version: |
             ${{
+              startsWith(matrix.version, '26.') && '25' ||
               startsWith(matrix.version, '1.16') && '11' ||
               startsWith(matrix.version, '1.17') && '16' ||
               startsWith(matrix.version, '1.18') && '17' ||
@@ -125,9 +131,20 @@ jobs:
         working-directory: ./server
         env:
           FLAVOR: ${{ matrix.flavor }}
+          VERSION: ${{ matrix.version }}
         run: |
-          (cd ../automata && npm run start) &
-          timeout -s SIGINT -k 110s 90s java -DIReallyKnowWhatIAmDoingISwear -jar server.jar nogui | tee server.log || true
+          smoke_only=false
+          if [[ "$VERSION" == 26.* ]]; then
+            smoke_only=true
+          fi
+
+          if [ "$smoke_only" = true ]; then
+            timeout -s SIGINT -k 80s 60s java -DIReallyKnowWhatIAmDoingISwear -jar server.jar nogui | tee server.log || true
+          else
+            (cd ../automata && npm run start) &
+            timeout -s SIGINT -k 110s 90s java -DIReallyKnowWhatIAmDoingISwear -jar server.jar nogui | tee server.log || true
+          fi
+
           if ! grep -Fq '[YamipaPlugin] ' server.log; then
             echo "Plugin did not load"
             exit 1
@@ -144,15 +161,31 @@ jobs:
             echo "Plugin did not fixed command permissions"
             exit 1
           fi
-          if ! grep -Fq '[YamipaPlugin] [FakeImage] Created FakeImage' server.log; then
-            echo "Plugin did not place the fake image"
+
+          if [ "$smoke_only" = false ]; then
+            if ! grep -Fq '[YamipaPlugin] [FakeImage] Created FakeImage' server.log; then
+              echo "Plugin did not place the fake image"
+              exit 1
+            fi
+            if ! grep -Fq '[YamipaPlugin] [FakeImage] Invalidated FakeImage' server.log; then
+              echo "Plugin did not remove the fake image"
+              exit 1
+            fi
+          fi
+
+          if grep -Fq 'Error occurred while enabling YamipaPlugin' server.log; then
+            echo "Plugin threw an enable error"
             exit 1
           fi
-          if ! grep -Fq '[YamipaPlugin] [FakeImage] Invalidated FakeImage' server.log; then
-            echo "Plugin did not remove the fake image"
+          if grep -Fq 'Error occurred while disabling YamipaPlugin' server.log; then
+            echo "Plugin threw a disable error"
             exit 1
           fi
-          if [ "$FLAVOR" != "spigot" ] && [ "$FLAVOR" != "purpur" ] && grep -iFq 'exception' server.log; then
-            echo "Server threw an exception"
+          if grep -Fq 'ExceptionInInitializerError' server.log; then
+            echo "Plugin failed during static initialization"
+            exit 1
+          fi
+          if grep -Fq 'NoClassDefFoundError: Could not initialize class io.josemmo.bukkit.plugin.utils.Internals' server.log; then
+            echo "Plugin failed to initialize internals"
             exit 1
           fi

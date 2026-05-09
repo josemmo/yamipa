@@ -24,6 +24,7 @@ public class SpawnEntityPacket extends PacketContainer {
 
     public SpawnEntityPacket() {
         super(PacketType.Play.Server.SPAWN_ENTITY);
+        getModifier().writeDefaults();
         if (MinecraftVersion.CURRENT.isAtLeast(MinecraftVersion.V1_21_9)) {
             getVectors().write(0, new Vector(0, 0, 0));
         } else {
@@ -51,6 +52,9 @@ public class SpawnEntityPacket extends PacketContainer {
             getBytes()
                 .write(0, (byte) pitch)
                 .write(1, (byte) yaw);
+            if (MinecraftVersion.CURRENT.isAtLeast(MinecraftVersion.V1_21_9)) {
+                getBytes().write(2, (byte) yaw);
+            }
         } else {
             getIntegers()
                 .write(4, pitch)

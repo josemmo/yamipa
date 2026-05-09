@@ -109,7 +109,7 @@ public abstract class SelectFakeItemFrameListener implements PacketListener {
         Player player =  event.getPlayer();
         if (action == EnumWrappers.EntityUseAction.ATTACK) {
             allowEvent = onLeftClick(player, entityId);
-        } else if (action == EnumWrappers.EntityUseAction.INTERACT_AT) {
+        } else if (action == EnumWrappers.EntityUseAction.INTERACT_AT || action == EnumWrappers.EntityUseAction.INTERACT) {
             allowEvent = onRightClick(player, entityId);
         }
 

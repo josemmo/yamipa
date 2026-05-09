@@ -1,11 +1,11 @@
 package io.josemmo.bukkit.plugin.storage;
 
-import com.sun.nio.file.ExtendedWatchEventModifier;
 import io.josemmo.bukkit.plugin.utils.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
@@ -137,6 +137,7 @@ public abstract class FileSystemWatcher {
 
     private class WatcherThread extends Thread {
         private final boolean IS_WINDOWS = System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win");
+        private final @Nullable WatchEvent.Modifier FILE_TREE_MODIFIER = getFileTreeModifier();
 
         @Override
         public void run() {
@@ -274,7 +275,7 @@ public abstract class FileSystemWatcher {
         private void registerDirectory(@NotNull WatchService watchService, @NotNull Path path) {
             // Windows supports listing to events in the entire file tree,
             // in that case only allow registering the listener on the base path
-            if (IS_WINDOWS && !path.equals(basePath)) {
+            if (IS_WINDOWS && FILE_TREE_MODIFIER != null && !path.equals(basePath)) {
                 return;
             }
 
@@ -285,13 +286,31 @@ public abstract class FileSystemWatcher {
                     StandardWatchEventKinds.ENTRY_DELETE,
                     StandardWatchEventKinds.ENTRY_MODIFY
                 };
-                WatchEvent.Modifier[] modifiers = IS_WINDOWS ?
-                    new WatchEvent.Modifier[]{ExtendedWatchEventModifier.FILE_TREE} :
+                WatchEvent.Modifier[] modifiers = (IS_WINDOWS && FILE_TREE_MODIFIER != null) ?
+                    new WatchEvent.Modifier[]{FILE_TREE_MODIFIER} :
                     new WatchEvent.Modifier[0];
                 path.register(watchService, events, modifiers);
                 LOGGER.fine("Started watching directory at \"" + path + "\"");
             } catch (IOException e) {
                 LOGGER.severe("Failed to register directory", e);
+            }
+        }
+
+        /**
+         * Get Windows file tree modifier if available
+         * @return File tree modifier or null if not supported
+         */
+        private @Nullable WatchEvent.Modifier getFileTreeModifier() {
+            if (!IS_WINDOWS) {
+                return null;
+            }
+            try {
+                Class<?> clazz = Class.forName("com.sun.nio.file.ExtendedWatchEventModifier");
+                Field field = clazz.getDeclaredField("FILE_TREE");
+                return (WatchEvent.Modifier) field.get(null);
+            } catch (ReflectiveOperationException __) {
+                LOGGER.warning("Windows FILE_TREE watch modifier unavailable, falling back to per-directory watches");
+                return null;
             }
         }
 
