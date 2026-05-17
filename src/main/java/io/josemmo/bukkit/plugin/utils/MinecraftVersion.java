@@ -10,6 +10,7 @@ import java.util.regex.Pattern;
 public class MinecraftVersion implements Comparable<MinecraftVersion> {
     private static final @NotNull Pattern VERSION_PATTERN = Pattern.compile("([0-9]+)\\.([0-9]+)(?:\\.([0-9]+))?.*");
 
+    public static final @NotNull MinecraftVersion V26_1 = new MinecraftVersion("26.1");
     public static final @NotNull MinecraftVersion V1_21_9 = new MinecraftVersion("1.21.9");
     public static final @NotNull MinecraftVersion V1_21_6 = new MinecraftVersion("1.21.6");
     public static final @NotNull MinecraftVersion V1_20_5 = new MinecraftVersion("1.20.5");

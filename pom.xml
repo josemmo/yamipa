@@ -16,6 +16,10 @@
 
     <repositories>
         <repository>
+            <id>mineacademy-repo</id>
+            <url>https://bitbucket.org/kangarko/libraries/raw/master</url>
+        </repository>
+        <repository>
             <id>papermc-repo</id>
             <url>https://repo.papermc.io/repository/maven-public/</url>
         </repository>
@@ -38,15 +42,15 @@
         <dependency>
             <groupId>dev.folia</groupId>
             <artifactId>folia-api</artifactId>
-            <version>1.21.11-R0.1-SNAPSHOT</version>
+            <version>26.1.2.build.8-stable</version>
             <scope>provided</scope>
         </dependency>
 
         <!-- https://central.sonatype.com/artifact/net.dmulloy2/ProtocolLib -->
         <dependency>
-            <groupId>net.dmulloy2</groupId>
+            <groupId>org.mineacademy.plugin</groupId>
             <artifactId>ProtocolLib</artifactId>
-            <version>5.4.0</version>
+            <version>5.5.0-SNAPSHOT-fd855ed</version>
             <scope>provided</scope>
         </dependency>
 
