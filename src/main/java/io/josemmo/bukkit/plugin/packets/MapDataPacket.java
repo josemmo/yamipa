@@ -6,7 +6,7 @@ import com.comphenix.protocol.injector.StructureCache;
 import com.comphenix.protocol.reflect.ExactReflection;
 import com.comphenix.protocol.reflect.StructureModifier;
 import com.comphenix.protocol.utility.MinecraftReflection;
-import io.josemmo.bukkit.plugin.utils.Internals;
+import io.josemmo.bukkit.plugin.utils.MinecraftVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Constructor;
@@ -19,12 +19,12 @@ public class MapDataPacket extends PacketContainer {
     private @Nullable StructureModifier<?> mapDataModifier;
 
     static {
-        LOCKED_INDEX = (Internals.MINECRAFT_VERSION < 1700) ? 1 : 0;
-        if (Internals.MINECRAFT_VERSION < 2005) {
-            MAP_ID_CONSTRUCTOR = null;
-        } else {
+        LOCKED_INDEX = MinecraftVersion.CURRENT.isAtLeast(MinecraftVersion.V1_17) ? 0 : 1;
+        if (MinecraftVersion.CURRENT.isAtLeast(MinecraftVersion.V1_20_5)) {
             Class<?> mapIdClass = MinecraftReflection.getNullableNMS("world.level.saveddata.maps.MapId");
             MAP_ID_CONSTRUCTOR = ExactReflection.fromClass(mapIdClass, true).findConstructor(int.class);
+        } else {
+            MAP_ID_CONSTRUCTOR = null;
         }
     }
 
@@ -32,19 +32,19 @@ public class MapDataPacket extends PacketContainer {
         super(PacketType.Play.Server.MAP);
         getModifier().writeDefaults();
 
-        if (Internals.MINECRAFT_VERSION < 1700) {
-            getBooleans().write(0, false); // Disable tracking position
-        } else if (Internals.MINECRAFT_VERSION < 2005) {
-            Class<?> mapDataType = getModifier().getField(4).getType();
-            Object mapDataInstance = getModifier().read(4);
-            mapDataModifier = new StructureModifier<>(mapDataType).withTarget(mapDataInstance);
-        } else {
+        if (MinecraftVersion.CURRENT.isAtLeast(MinecraftVersion.V1_20_5)) {
             ParameterizedType genericType = (ParameterizedType) getModifier().getField(4).getGenericType();
             Class<?> mapDataType = (Class<?>) genericType.getActualTypeArguments()[0];
             Object mapDataInstance = StructureCache.newInstance(mapDataType);
             getModifier().write(3, Optional.empty());
             getModifier().write(4, Optional.of(mapDataInstance));
             mapDataModifier = new StructureModifier<>(mapDataType).withTarget(mapDataInstance);
+        } else if (MinecraftVersion.CURRENT.isAtLeast(MinecraftVersion.V1_17)) {
+            Class<?> mapDataType = getModifier().getField(4).getType();
+            Object mapDataInstance = getModifier().read(4);
+            mapDataModifier = new StructureModifier<>(mapDataType).withTarget(mapDataInstance);
+        } else {
+            getBooleans().write(0, false); // Disable tracking position
         }
     }
 

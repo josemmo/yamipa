@@ -11,7 +11,7 @@ import io.josemmo.bukkit.plugin.YamipaPlugin;
 import io.josemmo.bukkit.plugin.renderer.FakeImage;
 import io.josemmo.bukkit.plugin.renderer.FakeItemFrame;
 import io.josemmo.bukkit.plugin.renderer.ImageRenderer;
-import io.josemmo.bukkit.plugin.utils.Internals;
+import io.josemmo.bukkit.plugin.utils.MinecraftVersion;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
@@ -98,10 +98,13 @@ public abstract class SelectFakeItemFrameListener implements PacketListener {
 
         // Get action
         EnumWrappers.EntityUseAction action;
-        if (Internals.MINECRAFT_VERSION < 1700) {
-            action = event.getPacket().getEntityUseActions().read(0);
-        } else {
+        if (MinecraftVersion.CURRENT.isAtLeast(MinecraftVersion.V26_1)) {
+            PacketType type = event.getPacketType();
+            action = (type == PacketType.Play.Client.ATTACK) ? EnumWrappers.EntityUseAction.ATTACK : EnumWrappers.EntityUseAction.INTERACT_AT;
+        } else if (MinecraftVersion.CURRENT.isAtLeast(MinecraftVersion.V1_17)) {
             action = event.getPacket().getEnumEntityUseActions().read(0).getAction();
+        } else {
+            action = event.getPacket().getEntityUseActions().read(0);
         }
 
         // Handle event
@@ -126,10 +129,13 @@ public abstract class SelectFakeItemFrameListener implements PacketListener {
 
     @Override
     public final @NotNull ListeningWhitelist getReceivingWhitelist() {
-        return ListeningWhitelist.newBuilder()
-            .priority(getPriority())
-            .types(PacketType.Play.Client.USE_ENTITY)
-            .build();
+        ListeningWhitelist.Builder builder = ListeningWhitelist.newBuilder().priority(getPriority());
+        if (MinecraftVersion.CURRENT.isAtLeast(MinecraftVersion.V26_1)) {
+            builder.types(PacketType.Play.Client.ATTACK, PacketType.Play.Client.USE_ENTITY);
+        } else {
+            builder.types(PacketType.Play.Client.USE_ENTITY);
+        }
+        return builder.build();
     }
 
     @Override

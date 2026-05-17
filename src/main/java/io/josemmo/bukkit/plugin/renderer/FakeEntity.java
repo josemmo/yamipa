@@ -6,8 +6,8 @@ import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.injector.netty.manager.NetworkManagerInjector;
 import com.comphenix.protocol.wrappers.WrappedDataWatcher;
-import io.josemmo.bukkit.plugin.utils.Internals;
 import io.josemmo.bukkit.plugin.utils.Logger;
+import io.josemmo.bukkit.plugin.utils.MinecraftVersion;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,14 +81,14 @@ public abstract class FakeEntity {
      * @param packets Packets to send
      */
     protected static void tryToSendPackets(@NotNull Player player, @NotNull Iterable<PacketContainer> packets) {
-        if (Internals.MINECRAFT_VERSION < 1904) {
-            for (PacketContainer packet : packets) {
-                tryToSendPacket(player, packet);
-            }
-        } else {
+        if (MinecraftVersion.CURRENT.isAtLeast(MinecraftVersion.V1_19_4)) {
             PacketContainer container = new PacketContainer(PacketType.Play.Server.BUNDLE);
             container.getPacketBundles().write(0, packets);
             tryToSendPacket(player, container);
+        } else {
+            for (PacketContainer packet : packets) {
+                tryToSendPacket(player, packet);
+            }
         }
     }
 }

@@ -4,6 +4,7 @@ import io.josemmo.bukkit.plugin.commands.ImageCommandBridge;
 import io.josemmo.bukkit.plugin.renderer.*;
 import io.josemmo.bukkit.plugin.storage.ImageStorage;
 import io.josemmo.bukkit.plugin.utils.Logger;
+import io.josemmo.bukkit.plugin.utils.MinecraftVersion;
 import io.josemmo.bukkit.plugin.utils.Scheduler;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.SimplePie;
@@ -98,7 +99,8 @@ public class YamipaPlugin extends JavaPlugin {
         // Initialize logger
         verbose = config.getBoolean("verbose");
         if (verbose) {
-            LOGGER.info("Running on VERBOSE mode");
+            LOGGER.fine("Running on VERBOSE mode");
+            LOGGER.fine("Detected server with Minecraft " + MinecraftVersion.CURRENT);
         }
 
         // Create scheduler
@@ -154,7 +156,7 @@ public class YamipaPlugin extends JavaPlugin {
             return "0-9";
         };
         metrics = new Metrics(this, BSTATS_PLUGIN_ID);
-        metrics.addCustomChart(new SimplePie("animate_images", () -> animateImages ? "true" : "false"));
+        metrics.addCustomChart(new SimplePie("animate_images", () -> Boolean.toString(animateImages)));
         metrics.addCustomChart(new SimplePie("number_of_image_files", () -> toStats.apply(storage.size())));
         metrics.addCustomChart(new SimplePie("number_of_placed_images", () -> toStats.apply(renderer.size())));
     }

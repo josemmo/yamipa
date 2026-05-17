@@ -5,7 +5,7 @@ import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.wrappers.BukkitConverters;
 import com.comphenix.protocol.wrappers.WrappedDataValue;
 import com.comphenix.protocol.wrappers.WrappedDataWatcher;
-import io.josemmo.bukkit.plugin.utils.Internals;
+import io.josemmo.bukkit.plugin.utils.MinecraftVersion;
 import org.bukkit.Rotation;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -22,13 +22,13 @@ public class EntityMetadataPacket extends PacketContainer {
     private final List<WrappedDataValue> values = new ArrayList<>(); // For >= 1.19.3
 
     static {
-        USE_DATA_WATCHER = (Internals.MINECRAFT_VERSION < 1903);
-        if (Internals.MINECRAFT_VERSION < 1700) { // Minecraft 1.16.x
-            ITEM_INDEX = 7;
-        } else if (Internals.MINECRAFT_VERSION < 2106) { // Minecraft 1.17.x to 1.21.5
-            ITEM_INDEX = 8;
-        } else { // Minecraft 1.21.6 and upwards
+        USE_DATA_WATCHER = !MinecraftVersion.CURRENT.isAtLeast(MinecraftVersion.V1_19_3);
+        if (MinecraftVersion.CURRENT.isAtLeast(MinecraftVersion.V1_21_6)) {
             ITEM_INDEX = 9;
+        } else if (MinecraftVersion.CURRENT.isAtLeast(MinecraftVersion.V1_17)) {
+            ITEM_INDEX = 8;
+        } else {
+            ITEM_INDEX = 7;
         }
         ROTATION_INDEX = ITEM_INDEX + 1;
     }

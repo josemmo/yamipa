@@ -6,7 +6,7 @@
 
     <groupId>io.josemmo.bukkit.plugin</groupId>
     <artifactId>YamipaPlugin</artifactId>
-    <version>1.4.1</version>
+    <version>1.4.2</version>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
@@ -15,6 +15,10 @@
     </properties>
 
     <repositories>
+        <repository>
+            <id>mineacademy-repo</id>
+            <url>https://bitbucket.org/kangarko/libraries/raw/master</url>
+        </repository>
         <repository>
             <id>papermc-repo</id>
             <url>https://repo.papermc.io/repository/maven-public/</url>
@@ -38,15 +42,15 @@
         <dependency>
             <groupId>dev.folia</groupId>
             <artifactId>folia-api</artifactId>
-            <version>1.21.11-R0.1-SNAPSHOT</version>
+            <version>26.1.2.build.8-stable</version>
             <scope>provided</scope>
         </dependency>
 
         <!-- https://central.sonatype.com/artifact/net.dmulloy2/ProtocolLib -->
         <dependency>
-            <groupId>net.dmulloy2</groupId>
+            <groupId>org.mineacademy.plugin</groupId>
             <artifactId>ProtocolLib</artifactId>
-            <version>5.4.0</version>
+            <version>5.5.0-SNAPSHOT-fd855ed</version>
             <scope>provided</scope>
         </dependency>
 
@@ -62,7 +66,7 @@
         <dependency>
             <groupId>org.bstats</groupId>
             <artifactId>bstats-bukkit</artifactId>
-            <version>3.1.0</version>
+            <version>3.2.1</version>
         </dependency>
 
         <!-- https://central.sonatype.com/artifact/net.luckperms/api -->
@@ -85,7 +89,7 @@
         <dependency>
             <groupId>com.sk89q.worldguard</groupId>
             <artifactId>worldguard-bukkit</artifactId>
-            <version>7.0.9</version>
+            <version>7.0.16</version>
             <scope>provided</scope>
         </dependency>
 
@@ -93,7 +97,7 @@
         <dependency>
             <groupId>com.github.GriefPrevention</groupId>
             <artifactId>GriefPrevention</artifactId>
-            <version>16.18.5</version>
+            <version>16.18.7</version>
             <scope>provided</scope>
         </dependency>
 
@@ -101,7 +105,7 @@
         <dependency>
             <groupId>com.github.TownyAdvanced.Towny</groupId>
             <artifactId>towny</artifactId>
-            <version>0.102.0.2</version>
+            <version>0.102.0.13</version>
             <scope>provided</scope>
         </dependency>
 
@@ -109,7 +113,7 @@
         <dependency>
             <groupId>com.github.Angeschossen</groupId>
             <artifactId>LandsAPI</artifactId>
-            <version>7.18.5</version>
+            <version>7.25.4</version>
             <scope>provided</scope>
         </dependency>
 
@@ -117,7 +121,7 @@
         <dependency>
             <groupId>org.jetbrains</groupId>
             <artifactId>annotations</artifactId>
-            <version>26.0.2-1</version>
+            <version>26.1.0</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

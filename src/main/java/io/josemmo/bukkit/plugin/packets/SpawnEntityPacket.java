@@ -2,7 +2,7 @@ package io.josemmo.bukkit.plugin.packets;
 
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.PacketContainer;
-import io.josemmo.bukkit.plugin.utils.Internals;
+import io.josemmo.bukkit.plugin.utils.MinecraftVersion;
 import org.bukkit.entity.EntityType;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
@@ -13,24 +13,24 @@ public class SpawnEntityPacket extends PacketContainer {
     private static final int DATA_INDEX;
 
     static {
-        if (Internals.MINECRAFT_VERSION < 1900) {
+        if (MinecraftVersion.CURRENT.isAtLeast(MinecraftVersion.V1_19)) {
+            ROTATION_AS_BYTES = true;
+            DATA_INDEX = MinecraftVersion.CURRENT.isAtLeast(MinecraftVersion.V1_21_9) ? 1 : 4;
+        } else {
             ROTATION_AS_BYTES = false;
             DATA_INDEX = 6;
-        } else {
-            ROTATION_AS_BYTES = true;
-            DATA_INDEX = (Internals.MINECRAFT_VERSION < 2109) ? 4 : 1;
         }
     }
 
     public SpawnEntityPacket() {
         super(PacketType.Play.Server.SPAWN_ENTITY);
-        if (Internals.MINECRAFT_VERSION < 2109) {
+        if (MinecraftVersion.CURRENT.isAtLeast(MinecraftVersion.V1_21_9)) {
+            getVectors().write(0, new Vector(0, 0, 0));
+        } else {
             getIntegers()
                 .write(1, 0)
                 .write(2, 0)
                 .write(3, 0);
-        } else {
-            getVectors().write(0, new Vector(0, 0, 0));
         }
         getUUIDs()
             .write(0, UUID.randomUUID());

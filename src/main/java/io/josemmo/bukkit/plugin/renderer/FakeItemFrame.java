@@ -4,8 +4,8 @@ import com.comphenix.protocol.events.PacketContainer;
 import io.josemmo.bukkit.plugin.packets.DestroyEntityPacket;
 import io.josemmo.bukkit.plugin.packets.EntityMetadataPacket;
 import io.josemmo.bukkit.plugin.packets.SpawnEntityPacket;
-import io.josemmo.bukkit.plugin.utils.Internals;
 import io.josemmo.bukkit.plugin.utils.Logger;
+import io.josemmo.bukkit.plugin.utils.MinecraftVersion;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Rotation;
@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class FakeItemFrame extends FakeEntity {
     public static final int MIN_FRAME_ID = Integer.MAX_VALUE / 4;
     public static final int MAX_FRAME_ID = Integer.MAX_VALUE;
-    private static final boolean SUPPORTS_GLOWING = Internals.MINECRAFT_VERSION >= 1700;
+    private static final boolean SUPPORTS_GLOWING = MinecraftVersion.CURRENT.isAtLeast(MinecraftVersion.V1_17);
     private static final Logger LOGGER = Logger.getLogger("FakeItemFrame");
     private static final AtomicInteger LAST_FRAME_ID = new AtomicInteger(MAX_FRAME_ID);
     private final int id;
