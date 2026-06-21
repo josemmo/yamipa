@@ -12,9 +12,14 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class FakeEntity {
     private static final Logger LOGGER = Logger.getLogger("FakeEntity");
+    // Minecraft disconnects clients on bundles larger than 4096 packets ("Too many packets
+    // in a bundle"). Keep well under that limit.
+    private static final int MAX_PACKETS_PER_BUNDLE = 1024;
     private static final ProtocolManager CONNECTION = ProtocolLibrary.getProtocolManager();
     private static @Nullable NetworkManagerInjector NETWORK_MANAGER_INJECTOR;
 
@@ -82,13 +87,33 @@ public abstract class FakeEntity {
      */
     protected static void tryToSendPackets(@NotNull Player player, @NotNull Iterable<PacketContainer> packets) {
         if (MinecraftVersion.CURRENT.isAtLeast(MinecraftVersion.V1_19_4)) {
-            PacketContainer container = new PacketContainer(PacketType.Play.Server.BUNDLE);
-            container.getPacketBundles().write(0, packets);
-            tryToSendPacket(player, container);
+            // Split large payloads across multiple bundles (see MAX_PACKETS_PER_BUNDLE).
+            List<PacketContainer> chunk = new ArrayList<>(MAX_PACKETS_PER_BUNDLE);
+            for (PacketContainer packet : packets) {
+                chunk.add(packet);
+                if (chunk.size() >= MAX_PACKETS_PER_BUNDLE) {
+                    sendBundle(player, chunk);
+                    chunk = new ArrayList<>(MAX_PACKETS_PER_BUNDLE);
+                }
+            }
+            if (!chunk.isEmpty()) {
+                sendBundle(player, chunk);
+            }
         } else {
             for (PacketContainer packet : packets) {
                 tryToSendPacket(player, packet);
             }
         }
+    }
+
+    /**
+     * Wrap a group of packets into a single bundle and send it (>= MC 1.19.4)
+     * @param player  Player who will receive the bundle
+     * @param packets Packets to bundle (must not exceed Minecraft's per-bundle limit)
+     */
+    private static void sendBundle(@NotNull Player player, @NotNull Iterable<PacketContainer> packets) {
+        PacketContainer container = new PacketContainer(PacketType.Play.Server.BUNDLE);
+        container.getPacketBundles().write(0, packets);
+        tryToSendPacket(player, container);
     }
 }
