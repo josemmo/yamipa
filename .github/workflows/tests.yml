@@ -49,6 +49,7 @@ jobs:
               startsWith(matrix.version, '1.18') && '17' ||
               startsWith(matrix.version, '1.19') && '17' ||
               startsWith(matrix.version, '1.20') && '21' ||
+              startsWith(matrix.version, '1.21') && '25' ||
               '26'
             }}
 
