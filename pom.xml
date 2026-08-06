@@ -42,7 +42,7 @@
         <dependency>
             <groupId>dev.folia</groupId>
             <artifactId>folia-api</artifactId>
-            <version>26.1.2.build.8-stable</version>
+            <version>26.2.build.1-beta</version>
             <scope>provided</scope>
         </dependency>
 

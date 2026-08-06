@@ -37,6 +37,7 @@ Here are the Minecraft distributions where Yamipa should be able to run:
 |     1.20 & 1.20.x |   ✅    |   ✅     |   ✅    |   ✅   |
 |     1.21 & 1.21.x |   ✅    |   ✅     |   ✅    |   ✅   |
 |     26.1 & 26.1.x |   ✅    |   ✅     |   ✅    |   ✅   |
+|              26.2 |   ✅    |   ✅     |   ✅    |   ✅   |
 
 ## Configuration
 Yamipa is ready-to-go right out of the box. By default, it creates the following files and directories under the
