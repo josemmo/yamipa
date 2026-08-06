@@ -10,14 +10,14 @@ jobs:
     steps:
       # Download code from repository
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # Setup Java
       - name: Setup JDK
         uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
-          java-version: '25'
+          java-version: '26'
 
       # Build plugin
       - name: Build with Maven
