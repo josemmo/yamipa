@@ -13,6 +13,7 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.*;
 import org.bukkit.event.vehicle.VehicleMoveEvent;
+import org.bukkit.event.world.WorldLoadEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
@@ -20,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -35,6 +37,8 @@ public class ImageRenderer implements Listener {
     private final AtomicBoolean hasConfigChanged = new AtomicBoolean(false);
     private final ConcurrentMap<WorldAreaId, Set<FakeImage>> images = new ConcurrentHashMap<>();
     private final ConcurrentMap<UUID, Integer> imagesCountByPlayer = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, Queue<String[]>> pendingConfigRows = new ConcurrentHashMap<>();
+    private final Object configRowsLock = new Object();
     private final Map<Player, WorldAreaId> playersLocation = new HashMap<>();
 
     /**
@@ -97,6 +101,7 @@ public class ImageRenderer implements Listener {
         // Clear dangling references
         images.clear();
         imagesCountByPlayer.clear();
+        pendingConfigRows.clear();
         playersLocation.clear();
     }
 
@@ -121,33 +126,49 @@ public class ImageRenderer implements Listener {
         // Parse each row
         for (String[] row : config.getRows()) {
             try {
-                String filename = row[0];
-                World world = Objects.requireNonNull(YamipaPlugin.getInstance().getServer().getWorld(row[1]));
-                double x = Integer.parseInt(row[2]);
-                double y = Integer.parseInt(row[3]);
-                double z = Integer.parseInt(row[4]);
-                Location location = new Location(world, x, y, z);
-                BlockFace face = BlockFace.valueOf(row[5]);
-                Rotation rotation = Rotation.valueOf(row[6]);
-                int width = Math.abs(Integer.parseInt(row[7]));
-                int height = Math.abs(Integer.parseInt(row[8]));
-                Date placedAt = (row.length > 9 && !row[9].isEmpty()) ?
-                    new Date(Long.parseLong(row[9])*1000L) :
-                    null;
-                UUID placedById = (row.length > 10 && !row[10].isEmpty()) ?
-                    UUID.fromString(row[10]) :
-                    FakeImage.UNKNOWN_PLAYER_ID;
-                OfflinePlayer placedBy = Bukkit.getOfflinePlayer(placedById);
-                int flags = (row.length > 11) ?
-                    Math.max(Integer.parseInt(row[11]), 0) :
-                    FakeImage.DEFAULT_PLACE_FLAGS;
-                FakeImage fakeImage = new FakeImage(filename, location, face, rotation, width, height,
-                    placedAt, placedBy, flags);
-                addImage(fakeImage, true);
+                String worldName = row[1];
+                World world = YamipaPlugin.getInstance().getServer().getWorld(worldName);
+                if (world == null) {
+                    pendingConfigRows.computeIfAbsent(worldName, __ -> new ConcurrentLinkedQueue<>())
+                        .add(Arrays.copyOf(row, row.length));
+                    LOGGER.fine("Deferred fake image in unloaded world: " + worldName);
+                    continue;
+                }
+                loadConfigRow(row, world);
             } catch (Exception e) {
                 LOGGER.severe("Invalid fake image properties: " + String.join(";", row), e);
             }
         }
+    }
+
+    /**
+     * Load a configuration row for an available world
+     * @param row   Configuration row
+     * @param world Target world
+     */
+    private void loadConfigRow(@NotNull String[] row, @NotNull World world) {
+        String filename = row[0];
+        double x = Integer.parseInt(row[2]);
+        double y = Integer.parseInt(row[3]);
+        double z = Integer.parseInt(row[4]);
+        Location location = new Location(world, x, y, z);
+        BlockFace face = BlockFace.valueOf(row[5]);
+        Rotation rotation = Rotation.valueOf(row[6]);
+        int width = Math.abs(Integer.parseInt(row[7]));
+        int height = Math.abs(Integer.parseInt(row[8]));
+        Date placedAt = (row.length > 9 && !row[9].isEmpty()) ?
+            new Date(Long.parseLong(row[9])*1000L) :
+            null;
+        UUID placedById = (row.length > 10 && !row[10].isEmpty()) ?
+            UUID.fromString(row[10]) :
+            FakeImage.UNKNOWN_PLAYER_ID;
+        OfflinePlayer placedBy = Bukkit.getOfflinePlayer(placedById);
+        int flags = (row.length > 11) ?
+            Math.max(Integer.parseInt(row[11]), 0) :
+            FakeImage.DEFAULT_PLACE_FLAGS;
+        FakeImage fakeImage = new FakeImage(filename, location, face, rotation, width, height,
+            placedAt, placedBy, flags);
+        addImage(fakeImage, true);
     }
 
     /**
@@ -159,8 +180,16 @@ public class ImageRenderer implements Listener {
 
         // Get all fake images
         Set<FakeImage> fakeImages = new HashSet<>();
-        for (Set<FakeImage> fakeImagesPart : images.values()) {
-            fakeImages.addAll(fakeImagesPart);
+        List<String[]> pendingRows = new ArrayList<>();
+        synchronized (configRowsLock) {
+            for (Set<FakeImage> fakeImagesPart : images.values()) {
+                fakeImages.addAll(fakeImagesPart);
+            }
+            for (Queue<String[]> rows : pendingConfigRows.values()) {
+                for (String[] row : rows) {
+                    pendingRows.add(Arrays.copyOf(row, row.length));
+                }
+            }
         }
 
         // Placed here so, if another change comes while saving, we don't lose those changes (will be saved later)
@@ -185,6 +214,9 @@ public class ImageRenderer implements Listener {
                 placedById.equals(FakeImage.UNKNOWN_PLAYER_ID) ? "" : placedById.toString(),
                 fakeImage.getFlags() + ""
             };
+            config.addRow(row);
+        }
+        for (String[] row : pendingRows) {
             config.addRow(row);
         }
 
@@ -423,6 +455,22 @@ public class ImageRenderer implements Listener {
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onPlayerJoin(@NotNull PlayerJoinEvent event) {
         onPlayerLocationChange(event.getPlayer(), event.getPlayer().getLocation());
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
+    public void onWorldLoad(@NotNull WorldLoadEvent event) {
+        String worldName = event.getWorld().getName();
+        synchronized (configRowsLock) {
+            Queue<String[]> rows = pendingConfigRows.remove(worldName);
+            if (rows == null) return;
+            for (String[] row : rows) {
+                try {
+                    loadConfigRow(row, event.getWorld());
+                } catch (Exception e) {
+                    LOGGER.severe("Invalid fake image properties: " + String.join(";", row), e);
+                }
+            }
+        }
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
