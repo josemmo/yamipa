@@ -28,10 +28,10 @@ jobs:
 
       # Setup Java (for building)
       - name: Setup JDK (for building)
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: 'temurin'
-          java-version: '26'
+          java-version: '27'
 
       # Build plugin
       - name: Build with Maven
@@ -39,7 +39,7 @@ jobs:
 
       # Setup Java (for testing)
       - name: Setup JDK (for testing)
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: 'temurin'
           java-version: |
@@ -96,6 +96,7 @@ jobs:
       # Install dependencies
       - name: Install plugin dependencies
         env:
+          FLAVOR: ${{ matrix.flavor }}
           VERSION: ${{ matrix.version }}
         run: |
           case "$VERSION" in
@@ -106,7 +107,11 @@ jobs:
               url="https://github.com/dmulloy2/ProtocolLib/releases/download/5.4.0/ProtocolLib.jar"
               ;;
             *)
-              url="https://github.com/dmulloy2/ProtocolLib/releases/download/dev-build/ProtocolLib.jar"
+              suffix=""
+              if [ "$FLAVOR" == "spigot" ]; then
+                suffix="-Spigot"
+              fi
+              url="https://github.com/dmulloy2/ProtocolLib/releases/download/dev-build/ProtocolLib${suffix}.jar"
               ;;
           esac
           mkdir -p ./server/plugins/ProtocolLib
