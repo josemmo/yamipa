@@ -6,7 +6,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 8
-    continue-on-error: ${{ matrix.version == '26.1.2' || matrix.version == '26.2' }}
+    continue-on-error: ${{ matrix.version == '26.2' }}
     strategy:
       fail-fast: false
       matrix:
