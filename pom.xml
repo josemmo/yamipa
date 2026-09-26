@@ -42,7 +42,7 @@
         <dependency>
             <groupId>dev.folia</groupId>
             <artifactId>folia-api</artifactId>
-            <version>26.2.build.1-beta</version>
+            <version>26.2.build.7-beta</version>
             <scope>provided</scope>
         </dependency>
 
@@ -89,7 +89,7 @@
         <dependency>
             <groupId>com.sk89q.worldguard</groupId>
             <artifactId>worldguard-bukkit</artifactId>
-            <version>7.0.18</version>
+            <version>7.0.19</version>
             <scope>provided</scope>
         </dependency>
 
@@ -105,7 +105,7 @@
         <dependency>
             <groupId>com.github.TownyAdvanced.Towny</groupId>
             <artifactId>towny</artifactId>
-            <version>0.102.0.13</version>
+            <version>0.103.2.7</version>
             <scope>provided</scope>
         </dependency>
 
