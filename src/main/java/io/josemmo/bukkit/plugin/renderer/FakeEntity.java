@@ -12,9 +12,11 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Field;
+import java.util.List;
 
 public abstract class FakeEntity {
     private static final Logger LOGGER = Logger.getLogger("FakeEntity");
+    private static final int MAX_PACKETS_PER_BUNDLE = 1024;
     private static final ProtocolManager CONNECTION = ProtocolLibrary.getProtocolManager();
     private static @Nullable NetworkManagerInjector NETWORK_MANAGER_INJECTOR;
 
@@ -80,11 +82,15 @@ public abstract class FakeEntity {
      * @param player  Player who will receive the packets
      * @param packets Packets to send
      */
-    protected static void tryToSendPackets(@NotNull Player player, @NotNull Iterable<PacketContainer> packets) {
+    protected static void tryToSendPackets(@NotNull Player player, @NotNull List<PacketContainer> packets) {
         if (MinecraftVersion.CURRENT.isAtLeast(MinecraftVersion.V1_19_4)) {
-            PacketContainer container = new PacketContainer(PacketType.Play.Server.BUNDLE);
-            container.getPacketBundles().write(0, packets);
-            tryToSendPacket(player, container);
+            int packetsSize = packets.size();
+            for (int i=0; i<packetsSize; i+=MAX_PACKETS_PER_BUNDLE) {
+                List<PacketContainer> chunk = packets.subList(i, Math.min(i+MAX_PACKETS_PER_BUNDLE, packetsSize));
+                PacketContainer container = new PacketContainer(PacketType.Play.Server.BUNDLE);
+                container.getPacketBundles().write(0, chunk);
+                tryToSendPacket(player, container);
+            }
         } else {
             for (PacketContainer packet : packets) {
                 tryToSendPacket(player, packet);

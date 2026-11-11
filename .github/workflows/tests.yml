@@ -6,12 +6,12 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 8
-    continue-on-error: ${{ matrix.version == '26.1.2' }}
+    continue-on-error: ${{ matrix.version == '26.2' || matrix.version == '26.3' }}
     strategy:
       fail-fast: false
       matrix:
         flavor: ['spigot', 'paper', 'purpur', 'folia']
-        version: ['26.1.2', '1.21.11', '1.20.6', '1.19.4', '1.18.2', '1.17.1', '1.16.5']
+        version: ['26.3', '26.2', '26.1.2', '1.21.11', '1.20.6', '1.19.4', '1.18.2', '1.17.1', '1.16.5']
         exclude:
           - flavor: folia
             version: 1.16.5
@@ -24,14 +24,14 @@ jobs:
     steps:
       # Download code from repository
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # Setup Java (for building)
       - name: Setup JDK (for building)
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: 'temurin'
-          java-version: '25'
+          java-version: '27'
 
       # Build plugin
       - name: Build with Maven
@@ -39,7 +39,7 @@ jobs:
 
       # Setup Java (for testing)
       - name: Setup JDK (for testing)
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: 'temurin'
           java-version: |
@@ -49,19 +49,20 @@ jobs:
               startsWith(matrix.version, '1.18') && '17' ||
               startsWith(matrix.version, '1.19') && '17' ||
               startsWith(matrix.version, '1.20') && '21' ||
-              '25'
+              startsWith(matrix.version, '1.21') && '25' ||
+              '26'
             }}
 
       # Setup Node.js
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: '24'
 
       # Setup automata
       - name: Setup automata
         working-directory: ./automata
-        run: npm install
+        run: npm ci
 
       # Setup server
       - name: Setup server
@@ -95,6 +96,7 @@ jobs:
       # Install dependencies
       - name: Install plugin dependencies
         env:
+          FLAVOR: ${{ matrix.flavor }}
           VERSION: ${{ matrix.version }}
         run: |
           case "$VERSION" in
@@ -105,7 +107,11 @@ jobs:
               url="https://github.com/dmulloy2/ProtocolLib/releases/download/5.4.0/ProtocolLib.jar"
               ;;
             *)
-              url="https://github.com/dmulloy2/ProtocolLib/releases/download/dev-build/ProtocolLib.jar"
+              suffix=""
+              if [ "$FLAVOR" == "spigot" ]; then
+                suffix="-Spigot"
+              fi
+              url="https://github.com/dmulloy2/ProtocolLib/releases/download/dev-build/ProtocolLib${suffix}.jar"
               ;;
           esac
           mkdir -p ./server/plugins/ProtocolLib

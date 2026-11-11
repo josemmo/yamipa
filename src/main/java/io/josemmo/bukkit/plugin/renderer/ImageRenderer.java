@@ -35,7 +35,7 @@ public class ImageRenderer implements Listener {
     private final AtomicBoolean hasConfigChanged = new AtomicBoolean(false);
     private final ConcurrentMap<WorldAreaId, Set<FakeImage>> images = new ConcurrentHashMap<>();
     private final ConcurrentMap<UUID, Integer> imagesCountByPlayer = new ConcurrentHashMap<>();
-    private final Map<Player, WorldAreaId> playersLocation = new HashMap<>();
+    private final ConcurrentMap<Player, WorldAreaId> playersLocation = new ConcurrentHashMap<>();
 
     /**
      * Class constructor
@@ -383,23 +383,19 @@ public class ImageRenderer implements Listener {
     }
 
     /**
-     * On player location change
-     * @param player   Player instance
-     * @param location New player location
+     * On player world area change
+     * @param player      Player instance
+     * @param worldAreaId New player world area ID
      */
-    private void onPlayerLocationChange(@NotNull Player player, @NotNull Location location) {
+    private void onPlayerWorldAreaChange(@NotNull Player player, @NotNull WorldAreaId worldAreaId) {
         // Ignore NPC events from other plugins
         if (player.hasMetadata("NPC")) {
             LOGGER.fine("Ignored NPC event from Player#" + player.getName());
             return;
         }
 
-        // Has player moved to another world area?
-        WorldAreaId worldAreaId = WorldAreaId.fromLocation(location);
+        // Keep player's new world area
         WorldAreaId prevWorldAreaId = playersLocation.get(player);
-        if (worldAreaId.equals(prevWorldAreaId)) {
-            return;
-        }
         playersLocation.put(player, worldAreaId);
         LOGGER.fine("Player#" + player.getName() + " moved to WorldArea#(" + worldAreaId + ")");
 
@@ -422,7 +418,10 @@ public class ImageRenderer implements Listener {
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onPlayerJoin(@NotNull PlayerJoinEvent event) {
-        onPlayerLocationChange(event.getPlayer(), event.getPlayer().getLocation());
+        Player player = event.getPlayer();
+        Location location = player.getLocation();
+        WorldAreaId worldAreaId = WorldAreaId.fromLocation(location);
+        onPlayerWorldAreaChange(player, worldAreaId);
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
@@ -431,7 +430,10 @@ public class ImageRenderer implements Listener {
 
         // Get player's current world area ID
         WorldAreaId worldAreaId = playersLocation.get(player);
-        if (worldAreaId == null) return;
+        if (worldAreaId == null) {
+            LOGGER.warning("Player#" + player.getName() + " quit without having a current world area");
+            return;
+        }
         playersLocation.remove(player);
 
         // Notify world areas that player quit
@@ -442,18 +444,32 @@ public class ImageRenderer implements Listener {
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onPlayerRespawn(@NotNull PlayerRespawnEvent event) {
-        onPlayerLocationChange(event.getPlayer(), event.getPlayer().getLocation());
+        Player player = event.getPlayer();
+
+        // Check whether player has changed world area
+        Location location = event.getRespawnLocation();
+        WorldAreaId worldAreaId = WorldAreaId.fromLocation(location);
+        WorldAreaId prevWorldAreaId = playersLocation.get(player);
+        if (worldAreaId.equals(prevWorldAreaId)) return;
+
+        // Notify event
+        onPlayerWorldAreaChange(player, worldAreaId);
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onPlayerTeleport(@NotNull PlayerTeleportEvent event) {
-        if (isSameWorldArea(event.getFrom(), event.getTo())) return;
+        Player player = event.getPlayer();
+
+        // Check whether player is about to change world area
+        Location location = event.getTo();
+        WorldAreaId worldAreaId = WorldAreaId.fromLocation(location);
+        WorldAreaId prevWorldAreaId = playersLocation.get(player);
+        if (worldAreaId.equals(prevWorldAreaId)) return;
 
         // Wait until next server tick before handling location change
         // This is necessary as teleport events get fired *before* teleporting the player
-        Location location = event.getTo();
         YamipaPlugin.getInstance().getScheduler().runInGame(
-            () -> onPlayerLocationChange(event.getPlayer(), location),
+            () -> onPlayerWorldAreaChange(player, worldAreaId),
             location,
             0
         );
@@ -461,31 +477,34 @@ public class ImageRenderer implements Listener {
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onPlayerMove(@NotNull PlayerMoveEvent event) {
-        if (isSameWorldArea(event.getFrom(), event.getTo())) return;
-        onPlayerLocationChange(event.getPlayer(), event.getTo());
+        Player player = event.getPlayer();
+
+        // Check whether player has changed world area
+        Location location = event.getTo();
+        WorldAreaId worldAreaId = WorldAreaId.fromLocation(location);
+        WorldAreaId prevWorldAreaId = playersLocation.get(player);
+        if (worldAreaId.equals(prevWorldAreaId)) return;
+
+        // Notify event
+        onPlayerWorldAreaChange(player, worldAreaId);
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onVehicleMove(@NotNull VehicleMoveEvent event) {
+        // Make sure vehicle has passengers
         List<Entity> passengers = event.getVehicle().getPassengers();
         if (passengers.isEmpty()) return;
-        if (isSameWorldArea(event.getFrom(), event.getTo())) return;
+
+        // Notify events
+        WorldAreaId worldAreaId = WorldAreaId.fromLocation(event.getTo());
         for (Entity passenger : passengers) {
             if (passenger instanceof Player) {
-                onPlayerLocationChange((Player) passenger, event.getTo());
+                Player player = (Player) passenger;
+                WorldAreaId prevWorldAreaId = playersLocation.get(player);
+                if (!worldAreaId.equals(prevWorldAreaId)) {
+                    onPlayerWorldAreaChange(player, worldAreaId);
+                }
             }
         }
-    }
-
-    /**
-     * Is same world area
-     * @param  a Location A
-     * @param  b Location B
-     * @return   Whether both locations are in the same world area
-     */
-    private boolean isSameWorldArea(@NotNull Location a, @NotNull Location b) {
-        WorldAreaId fromArea = WorldAreaId.fromLocation(a);
-        WorldAreaId toArea = WorldAreaId.fromLocation(b);
-        return fromArea.equals(toArea);
     }
 }
